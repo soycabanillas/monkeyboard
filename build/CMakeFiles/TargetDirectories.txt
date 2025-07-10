@@ -1,0 +1,7 @@
+/workspaces/qmk_userspace/keyboard_agnostic/build/CMakeFiles/rebuild_cache.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/CMakeFiles/edit_cache.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/CMakeFiles/tap_dance_engine.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/examples/CMakeFiles/rebuild_cache.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/examples/CMakeFiles/edit_cache.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/examples/qmk/CMakeFiles/edit_cache.dir
+/workspaces/qmk_userspace/keyboard_agnostic/build/examples/qmk/CMakeFiles/rebuild_cache.dir

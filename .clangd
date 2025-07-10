@@ -1,0 +1,13 @@
+CompileFlags:
+  Add:
+    - "-Wall"
+    - "-Wextra"
+    - "-Wpedantic"
+    - "-std=c11"
+  CompilationDatabase: build
+
+If:
+  PathMatch: [.*\.cpp$, .*\.hpp$, .*\.cxx$]
+CompileFlags:
+  Add:
+    - "-std=c++17"

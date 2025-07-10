@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtap_dance_engine.a CMakeFiles/tap_dance_engine.dir/src/key_buffer.c.o CMakeFiles/tap_dance_engine.dir/src/pipeline_tap_dance.c.o CMakeFiles/tap_dance_engine.dir/src/pipeline_tap_dance_initializer.c.o
+/usr/bin/ranlib libtap_dance_engine.a
