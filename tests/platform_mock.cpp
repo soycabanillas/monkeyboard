@@ -9,6 +9,8 @@ static platform_time_t mock_timer = 0;
 static uint8_t mock_current_layer = 0;
 static platform_deferred_token mock_next_token = 1;
 
+extern "C" {
+
 // Mock key operations
 void platform_send_key(platform_keycode_t keycode) {
     printf("MOCK: Send key %u\n", keycode);
@@ -92,3 +94,10 @@ void mock_reset_timer(void) {
 void mock_set_layer(uint8_t layer) {
     mock_current_layer = layer;
 }
+
+void reset_mock_state(void) {
+    mock_reset_timer();
+    mock_set_layer(0);
+}
+
+} // extern "C"

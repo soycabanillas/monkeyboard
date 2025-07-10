@@ -61,9 +61,9 @@ void execute_pipeline(uint16_t callback_time, uint8_t pos, press_buffer_item_t* 
     pipeline_executor_config->pipelines[pos]->definition->callback(&callback_params, &actions, pipeline_executor_config->pipelines[pos]->definition->data);
 }
 
-uint32_t deferred_exec_callback(uint32_t trigger_time, void *cb_arg) {
+void deferred_exec_callback(void *cb_arg) {
+    (void)cb_arg; // Unused parameter
     execute_pipeline(pipeline_executor_state.capture_pipeline.callback_time, pipeline_executor_state.capture_pipeline.pipeline_index, NULL, pipeline_executor_state.capture_pipeline);
-    return 0;
 }
 
 bool process_key_pool(void) {
@@ -73,7 +73,7 @@ bool process_key_pool(void) {
     pipeline_executor_state.capture_pipeline.pipeline_index = 0;
 
     if (pipeline_executor_state.capture_pipeline.callback_time > 0) {
-        platform_cancel_deferred_exec(pipeline_executor_state.deferred_exec_callback);
+        platform_cancel_deferred_exec(pipeline_executor_state.deferred_exec_callback_token);
     }
     while (pipeline_executor_state.key_buffer->press_buffer_pos > 0) {
         press_buffer_item_t* press_buffer_selected = &pipeline_executor_state.key_buffer->press_buffer[0];
@@ -91,7 +91,7 @@ bool process_key_pool(void) {
 
     }
     if (pipeline_executor_state.capture_pipeline.captured == true && pipeline_executor_state.capture_pipeline.callback_time > 0) {
-        pipeline_executor_state.deferred_exec_callback = platform_defer_exec(pipeline_executor_state.capture_pipeline.callback_time, deferred_exec_callback, 0);
+        pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.capture_pipeline.callback_time, deferred_exec_callback, NULL);
     }
 
     // if (press_buffer_selected->keycode <= 0xFF) {
@@ -127,7 +127,7 @@ void pipeline_executor_global_state_create(void) {
     pipeline_executor_state.capture_pipeline.pipeline_index = 0;
     pipeline_executor_state.key_buffer = pipeline_key_buffer_create();
     pipeline_executor_state.pipeline_index = 0; // Initialize the pipeline index
-    pipeline_executor_state.deferred_exec_callback = 0; // Initialize the deferred execution callback token
+    pipeline_executor_state.deferred_exec_callback_token = 0; // Initialize the deferred execution callback token
 }
 
 void pipeline_executor_global_state_destroy(void) {

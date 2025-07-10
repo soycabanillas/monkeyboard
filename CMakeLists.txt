@@ -11,12 +11,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build options
-option(BUILD_TESTS "Build tests" OFF)  # Disable tests for now
+option(BUILD_TESTS "Build tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
 
-# Core library - only the most essential platform-agnostic files
+# Core library - platform-agnostic files (only core tap dance functionality)
 set(CORE_SOURCES
     src/key_buffer.c
+    src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
 )
@@ -40,9 +41,13 @@ if(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(googletest)
 
-    # Test executable
-    file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
-    add_executable(tests ${TEST_SOURCES})
+    # Test executable - only include our simple test for now
+    add_executable(tests
+        tests/platform_mock.cpp
+        tests/test_tap_dance_simple.cpp
+    )
+    # file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+    # add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests tap_dance_engine gtest_main)
     target_include_directories(tests PRIVATE src tests)
 

@@ -60,7 +60,7 @@ typedef struct {
     key_buffer_t *key_buffer;
     capture_pipeline_t capture_pipeline;
     size_t pipeline_index;
-    uint8_t deferred_exec_callback;
+    platform_deferred_token deferred_exec_callback_token;
 } pipeline_executor_state_t;
 
 typedef struct {
