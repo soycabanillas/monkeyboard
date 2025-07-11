@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include "gtest/gtest.h"
+#include "keycodes.h"
 #include "platform_interface.h"
 #include "platform_mock.h"
 

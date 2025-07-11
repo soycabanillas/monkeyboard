@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "../src/platform_interface.h"
 
 #ifdef __cplusplus

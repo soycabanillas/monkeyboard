@@ -1,6 +1,13 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "platform_interface.h"
 
 typedef struct {
@@ -40,5 +47,9 @@ void pipeline_key_buffer_destroy(key_buffer_t* key_buffer);
 bool key_buffer_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode);
 bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, platform_keypos_t key, platform_time_t time, uint8_t layer, bool is_press, bool is_from_pipeline, size_t pipeline_index);
 void remove_from_press_buffer(key_buffer_t *key_buffer, uint8_t pos);
+
+#ifdef __cplusplus
+}
+#endif
 
 

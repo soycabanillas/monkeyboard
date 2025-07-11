@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstdlib>
+#include "platform_interface.h"
 #include "platform_mock.h"
 
 extern "C" {

@@ -3,11 +3,26 @@ CompileFlags:
     - "-Wall"
     - "-Wextra"
     - "-Wpedantic"
-    - "-std=c11"
-  CompilationDatabase: build
+    - "-Wno-unused-parameter"
+  CompilationDatabase: build/
 
 If:
-  PathMatch: [.*\.cpp$, .*\.hpp$, .*\.cxx$]
+  PathMatch: [.*\.cpp, .*\.hpp, .*\.cc, .*\.cxx]
 CompileFlags:
   Add:
     - "-std=c++17"
+    - "-xc++"
+  Remove:
+    - "-std=c11"
+
+If:
+  PathMatch: [.*\.c, .*\.h]
+CompileFlags:
+  Add:
+    - "-std=c11"
+  Remove:
+    - "-std=c++*"
+
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict

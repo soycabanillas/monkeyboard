@@ -1,4 +1,5 @@
 #include "pipeline_executor.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include "key_buffer.h"
 #include "platform_interface.h"

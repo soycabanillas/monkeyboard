@@ -1,6 +1,8 @@
 #include "pipeline_oneshot_modifier.h"
+#include <stdint.h>
 #include <stdlib.h>
-#include "keycodes.h"
+#include "pipeline_executor.h"
+#include "platform_interface.h"
 
 uint8_t modifier_state = 0;
 
@@ -27,28 +29,28 @@ void pipeline_oneshot_modifier_callback(pipeline_callback_params_t* params, pipe
 
     if (global_status->modifiers_applied == true) {
         if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT) {
-            actions->add_untap_fn(KC_LEFT_SHIFT);
+            actions->add_untap_fn(PLATFORM_KC_LEFT_SHIFT);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT) {
-            actions->add_untap_fn(KC_RIGHT_SHIFT);
+            actions->add_untap_fn(PLATFORM_KC_RIGHT_SHIFT);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL) {
-            actions->add_untap_fn(KC_LEFT_CTRL);
+            actions->add_untap_fn(PLATFORM_KC_LEFT_CTRL);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL) {
-            actions->add_untap_fn(KC_RIGHT_CTRL);
+            actions->add_untap_fn(PLATFORM_KC_RIGHT_CTRL);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_ALT) {
-            actions->add_untap_fn(KC_LEFT_ALT);
+            actions->add_untap_fn(PLATFORM_KC_LEFT_ALT);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT) {
-            actions->add_untap_fn(KC_RIGHT_ALT);
+            actions->add_untap_fn(PLATFORM_KC_RIGHT_ALT);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_GUI) {
-            actions->add_untap_fn(KC_LEFT_GUI);
+            actions->add_untap_fn(PLATFORM_KC_LEFT_GUI);
         }
         if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI) {
-            actions->add_untap_fn(KC_RIGHT_GUI);
+            actions->add_untap_fn(PLATFORM_KC_RIGHT_GUI);
         }
         global_status->modifiers = 0;
         global_status->modifiers_applied = false;
@@ -68,28 +70,28 @@ void pipeline_oneshot_modifier_callback(pipeline_callback_params_t* params, pipe
     if (found_modifier == false) {
         if (global_status->modifiers != 0 && params->keycode <= 0xFF && params->callback_type == PIPELINE_CALLBACK_KEY_PRESS) {
             if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT) {
-                actions->add_tap_fn(KC_LEFT_SHIFT, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_LEFT_SHIFT, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT) {
-                actions->add_tap_fn(KC_RIGHT_SHIFT, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_RIGHT_SHIFT, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL) {
-                actions->add_tap_fn(KC_LEFT_CTRL, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_LEFT_CTRL, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL) {
-                actions->add_tap_fn(KC_RIGHT_CTRL, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_RIGHT_CTRL, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_ALT) {
-                actions->add_tap_fn(KC_LEFT_ALT, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_LEFT_ALT, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT) {
-                actions->add_tap_fn(KC_RIGHT_ALT, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_RIGHT_ALT, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_LEFT_GUI) {
-                actions->add_tap_fn(KC_LEFT_GUI, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_LEFT_GUI, params->keypos);
             }
             if (global_status->modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI) {
-                actions->add_tap_fn(KC_RIGHT_GUI, params->keypos);
+                actions->add_tap_fn(PLATFORM_KC_RIGHT_GUI, params->keypos);
             }
             global_status->modifiers_applied = true;
         }

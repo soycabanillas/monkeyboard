@@ -1,5 +1,7 @@
 #include "pipeline_key_replacer.h"
-#include "keycodes.h"
+#include "pipeline_executor.h"
+#include "platform_interface.h"
+#include <stddef.h>
 
 void pipeline_key_replacer_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
     //platform_log_debug("pipeline_key_replacer_callback || up: %u || press: %u", params->up, params->callback_type);
@@ -16,40 +18,40 @@ void pipeline_key_replacer_callback(pipeline_callback_params_t* params, pipeline
                     .modifiers = 0
                 };
                 data->config->modifier_pairs[i]->callback(&input, &result);
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT && params->info.is_pressed_fn(KC_LEFT_SHIFT) == false) {
-                    platform_register_code(KC_LEFT_SHIFT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT && params->info.is_pressed_fn(PLATFORM_KC_LEFT_SHIFT) == false) {
+                    platform_register_key(PLATFORM_KC_LEFT_SHIFT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT && params->info.is_pressed_fn(KC_RIGHT_SHIFT) == false) {
-                    platform_register_code(KC_RIGHT_SHIFT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_SHIFT) == false) {
+                    platform_register_key(PLATFORM_KC_RIGHT_SHIFT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL && params->info.is_pressed_fn(KC_LEFT_CTRL) == false) {
-                    platform_register_code(KC_LEFT_CTRL);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL && params->info.is_pressed_fn(PLATFORM_KC_LEFT_CTRL) == false) {
+                    platform_register_key(PLATFORM_KC_LEFT_CTRL);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL && params->info.is_pressed_fn(KC_RIGHT_CTRL) == false) {
-                    platform_register_code(KC_RIGHT_CTRL);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_CTRL) == false) {
+                    platform_register_key(PLATFORM_KC_RIGHT_CTRL);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_ALT && params->info.is_pressed_fn(KC_LEFT_ALT) == false) {
-                    platform_register_code(KC_LEFT_ALT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_ALT && params->info.is_pressed_fn(PLATFORM_KC_LEFT_ALT) == false) {
+                    platform_register_key(PLATFORM_KC_LEFT_ALT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT && params->info.is_pressed_fn(KC_RIGHT_ALT) == false) {
-                    platform_register_code(KC_RIGHT_ALT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_ALT) == false) {
+                    platform_register_key(PLATFORM_KC_RIGHT_ALT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_GUI && params->info.is_pressed_fn(KC_LEFT_GUI) == false) {
-                    platform_register_code(KC_LEFT_GUI);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_GUI && params->info.is_pressed_fn(PLATFORM_KC_LEFT_GUI) == false) {
+                    platform_register_key(PLATFORM_KC_LEFT_GUI);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI && params->info.is_pressed_fn(KC_RIGHT_GUI) == false) {
-                    platform_register_code(KC_RIGHT_GUI);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_GUI) == false) {
+                    platform_register_key(PLATFORM_KC_RIGHT_GUI);
                     platform_wait_ms(10);
                 }
                 // tap_code(result.keycode);
-                platform_register_code(result.keycode);
+                platform_register_key(result.keycode);
                 data->config->modifier_pairs[i]->activated = true;
                 break;
             }
@@ -66,37 +68,37 @@ void pipeline_key_replacer_callback(pipeline_callback_params_t* params, pipeline
                     .modifiers = 0
                 };
                 data->config->modifier_pairs[i]->callback(&input, &result);
-                platform_unregister_code(result.keycode);
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT && params->info.is_pressed_fn(KC_LEFT_SHIFT) == false) {
-                    platform_unregister_code(KC_LEFT_SHIFT);
+                platform_unregister_key(result.keycode);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT && params->info.is_pressed_fn(PLATFORM_KC_LEFT_SHIFT) == false) {
+                    platform_unregister_key(PLATFORM_KC_LEFT_SHIFT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT && params->info.is_pressed_fn(KC_RIGHT_SHIFT) == false) {
-                    platform_unregister_code(KC_RIGHT_SHIFT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_SHIFT) == false) {
+                    platform_unregister_key(PLATFORM_KC_RIGHT_SHIFT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL && params->info.is_pressed_fn(KC_LEFT_CTRL) == false) {
-                    platform_unregister_code(KC_LEFT_CTRL);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL && params->info.is_pressed_fn(PLATFORM_KC_LEFT_CTRL) == false) {
+                    platform_unregister_key(PLATFORM_KC_LEFT_CTRL);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL && params->info.is_pressed_fn(KC_RIGHT_CTRL) == false) {
-                    platform_unregister_code(KC_RIGHT_CTRL);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_CTRL) == false) {
+                    platform_unregister_key(PLATFORM_KC_RIGHT_CTRL);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_ALT && params->info.is_pressed_fn(KC_LEFT_ALT) == false) {
-                    platform_unregister_code(KC_LEFT_ALT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_ALT && params->info.is_pressed_fn(PLATFORM_KC_LEFT_ALT) == false) {
+                    platform_unregister_key(PLATFORM_KC_LEFT_ALT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT && params->info.is_pressed_fn(KC_RIGHT_ALT) == false) {
-                    platform_unregister_code(KC_RIGHT_ALT);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_ALT) == false) {
+                    platform_unregister_key(PLATFORM_KC_RIGHT_ALT);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_GUI && params->info.is_pressed_fn(KC_LEFT_GUI) == false) {
-                    platform_unregister_code(KC_LEFT_GUI);
+                if (result.modifiers & MACRO_KEY_MODIFIER_LEFT_GUI && params->info.is_pressed_fn(PLATFORM_KC_LEFT_GUI) == false) {
+                    platform_unregister_key(PLATFORM_KC_LEFT_GUI);
                     platform_wait_ms(10);
                 }
-                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI && params->info.is_pressed_fn(KC_RIGHT_GUI) == false) {
-                    platform_unregister_code(KC_RIGHT_GUI);
+                if (result.modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI && params->info.is_pressed_fn(PLATFORM_KC_RIGHT_GUI) == false) {
+                    platform_unregister_key(PLATFORM_KC_RIGHT_GUI);
                     platform_wait_ms(10);
                 }
                 data->config->modifier_pairs[i]->activated = false;

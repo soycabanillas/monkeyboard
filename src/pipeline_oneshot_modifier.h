@@ -1,6 +1,9 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include "pipeline_executor.h"
+#include "platform_interface.h"
 
 typedef struct {
     platform_keycode_t keycode;

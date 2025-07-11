@@ -1,4 +1,5 @@
 #include "pipeline_tap_dance.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "pipeline_executor.h"

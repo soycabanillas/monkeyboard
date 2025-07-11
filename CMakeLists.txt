@@ -22,13 +22,32 @@ set(CORE_SOURCES
     src/pipeline_tap_dance_initializer.c
 )
 
-add_library(tap_dance_engine ${CORE_SOURCES})
-target_include_directories(tap_dance_engine PUBLIC src)
+# Create core headers list
+set(CORE_HEADERS
+    src/key_buffer.h
+    src/pipeline_executor.h
+    src/pipeline_tap_dance.h
+    src/pipeline_tap_dance_initializer.h
+    src/platform_interface.h
+)
+
+add_library(tap_dance_engine ${CORE_SOURCES} ${CORE_HEADERS})
+target_include_directories(tap_dance_engine
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:include>
+)
 
 # Set compiler flags for better debugging and warnings
 target_compile_options(tap_dance_engine PRIVATE
-    $<$<COMPILE_LANGUAGE:C>:-Wall -Wextra -Wpedantic>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic>
+    $<$<COMPILE_LANGUAGE:C>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+)
+
+# Add debug symbols for development
+target_compile_options(tap_dance_engine PRIVATE
+    $<$<CONFIG:Debug>:-g -O0>
+    $<$<CONFIG:Release>:-O2 -DNDEBUG>
 )
 
 # Tests
@@ -46,10 +65,29 @@ if(BUILD_TESTS)
         tests/platform_mock.cpp
         tests/test_tap_dance_simple.cpp
     )
-    # file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
-    # add_executable(tests ${TEST_SOURCES})
-    target_link_libraries(tests tap_dance_engine gtest_main)
-    target_include_directories(tests PRIVATE src tests)
+
+    target_link_libraries(tests
+        PRIVATE
+            tap_dance_engine
+            gtest_main
+    )
+
+    target_include_directories(tests
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    )
+
+    # Explicitly set C++ standard for tests and separate from C library flags
+    set_target_properties(tests PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
+
+    # Set C++ compile options for tests (separate from C library)
+    target_compile_options(tests PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+    )
 
     # Enable testing
     enable_testing()
@@ -61,3 +99,15 @@ endif()
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+# Install targets
+install(TARGETS tap_dance_engine
+    EXPORT tap_dance_engine_targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+install(FILES ${CORE_HEADERS}
+    DESTINATION include
+)

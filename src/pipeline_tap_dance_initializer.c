@@ -1,7 +1,9 @@
 #include "pipeline_tap_dance_initializer.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "pipeline_tap_dance.h"
+#include "platform_interface.h"
 
 pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create(void) {
     pipeline_tap_dance_behaviour_status_t* behaviour_status = (pipeline_tap_dance_behaviour_status_t*)malloc(sizeof(pipeline_tap_dance_behaviour_status_t));

@@ -52,6 +52,10 @@ uint8_t platform_get_highest_layer(void) {
 }
 
 // Mock time operations
+void platform_wait_ms(platform_time_t ms) {
+    mock_timer += ms;
+}
+
 platform_time_t platform_timer_read(void) {
     return mock_timer;
 }

@@ -5,7 +5,7 @@
 #include "platform_interface.h"
 
 extern "C" {
-#include "../src/keycodes.h"
+#include "keycodes.h"
 #include "commons.h"
 #include "pipeline_tap_dance.h"
 #include "pipeline_tap_dance_initializer.h"
@@ -106,8 +106,6 @@ protected:
         pipeline_process_key(keycode, event);
     }
 };
-
-;
 
 // Test hold on CKC_LAY_MOUSE_Q activates mouse layer
 TEST_F(TapDanceBasicHoldTest, HoldActivatesMouseLayer) {

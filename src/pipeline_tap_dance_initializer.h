@@ -1,6 +1,9 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include "pipeline_tap_dance.h"
+#include "platform_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
