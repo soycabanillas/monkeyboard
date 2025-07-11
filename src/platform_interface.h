@@ -68,11 +68,7 @@ void platform_register_key(platform_keycode_t keycode);
 void platform_unregister_key(platform_keycode_t keycode);
 
 // Layer operations
-void platform_layer_on(uint8_t layer);
-void platform_layer_off(uint8_t layer);
-void platform_layer_set(uint8_t layer);
-void platform_layer_select(uint8_t layer);  // Alias for platform_layer_set
-uint8_t platform_get_highest_layer(void);
+void platform_layer_select(uint8_t layer);
 
 // Time operations
 void platform_wait_ms(platform_time_t ms);
