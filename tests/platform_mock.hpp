@@ -1,23 +1,15 @@
 #pragma once
 
 #include "../src/platform_interface.h"
+#include <vector>
+#include <set>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Mock utility functions
 void reset_mock_state(void);
 void mock_advance_timer(platform_time_t ms);
 void mock_reset_timer(void);
 void mock_set_layer(uint8_t layer);
 void mock_print_state(void);
-
-#ifdef __cplusplus
-}
-#include <vector>
-#include <set>
 
 // Key event tracking
 struct key_event_t {
@@ -26,7 +18,7 @@ struct key_event_t {
     platform_time_t timestamp;
 };
 
-// MockPlatformState class declaration only
+// MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
     uint8_t current_layer;
@@ -45,7 +37,7 @@ struct MockPlatformState {
     platform_keycode_t last_unregistered_key;
     uint8_t last_selected_layer;
 
-    // Constructor and method declarations only
+    // Constructor and method declarations
     MockPlatformState();
 
     int send_key_calls_count() const;
@@ -64,6 +56,3 @@ struct MockPlatformState {
 
 // External declaration of the global mock state
 extern MockPlatformState g_mock_state;
-
-#endif
-

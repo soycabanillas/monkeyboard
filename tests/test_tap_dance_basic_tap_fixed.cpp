@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include "gtest/gtest.h"
 #include "platform_interface.h"
-#include "platform_mock.h"
+#include "platform_mock.hpp"
 
 extern "C" {
 #include "keycodes.h"

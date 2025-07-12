@@ -1,5 +1,5 @@
 #include "../src/platform_interface.h"
-#include "platform_mock.h"
+#include "platform_mock.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdint>
@@ -88,8 +88,6 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
 // Global mock state
 MockPlatformState g_mock_state;
 
-extern "C" {
-
 // Mock key operations
 void platform_send_key(platform_keycode_t keycode) {
     printf("MOCK: Send key %u\n", keycode);
@@ -177,5 +175,3 @@ void mock_print_state(void) {
 void reset_mock_state(void) {
     g_mock_state.reset();
 }
-
-} // extern "C"
