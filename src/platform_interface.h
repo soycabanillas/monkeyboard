@@ -50,15 +50,14 @@ typedef enum {
     #define PLATFORM_KC_LEFT_GUI    LGUI
     #define PLATFORM_KC_RIGHT_GUI   RGUI
 #elif defined(UNIT_TESTING)
-    #include "../tests/keycodes.h"
-    #define PLATFORM_KC_LEFT_SHIFT  KC_LEFT_SHIFT
-    #define PLATFORM_KC_RIGHT_SHIFT KC_RIGHT_SHIFT
-    #define PLATFORM_KC_LEFT_CTRL   KC_LEFT_CTRL
-    #define PLATFORM_KC_RIGHT_CTRL  KC_RIGHT_CTRL
-    #define PLATFORM_KC_LEFT_ALT    KC_LEFT_ALT
-    #define PLATFORM_KC_RIGHT_ALT   KC_RIGHT_ALT
-    #define PLATFORM_KC_LEFT_GUI    KC_LEFT_GUI
-    #define PLATFORM_KC_RIGHT_GUI   KC_RIGHT_GUI
+    #define PLATFORM_KC_LEFT_SHIFT  0xE1
+    #define PLATFORM_KC_RIGHT_SHIFT 0xE5
+    #define PLATFORM_KC_LEFT_CTRL   0xE0
+    #define PLATFORM_KC_RIGHT_CTRL  0xE4
+    #define PLATFORM_KC_LEFT_ALT    0xE2
+    #define PLATFORM_KC_RIGHT_ALT   0xE6
+    #define PLATFORM_KC_LEFT_GUI    0xE3
+    #define PLATFORM_KC_RIGHT_GUI   0xE7
 #endif
 
 // Platform-specific type definitions
