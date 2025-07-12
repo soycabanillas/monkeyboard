@@ -6,7 +6,7 @@
 #include "platform_mock.h"
 
 extern "C" {
-#include "../src/keycodes.h"
+#include "test_keycodes.h"
 #include "commons.h"
 #include "pipeline_tap_dance.h"
 #include "pipeline_tap_dance_initializer.h"
@@ -115,7 +115,7 @@ TEST_F(TapDanceLayerSwitchingTest, BasicLayerActivation) {
     simulate_key_event(CKC_LAY_MOUSE_Q, true);
     platform_wait_ms(250); // Hold to activate layer
 
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
     EXPECT_EQ(g_mock_state.last_layer_on, _LMOUSE);
 }
 
@@ -130,7 +130,7 @@ TEST_F(TapDanceLayerSwitchingTest, LayerDeactivationOnRelease) {
     // Release key to deactivate
     simulate_key_event(CKC_LAY_NUMBERS_R, false);
 
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
 }
 
 // Test multiple layer switching
@@ -151,8 +151,8 @@ TEST_F(TapDanceLayerSwitchingTest, MultipleLayerSwitching) {
     platform_wait_ms(250);
 
     // Should have activated both layers in sequence
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 2);
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
 }
 
 // Test overlapping layer activation
@@ -168,7 +168,7 @@ TEST_F(TapDanceLayerSwitchingTest, OverlappingLayerActivation) {
     platform_wait_ms(250);
 
     // Should have both layers active
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 2);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
 }
 
 // Test layer switching with tap interruption
@@ -189,7 +189,7 @@ TEST_F(TapDanceLayerSwitchingTest, LayerSwitchingWithTapInterruption) {
     simulate_key_event(CKC_LAY_MOUSE_Q, false);
 
     // Should have both layer activation and tap
-    EXPECT_GE(g_mock_state.layer_on_calls_count(), 1);
+    EXPECT_GE(g_mock_state.layer_select_calls_count(), 1);
     EXPECT_GE(g_mock_state.tap_code_calls_count(), 1);
 }
 
@@ -211,8 +211,8 @@ TEST_F(TapDanceLayerSwitchingTest, RapidLayerSwitching) {
     }
 
     // Should have activated and deactivated each layer
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 3);
-    EXPECT_EQ(g_mock_state.layer_on_calls_count(), 3);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 3);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 3);
 }
 
 // Test layer persistence across key releases
@@ -259,5 +259,5 @@ TEST_F(TapDanceLayerSwitchingTest, LayerSwitchingEdgeCases) {
     platform_wait_ms(250);
 
     // Should handle edge cases gracefully
-    EXPECT_GE(g_mock_state.layer_on_calls_count(), 0);
+    EXPECT_GE(g_mock_state.layer_select_calls_count(), 0);
 }

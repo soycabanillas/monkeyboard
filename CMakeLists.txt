@@ -60,15 +60,33 @@ if(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(googletest)
 
-    # Test executable - only include our simple test for now
-    add_executable(tests
-        tests/platform_mock.cpp
-        tests/test_tap_dance_simple.cpp
+    # Create platform mock library
+    add_library(platform_mock tests/platform_mock.cpp)
+    target_include_directories(platform_mock
+        PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
+    target_compile_definitions(platform_mock PRIVATE UNIT_TESTING)
+
+    # Define UNIT_TESTING for the core library when building tests
+    target_compile_definitions(tap_dance_engine PRIVATE UNIT_TESTING)
+
+    # Link the core library with the platform mock for tests
+    target_link_libraries(tap_dance_engine PRIVATE platform_mock)
+
+    # Find test files (excluding platform_mock.cpp since it's now a separate library)
+    file(GLOB_RECURSE TEST_SOURCES
+        "tests/test_tap_dance_basic_tap*.cpp"
+    )
+
+    # Test executable - include all test files
+    add_executable(tests ${TEST_SOURCES})
 
     target_link_libraries(tests
         PRIVATE
             tap_dance_engine
+            platform_mock
             gtest_main
     )
 

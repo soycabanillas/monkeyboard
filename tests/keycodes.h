@@ -112,6 +112,10 @@ enum planck_keycodes {
 
 
 
+    // Custom keycodes for key replacement
+    KC_EXLM,
+    KC_QUES,
+
   CKC_REMOVE_MODS,
   CKC_REMOVE_ONESHOTS,
   CKC_RESET_TAPPINGTERM,
@@ -150,3 +154,8 @@ enum planck_keycodes {
   CKC_REPLACE_SHIFTED_9,
   CKC_REPLACE_SHIFTED_0,
 };
+
+// Modifier macros for test environment
+#define S(kc) (0x0100 | (kc))
+#define LSFT(kc) (0x0100 | (kc))
+#define RALT(kc) (0x0600 | (kc))

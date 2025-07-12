@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "../tests/keycodes.h"  // Assuming this header defines planck_keycodes
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,14 +28,38 @@ typedef enum {
     MODIFIER_RIGHT_GUI   = (1 << 7)
 } modifier_t;
 
-#define PLATFORM_KC_LEFT_SHIFT  KC_LEFT_SHIFT
-#define PLATFORM_KC_RIGHT_SHIFT KC_RIGHT_SHIFT
-#define PLATFORM_KC_LEFT_CTRL KC_LEFT_CTRL
-#define PLATFORM_KC_RIGHT_CTRL KC_RIGHT_CTRL
-#define PLATFORM_KC_LEFT_ALT KC_LEFT_ALT
-#define PLATFORM_KC_RIGHT_ALT KC_RIGHT_ALT
-#define PLATFORM_KC_LEFT_GUI KC_LEFT_GUI
-#define PLATFORM_KC_RIGHT_GUI KC_RIGHT_GUI
+// Platform-specific keycode definitions - only when needed
+#ifdef PLATFORM_QMK
+    #include "quantum.h"
+    #define PLATFORM_KC_LEFT_SHIFT  KC_LSFT
+    #define PLATFORM_KC_RIGHT_SHIFT KC_RSFT
+    #define PLATFORM_KC_LEFT_CTRL   KC_LCTL
+    #define PLATFORM_KC_RIGHT_CTRL  KC_RCTL
+    #define PLATFORM_KC_LEFT_ALT    KC_LALT
+    #define PLATFORM_KC_RIGHT_ALT   KC_RALT
+    #define PLATFORM_KC_LEFT_GUI    KC_LGUI
+    #define PLATFORM_KC_RIGHT_GUI   KC_RGUI
+#elif defined(PLATFORM_ZMK)
+    #include <zmk/keys.h>
+    #define PLATFORM_KC_LEFT_SHIFT  LSHIFT
+    #define PLATFORM_KC_RIGHT_SHIFT RSHIFT
+    #define PLATFORM_KC_LEFT_CTRL   LCTRL
+    #define PLATFORM_KC_RIGHT_CTRL  RCTRL
+    #define PLATFORM_KC_LEFT_ALT    LALT
+    #define PLATFORM_KC_RIGHT_ALT   RALT
+    #define PLATFORM_KC_LEFT_GUI    LGUI
+    #define PLATFORM_KC_RIGHT_GUI   RGUI
+#elif defined(UNIT_TESTING)
+    #include "../tests/keycodes.h"
+    #define PLATFORM_KC_LEFT_SHIFT  KC_LEFT_SHIFT
+    #define PLATFORM_KC_RIGHT_SHIFT KC_RIGHT_SHIFT
+    #define PLATFORM_KC_LEFT_CTRL   KC_LEFT_CTRL
+    #define PLATFORM_KC_RIGHT_CTRL  KC_RIGHT_CTRL
+    #define PLATFORM_KC_LEFT_ALT    KC_LEFT_ALT
+    #define PLATFORM_KC_RIGHT_ALT   KC_RIGHT_ALT
+    #define PLATFORM_KC_LEFT_GUI    KC_LEFT_GUI
+    #define PLATFORM_KC_RIGHT_GUI   KC_RIGHT_GUI
+#endif
 
 // Platform-specific type definitions
 typedef uint16_t platform_keycode_t;

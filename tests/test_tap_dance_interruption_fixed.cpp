@@ -6,7 +6,7 @@
 #include "platform_mock.h"
 
 extern "C" {
-#include "../src/keycodes.h"
+#include "test_keycodes.h"
 #include "commons.h"
 #include "pipeline_tap_dance.h"
 #include "pipeline_tap_dance_initializer.h"

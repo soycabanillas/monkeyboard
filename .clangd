@@ -4,24 +4,23 @@ CompileFlags:
     - "-Wextra"
     - "-Wpedantic"
     - "-Wno-unused-parameter"
+    - "-DUNIT_TESTING"
   CompilationDatabase: build/
 
+---
 If:
   PathMatch: [.*\.cpp, .*\.hpp, .*\.cc, .*\.cxx]
 CompileFlags:
   Add:
     - "-std=c++17"
     - "-xc++"
-  Remove:
-    - "-std=c11"
 
+---
 If:
   PathMatch: [.*\.c, .*\.h]
 CompileFlags:
   Add:
     - "-std=c11"
-  Remove:
-    - "-std=c++*"
 
 Diagnostics:
   UnusedIncludes: Strict

@@ -1,117 +1,89 @@
 #include "../src/platform_interface.h"
+#include "platform_mock.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdint>
-#include <vector>
-#include <set>
 
 // Mock implementation of platform interface for testing
 
-// Key event tracking
-struct key_event_t {
-    platform_keycode_t keycode;
-    bool pressed;  // true for press, false for release
-    platform_time_t timestamp;
-};
+// MockPlatformState method implementations
+MockPlatformState::MockPlatformState() : timer(0), current_layer(0), next_token(1),
+                     last_key_event_time(0), last_sent_key(0),
+                     last_registered_key(0), last_unregistered_key(0),
+                     last_selected_layer(0) {}
 
-// C++ part - Mock platform state structure
-struct MockPlatformState {
-    platform_time_t timer;
-    uint8_t current_layer;
-    platform_deferred_token next_token;
-    platform_time_t last_key_event_time;
+void MockPlatformState::record_key_event(platform_keycode_t keycode, bool pressed) {
+    key_events.push_back({keycode, pressed, timer});
+    last_key_event_time = timer;
+    if (pressed) {
+        pressed_keys.insert(keycode);
+    } else {
+        pressed_keys.erase(keycode);
+    }
+}
 
-    std::vector<key_event_t> key_events;
-    std::set<platform_keycode_t> pressed_keys;
-    std::vector<platform_keycode_t> send_key_calls;
-    std::vector<platform_keycode_t> register_key_calls;
-    std::vector<platform_keycode_t> unregister_key_calls;
-    std::vector<uint8_t> layer_select_calls;
+void MockPlatformState::advance_timer(platform_time_t ms) {
+    timer += ms;
+}
 
-    platform_keycode_t last_sent_key;
-    platform_keycode_t last_registered_key;
-    platform_keycode_t last_unregistered_key;
-    uint8_t last_selected_layer;
+void MockPlatformState::reset() {
+    timer = 0;
+    current_layer = 0;
+    next_token = 1;
+    last_key_event_time = 0;
 
-    MockPlatformState() : timer(0), current_layer(0), next_token(1),
-                         last_key_event_time(0), last_sent_key(0),
-                         last_registered_key(0), last_unregistered_key(0),
-                         last_selected_layer(0) {}
+    key_events.clear();
+    pressed_keys.clear();
+    send_key_calls.clear();
+    register_key_calls.clear();
+    unregister_key_calls.clear();
+    layer_select_calls.clear();
 
-    void record_key_event(platform_keycode_t keycode, bool pressed) {
-        key_events.push_back({keycode, pressed, timer});
-        last_key_event_time = timer;
-        if (pressed) {
-            pressed_keys.insert(keycode);
+    last_sent_key = 0;
+    last_registered_key = 0;
+    last_unregistered_key = 0;
+    last_selected_layer = 0;
+}
+
+void MockPlatformState::print_state() const {
+    printf("=== MOCK STATE ===\n");
+    printf("Current time: %u ms\n", timer);
+    printf("Current layer: %u\n", current_layer);
+    printf("Time since last key event: %u ms\n", timer - last_key_event_time);
+
+    printf("Currently pressed keys (%zu): ", pressed_keys.size());
+    for (auto keycode : pressed_keys) {
+        printf("%u ", keycode);
+    }
+    printf("\n");
+
+    printf("Key event history (%zu events):\n", key_events.size());
+    for (size_t i = 0; i < key_events.size(); i++) {
+        const auto& event = key_events[i];
+        if (i == 0) {
+            printf("  %u ms: Key %u %s (first event)\n",
+                   event.timestamp, event.keycode,
+                   event.pressed ? "PRESS" : "RELEASE");
         } else {
-            pressed_keys.erase(keycode);
+            platform_time_t time_diff = event.timestamp - key_events[i-1].timestamp;
+            printf("  %u ms: Key %u %s (+%u ms)\n",
+                   event.timestamp, event.keycode,
+                   event.pressed ? "PRESS" : "RELEASE", time_diff);
         }
     }
+    printf("==================\n");
+}
 
-    void advance_timer(platform_time_t ms) {
-        timer += ms;
-    }
+int MockPlatformState::send_key_calls_count() const { return send_key_calls.size(); }
+int MockPlatformState::register_key_calls_count() const { return register_key_calls.size(); }
+int MockPlatformState::unregister_key_calls_count() const { return unregister_key_calls.size(); }
+int MockPlatformState::layer_select_calls_count() const { return layer_select_calls.size(); }
+int MockPlatformState::key_events_count() const { return key_events.size(); }
+size_t MockPlatformState::pressed_keys_count() const { return pressed_keys.size(); }
 
-    void reset() {
-        timer = 0;
-        current_layer = 0;
-        next_token = 1;
-        last_key_event_time = 0;
-
-        key_events.clear();
-        pressed_keys.clear();
-        send_key_calls.clear();
-        register_key_calls.clear();
-        unregister_key_calls.clear();
-        layer_select_calls.clear();
-
-        last_sent_key = 0;
-        last_registered_key = 0;
-        last_unregistered_key = 0;
-        last_selected_layer = 0;
-    }
-
-    void print_state() const {
-        printf("=== MOCK STATE ===\n");
-        printf("Current time: %u ms\n", timer);
-        printf("Current layer: %u\n", current_layer);
-        printf("Time since last key event: %u ms\n", timer - last_key_event_time);
-
-        printf("Currently pressed keys (%zu): ", pressed_keys.size());
-        for (auto keycode : pressed_keys) {
-            printf("%u ", keycode);
-        }
-        printf("\n");
-
-        printf("Key event history (%zu events):\n", key_events.size());
-        for (size_t i = 0; i < key_events.size(); i++) {
-            const auto& event = key_events[i];
-            if (i == 0) {
-                printf("  %u ms: Key %u %s (first event)\n",
-                       event.timestamp, event.keycode,
-                       event.pressed ? "PRESS" : "RELEASE");
-            } else {
-                platform_time_t time_diff = event.timestamp - key_events[i-1].timestamp;
-                printf("  %u ms: Key %u %s (+%u ms)\n",
-                       event.timestamp, event.keycode,
-                       event.pressed ? "PRESS" : "RELEASE", time_diff);
-            }
-        }
-        printf("==================\n");
-    }
-
-    // Convenient accessor methods
-    int send_key_calls_count() const { return send_key_calls.size(); }
-    int register_key_calls_count() const { return register_key_calls.size(); }
-    int unregister_key_calls_count() const { return unregister_key_calls.size(); }
-    int layer_select_calls_count() const { return layer_select_calls.size(); }
-    int key_events_count() const { return key_events.size(); }
-    size_t pressed_keys_count() const { return pressed_keys.size(); }
-
-    bool is_key_pressed(platform_keycode_t keycode) const {
-        return pressed_keys.find(keycode) != pressed_keys.end();
-    }
-};
+bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
+    return pressed_keys.find(keycode) != pressed_keys.end();
+}
 
 // Global mock state
 MockPlatformState g_mock_state;

@@ -81,11 +81,10 @@ bool process_key_pool(void) {
         if (pipeline_executor_state.capture_pipeline.captured == true) {
             execute_pipeline(0, pipeline_executor_state.capture_pipeline.pipeline_index, press_buffer_selected, pipeline_executor_state.capture_pipeline);
         } else {
-            for (size_t i; i < pipeline_executor_config->length; i++) {
+            for (size_t i = 0; i < pipeline_executor_config->length; i++) {
                 pipeline_executor_state.pipeline_index = i;
                 execute_pipeline(0, i, press_buffer_selected, pipeline_executor_state.capture_pipeline);
                 if (pipeline_executor_state.capture_pipeline.captured == true) break;
-                i++;
             };
         }
         remove_from_press_buffer(pipeline_executor_state.key_buffer,  0);
@@ -116,7 +115,7 @@ void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t 
     pipeline_executor_state.capture_pipeline.pipeline_index = pipeline_executor_state.pipeline_index;
 }
 
-void pipeline_executor_capture_next_keys() {
+void pipeline_executor_capture_next_keys(void) {
     pipeline_executor_state.capture_pipeline.callback_time = 0;
     pipeline_executor_state.capture_pipeline.captured = true;
     pipeline_executor_state.capture_pipeline.pipeline_index = pipeline_executor_state.pipeline_index;

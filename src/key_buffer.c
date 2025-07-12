@@ -67,7 +67,7 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
     only_press_buffer_item_t* only_press_buffer = key_buffer->only_press_buffer;
     uint8_t only_press_buffer_pos = key_buffer->only_press_buffer_pos;
 
-    uint8_t untap_layer; // This variable is used to store the layer of the key press that is being released. If the key is released, it will be the layer of the press that was buffered.
+    uint8_t untap_layer = 0; // This variable is used to store the layer of the key press that is being released. If the key is released, it will be the layer of the press that was buffered.
     if ((is_press == true && press_buffer_pos + 1 < PRESS_BUFFER_MAX) || (is_press == false && press_buffer_pos < PRESS_BUFFER_MAX)) {
         // Before adding the key to the press_buffer, make sure there is space available in only_press_buffer.
         if (is_press == true) {
@@ -121,8 +121,8 @@ void remove_from_press_buffer(key_buffer_t *key_buffer, uint8_t pos) {
         for (size_t i = only_press_buffer_pos; i-- > 0;)
         {
             if (only_press_buffer[i].key.col == press_buffer[pos].key.col && only_press_buffer[i].key.row == press_buffer[pos].key.row) {
-                if (i < only_press_buffer_pos - 1) {
-                    memcpy(&only_press_buffer[i], &only_press_buffer[i + 1], sizeof(only_press_buffer_item_t) * (only_press_buffer_pos - 1 - i));
+                if (i < (size_t)(only_press_buffer_pos - 1)) {
+                    memcpy(&only_press_buffer[i], &only_press_buffer[i + 1], sizeof(only_press_buffer_item_t) * ((size_t)(only_press_buffer_pos - 1) - i));
                 }
                 only_press_buffer_pos = only_press_buffer_pos - 1;
                 break;

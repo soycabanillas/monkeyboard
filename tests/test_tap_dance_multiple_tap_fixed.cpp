@@ -6,7 +6,7 @@
 #include "platform_mock.h"
 
 extern "C" {
-#include "../src/keycodes.h"
+#include "test_keycodes.h"
 #include "commons.h"
 #include "pipeline_tap_dance.h"
 #include "pipeline_tap_dance_initializer.h"
@@ -191,7 +191,7 @@ TEST_F(TapDanceMultipleTapTest, MultipleTapVsHold) {
 
     // Should have both tap and layer behavior
     EXPECT_GT(g_mock_state.tap_code_calls_count(), 0);
-    EXPECT_GT(g_mock_state.layer_on_calls_count(), 0);
+    EXPECT_GT(g_mock_state.layer_select_calls_count(), 0);
 }
 
 // Test rapid multiple taps

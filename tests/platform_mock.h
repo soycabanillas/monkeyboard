@@ -1,20 +1,32 @@
 #pragma once
 
-#include <cstdint>
 #include "../src/platform_interface.h"
 
+
 #ifdef __cplusplus
+extern "C" {
+#endif
+
+// Mock utility functions
+void reset_mock_state(void);
+void mock_advance_timer(platform_time_t ms);
+void mock_reset_timer(void);
+void mock_set_layer(uint8_t layer);
+void mock_print_state(void);
+
+#ifdef __cplusplus
+}
 #include <vector>
 #include <set>
 
-// Key event tracking structure
+// Key event tracking
 struct key_event_t {
     platform_keycode_t keycode;
-    bool pressed;  // true for press, false for release
+    bool pressed;
     platform_time_t timestamp;
 };
 
-// Mock platform state structure (C++ only)
+// MockPlatformState class declaration only
 struct MockPlatformState {
     platform_time_t timer;
     uint8_t current_layer;
@@ -33,13 +45,9 @@ struct MockPlatformState {
     platform_keycode_t last_unregistered_key;
     uint8_t last_selected_layer;
 
+    // Constructor and method declarations only
     MockPlatformState();
-    void record_key_event(platform_keycode_t keycode, bool pressed);
-    void advance_timer(platform_time_t ms);
-    void reset();
-    void print_state() const;
 
-    // Convenient accessor methods
     int send_key_calls_count() const;
     int register_key_calls_count() const;
     int unregister_key_calls_count() const;
@@ -47,21 +55,15 @@ struct MockPlatformState {
     int key_events_count() const;
     size_t pressed_keys_count() const;
     bool is_key_pressed(platform_keycode_t keycode) const;
+
+    void advance_timer(platform_time_t ms);
+    void reset();
+    void print_state() const;
+    void record_key_event(platform_keycode_t keycode, bool pressed);
 };
 
-// Global mock state (C++ only)
+// External declaration of the global mock state
 extern MockPlatformState g_mock_state;
 
-extern "C" {
 #endif
 
-// Test utilities for controlling the mock platform
-void mock_advance_timer(platform_time_t ms);
-void mock_reset_timer(void);
-void mock_set_layer(uint8_t layer);
-void mock_print_state(void);
-void reset_mock_state(void);
-
-#ifdef __cplusplus
-}
-#endif
