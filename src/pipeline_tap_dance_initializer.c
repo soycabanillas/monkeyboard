@@ -17,6 +17,20 @@ pipeline_tap_dance_action_config_t* createbehaviouraction(uint8_t repetitions, t
         .action = action,
         .keycode = keycode,
         .layer = layer,
+        .interrupt_config = 0  // Default interrupt config (activate on any key press)
+    };
+    pipeline_tap_dance_action_config_t* allocation = (pipeline_tap_dance_action_config_t*)malloc(sizeof behaviouraction);
+    memcpy(allocation, &behaviouraction, sizeof behaviouraction);
+    return allocation;
+}
+
+pipeline_tap_dance_action_config_t* createbehaviouraction_with_interrupt(uint8_t repetitions, td_customlayer_action_t action, platform_keycode_t keycode, uint8_t layer, int16_t interrupt_config) {
+    pipeline_tap_dance_action_config_t behaviouraction = {
+        .repetitions = repetitions,
+        .action = action,
+        .keycode = keycode,
+        .layer = layer,
+        .interrupt_config = interrupt_config
     };
     pipeline_tap_dance_action_config_t* allocation = (pipeline_tap_dance_action_config_t*)malloc(sizeof behaviouraction);
     memcpy(allocation, &behaviouraction, sizeof behaviouraction);

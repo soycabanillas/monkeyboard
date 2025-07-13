@@ -77,7 +77,7 @@ if(BUILD_TESTS)
 
     # Find test files (excluding platform_mock.cpp since it's now a separate library)
     file(GLOB_RECURSE TEST_SOURCES
-        "tests/test_tap_dance_basic_tap*.cpp"
+        "tests/test_tap_dance_comp*.cpp"
     )
 
     # Test executable - include all test files

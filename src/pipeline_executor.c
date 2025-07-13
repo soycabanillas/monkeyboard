@@ -23,11 +23,13 @@ void intern_tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
 
 void intern_untap_key(platform_keycode_t keycode) {
     abskeyevent_t abskeyevent;
-    abskeyevent.key.col = 0;
-    abskeyevent.key.row = 0;
-    abskeyevent.pressed = true;
+    // Use invalid keypos (-1, -1) to indicate pipeline-generated event
+    // This distinguishes it from real physical key positions
+    abskeyevent.key.col = 255;  // Use max value to indicate invalid/pipeline position
+    abskeyevent.key.row = 255;
+    abskeyevent.pressed = false;  // Fixed: untap should be false, not true
     abskeyevent.time = platform_timer_read();
-    add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, abskeyevent.pressed, false, true, pipeline_executor_state.pipeline_index);
+    add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, 0, abskeyevent.pressed, true, pipeline_executor_state.pipeline_index);
 }
 
 void intern_add_key(platform_keycode_t keycode, platform_keypos_t keypos) {
@@ -37,6 +39,14 @@ void intern_add_key(platform_keycode_t keycode, platform_keypos_t keypos) {
 
 // End of functions available in the pipeline_info_t struct
 
+/**
+ * Capture mechanism: Allows a pipeline to "capture" subsequent key events
+ * and optionally set a timeout callback. When captured:
+ * - All following key events go to the capturing pipeline only
+ * - Other pipelines are bypassed until capture is released
+ * - If timeout is set, callback is triggered after specified time
+ * - Used for multi-key sequences, tap dance timing, etc.
+ */
 void execute_pipeline(uint16_t callback_time, uint8_t pos, press_buffer_item_t* press_buffer_selected, capture_pipeline_t return_data) {
     pipeline_callback_params_t callback_params;
     if (callback_time == 0) {

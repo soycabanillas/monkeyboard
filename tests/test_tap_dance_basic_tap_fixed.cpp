@@ -46,44 +46,44 @@ protected:
 
         pipeline_tap_dance_action_config_t* custom_actions[] =
             {
-                createbehaviouraction(0, TDCL_TAP_KEY_SENDKEY, KC_Q, _LMOUSE),
-                createbehaviouraction(0, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_Q, _LMOUSE)
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, KC_Q, _LMOUSE),  // Changed from 0 to 1
+                createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_Q, _LMOUSE)  // Changed from 0 to 1
             };
         tap_dance_global_config->behaviours[0] = createbehaviour(CKC_LAY_MOUSE_Q, custom_actions, 2);
 
         pipeline_tap_dance_action_config_t* custom_actions2[] =
             {
-                createbehaviouraction(0, TDCL_TAP_KEY_SENDKEY, KC_R, _LNUMBERS),
-                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, S(KC_R), _LNUMBERS),
-                createbehaviouraction(0, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_R, _LNUMBERS)
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, KC_R, _LNUMBERS),  // Changed from 0 to 1
+                createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, S(KC_R), _LNUMBERS),  // Changed from 1 to 2
+                createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_R, _LNUMBERS)  // Changed from 0 to 1
             };
         tap_dance_global_config->behaviours[1] = createbehaviour(CKC_LAY_NUMBERS_R, custom_actions2, 3);
 
         pipeline_tap_dance_action_config_t* custom_actions3[] =
             {
-                createbehaviouraction(0, TDCL_TAP_KEY_SENDKEY, KC_F, _LNUMBERS),
-                createbehaviouraction(0, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_F, _LMOVEMENT),
-                createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_F, _LMOUSE)
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, KC_F, _LNUMBERS),  // Changed from 0 to 1
+                createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_F, _LMOVEMENT),  // Changed from 0 to 1
+                createbehaviouraction(2, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_F, _LMOUSE)  // Changed from 1 to 2
             };
         tap_dance_global_config->behaviours[2] = createbehaviour(CKC_LAY_MOVEMENT_F, custom_actions3, 3);
 
         pipeline_tap_dance_action_config_t* custom_actions4[] =
             {
-                createbehaviouraction(0, TDCL_TAP_KEY_SENDKEY, KC_EXLM, _LMOUSE),
-                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, RALT(KC_1), _LNUMBERS),
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, KC_EXLM, _LMOUSE),  // Changed from 0 to 1
+                createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, RALT(KC_1), _LNUMBERS),  // Changed from 1 to 2
             };
         tap_dance_global_config->behaviours[3] = createbehaviour(CKC_EXCL, custom_actions4, 2);
 
         pipeline_tap_dance_action_config_t* custom_actions5[] =
             {
-                createbehaviouraction(0, TDCL_TAP_KEY_SENDKEY, KC_QUES, _LNUMBERS),
-                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, RALT(KC_SLASH), _LNUMBERS),
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, KC_QUES, _LNUMBERS),  // Changed from 0 to 1
+                createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, RALT(KC_SLASH), _LNUMBERS),  // Changed from 1 to 2
             };
         tap_dance_global_config->behaviours[4] = createbehaviour(CKC_QUES, custom_actions5, 2);
 
         pipeline_tap_dance_action_config_t* custom_actions6[] =
             {
-                createbehaviouraction(0, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_QUES, _LRIGHT_THUMB),
+                createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, KC_QUES, _LRIGHT_THUMB),  // Changed from 0 to 1
             };
         tap_dance_global_config->behaviours[5] = createbehaviour(CKC_LAY_RIGHT_THUMB, custom_actions6, 1);
 
