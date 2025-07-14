@@ -79,6 +79,7 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
                 only_press_buffer[only_press_buffer_pos].release_on_buffer = false;
                 only_press_buffer[only_press_buffer_pos].time = time;
                 only_press_buffer_pos = only_press_buffer_pos + 1;
+                key_buffer->only_press_buffer_pos = only_press_buffer_pos; // Fix: Update the key_buffer structure
             } else {
                 return false;
             }
@@ -105,6 +106,7 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
         press_buffer[press_buffer_pos].is_from_pipeline = is_from_pipeline;
         press_buffer[press_buffer_pos].pipeline_index = pipeline_index;
         press_buffer_pos = press_buffer_pos + 1;
+        key_buffer->press_buffer_pos = press_buffer_pos; // Fix: Update the key_buffer structure
         return true;
     }
     return false;
@@ -125,6 +127,7 @@ void remove_from_press_buffer(key_buffer_t *key_buffer, uint8_t pos) {
                     memcpy(&only_press_buffer[i], &only_press_buffer[i + 1], sizeof(only_press_buffer_item_t) * ((size_t)(only_press_buffer_pos - 1) - i));
                 }
                 only_press_buffer_pos = only_press_buffer_pos - 1;
+                key_buffer->only_press_buffer_pos = only_press_buffer_pos; // Fix: Update the key_buffer structure
                 break;
             }
         }
@@ -134,6 +137,7 @@ void remove_from_press_buffer(key_buffer_t *key_buffer, uint8_t pos) {
         memcpy(&press_buffer[pos], &press_buffer[pos + 1], sizeof(press_buffer_item_t) * (press_buffer_pos - 1 - pos));
     }
     press_buffer_pos = press_buffer_pos - 1;
+    key_buffer->press_buffer_pos = press_buffer_pos; // Fix: Update the key_buffer structure
 }
 
 // bool check_if_release_is_before_press(abskeypos_t key_release, abskeypos_t key_press) {
