@@ -15,7 +15,7 @@ pipeline_tap_dance_global_status_t* global_status;
 pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
-        if (action->repetitions == tap_count && action->action == TDCL_TAP_KEY_SENDKEY) {
+        if (action->tap_count == tap_count && action->action == TDCL_TAP_KEY_SENDKEY) {
             return action;
         }
     }
@@ -25,7 +25,7 @@ pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count
 pipeline_tap_dance_action_config_t* get_action_hold_key_changelayertempo(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
-        if (action->repetitions == tap_count && action->action == TDCL_HOLD_KEY_CHANGELAYERTEMPO) {
+        if (action->tap_count == tap_count && action->action == TDCL_HOLD_KEY_CHANGELAYERTEMPO) {
             return action;
         }
     }
@@ -35,7 +35,7 @@ pipeline_tap_dance_action_config_t* get_action_hold_key_changelayertempo(uint8_t
 bool has_subsequent_actions(pipeline_tap_dance_behaviour_config_t* config, uint8_t tap_count) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
-        if (action->repetitions > tap_count) {
+        if (action->tap_count > tap_count) {
             return true;
         }
     }
@@ -60,23 +60,20 @@ bool is_key_repetition_exception(pipeline_tap_dance_behaviour_config_t* config) 
     // Check if there is only one tap action at tap count 1 and one or zero hold actions at tap count 1
     // with no actions configured at any tap count beyond 1
     bool has_tap_action_1 = false;
-    bool has_hold_action_1 = false;
     bool has_actions_beyond_1 = false;
-    
+
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
-        
-        if (action->repetitions == 1) {
+
+        if (action->tap_count == 1) {
             if (action->action == TDCL_TAP_KEY_SENDKEY) {
                 has_tap_action_1 = true;
-            } else if (action->action == TDCL_HOLD_KEY_CHANGELAYERTEMPO) {
-                has_hold_action_1 = true;
             }
-        } else if (action->repetitions > 1) {
+        } else if (action->tap_count > 1) {
             has_actions_beyond_1 = true;
         }
     }
-    
+
     // Exception applies when: exactly one tap action at count 1, at most one hold action at count 1, no actions beyond count 1
     return has_tap_action_1 && !has_actions_beyond_1;
 }
@@ -304,7 +301,7 @@ void handle_key_release(pipeline_callback_params_t* params,
                 if (tap_action != NULL) {
                     actions->add_key_fn(tap_action->keycode, params->keypos);
                 }
-                
+
                 // Check for key repetition exception
                 if (is_key_repetition_exception(config)) {
                     // Reset immediately for key repetition
@@ -372,7 +369,7 @@ void handle_timeout(pipeline_callback_params_t* params,
             if (tap_action != NULL) {
                 actions->add_key_fn(tap_action->keycode, params->keypos);
             }
-            
+
             // Check for key repetition exception
             if (is_key_repetition_exception(config)) {
                 // Reset immediately for key repetition
@@ -435,11 +432,11 @@ void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_ac
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS || params->callback_type == PIPELINE_CALLBACK_KEY_RELEASE) {
         // Check for nesting behavior - ignore same keycode if already active
-        if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS && 
+        if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS &&
             should_ignore_same_keycode_nesting(global_config, params->keycode)) {
             return; // Ignore this key press completely
         }
-        
+
         // Process all tap dance behaviors for key events
         for (uint8_t i = 0; i < global_config->length; i++) {
             global_status->last_behaviour = i;

@@ -26,7 +26,7 @@ typedef enum {
 } tap_dance_state_t;
 
 typedef struct {
-    uint8_t repetitions;
+    uint8_t tap_count;
     td_customlayer_action_t action;
     platform_keycode_t keycode;
     uint8_t layer;

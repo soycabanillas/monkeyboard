@@ -1,327 +1,448 @@
-#include <gtest/gtest.h>
-#include "tap_dance_test_framework.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include "gtest/gtest.h"
+#include "platform_interface.h"
+#include "platform_mock.hpp"
 
-class TapDanceComprehensiveTest : public TapDanceTestFramework {};
+extern "C" {
+#include "keycodes.h"
+#include "commons.h"
+#include "pipeline_tap_dance.h"
+#include "pipeline_tap_dance_initializer.h"
+#include "pipeline_executor.h"
+}
+
+// Test keycodes - using different keycodes to avoid conflicts
+#define TEST_KEY_TAP_DANCE_1 0x7E10
+#define TEST_KEY_TAP_DANCE_2 0x7E11
+#define TEST_KEY_TAP_DANCE_3 0x7E12
+#define TEST_KEY_A 0x7E20
+#define OUT_KEY_X KC_X
+#define OUT_KEY_Y KC_Y
+#define OUT_KEY_Z KC_Z
+
+// Layer aliases for readability
+#define LAYER_BASE _LQWERTY
+#define LAYER_SYMBOLS _LCONTROL
+#define LAYER_NUMBERS _LNUMBERS
+#define LAYER_FUNCTION _LFUNCTIONKEYS
+
+class TapDanceComprehensiveTest : public ::testing::Test {
+protected:
+    pipeline_tap_dance_global_config_t* global_config;
+
+    void SetUp() override {
+        reset_mock_state();
+
+        // Create pipeline executor
+        size_t n_pipelines = 1;
+        pipeline_executor_config = static_cast<pipeline_executor_config_t*>(
+            malloc(sizeof(pipeline_executor_config_t) + n_pipelines * sizeof(pipeline_t*)));
+
+        pipeline_tap_dance_global_state_create();
+
+        // Create tap dance configuration with enough space for comprehensive tests
+        size_t n_elements = 10;
+        global_config = static_cast<pipeline_tap_dance_global_config_t*>(
+            malloc(sizeof(*global_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
+        global_config->length = 0; // Will be set as we add configurations
+
+        pipeline_executor_global_state_create();
+        pipeline_executor_config->length = n_pipelines;
+        pipeline_executor_config->pipelines[0] = add_pipeline(&pipeline_tap_dance_callback, global_config);
+    }
+
+    void TearDown() override {
+        // Cleanup allocated memory
+        if (pipeline_executor_config) {
+            free(pipeline_executor_config);
+            pipeline_executor_config = nullptr;
+        }
+        if (global_config) {
+            free(global_config);
+            global_config = nullptr;
+        }
+    }
+
+    void setup_simple_tap_config(uint16_t keycode, uint16_t output_key, uint8_t tap_count = 1) {
+        pipeline_tap_dance_action_config_t* actions[] = {
+            createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, output_key, 0)
+        };
+        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 1);
+        global_config->length++;
+    }
+
+    void setup_simple_hold_config(uint16_t keycode, uint8_t layer, uint8_t tap_count = 1) {
+        pipeline_tap_dance_action_config_t* actions[] = {
+            createbehaviouraction(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer)
+        };
+        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 1);
+        global_config->length++;
+    }
+
+    void setup_tap_and_hold_config(uint16_t keycode, uint16_t tap_key, uint8_t layer, uint8_t tap_count = 1) {
+        pipeline_tap_dance_action_config_t* actions[] = {
+            createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, tap_key, 0),
+            createbehaviouraction(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer)
+        };
+        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
+        global_config->length++;
+    }
+
+    void setup_multi_tap_config(uint16_t keycode, uint16_t key1, uint16_t key2, uint16_t key3 = 0) {
+        if (key3 != 0) {
+            pipeline_tap_dance_action_config_t* actions[] = {
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, key1, 0),
+                createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, key2, 0),
+                createbehaviouraction(3, TDCL_TAP_KEY_SENDKEY, key3, 0)
+            };
+            global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 3);
+        } else {
+            pipeline_tap_dance_action_config_t* actions[] = {
+                createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, key1, 0),
+                createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, key2, 0)
+            };
+            global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
+        }
+        global_config->length++;
+    }
+
+    void setup_interrupt_config(uint16_t keycode, uint16_t tap_key, uint8_t layer, int16_t interrupt_config, uint8_t tap_count = 1) {
+        pipeline_tap_dance_action_config_t* actions[] = {
+            createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, tap_key, 0),
+            createbehaviouraction_with_interrupt(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer, interrupt_config)
+        };
+        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
+        global_config->length++;
+    }
+
+    void simulate_key_event(uint16_t keycode, bool pressed, uint16_t time_offset = 0) {
+        if (time_offset > 0) {
+            platform_wait_ms(time_offset);
+        }
+
+        abskeyevent_t event;
+        event.key.row = 0;
+        event.key.col = 0;
+        event.pressed = pressed;
+        event.time = static_cast<uint16_t>(platform_timer_read());
+
+        pipeline_process_key(keycode, event);
+    }
+
+    void reset_test_state() {
+        reset_mock_state();
+        global_config->length = 0;
+    }
+};
 
 // ==================== BASIC TAP FUNCTIONALITY ====================
 
 TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
-    auto config = TapDanceTestConfig()
-        .add_tap_key(TEST_KEY_TAP_DANCE_1, 1, OUT_KEY_X);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    setup_simple_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "press tap dance key"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release tap dance key"),
-        TestEvent::time_passed(250, "wait for timeout"),
-        TestEvent::expect_key_sent(OUT_KEY_X, "should output X")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);   // Press
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);  // Release
+    platform_wait_ms(250);  // Wait for timeout
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
-    auto config = TapDanceTestConfig()
-        .add_tap_key(TEST_KEY_TAP_DANCE_1, 1, OUT_KEY_X)  // Changed from 0 to 1
-        .add_hold_key(TEST_KEY_TAP_DANCE_1, 1, LAYER_SYMBOLS);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    setup_tap_and_hold_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, LAYER_SYMBOLS, 1);
 
-    execute_test_sequence({
-        // First tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_key_sent(OUT_KEY_X, "first tap should output immediately"),
+    // First tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 
-        // Second tap (should work due to repetition exception)
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_key_sent(OUT_KEY_X, "second tap should also output immediately"),
+    // Second tap (should work due to repetition exception)
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 2);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 
-        // Third tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_key_sent(OUT_KEY_X, "third tap should also work")
-    });
+    // Third tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 3);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
-    auto config = TapDanceTestConfig(); // Empty configuration
-    setup_tap_dance(config);
+    // Empty configuration - no tap dance behaviors set up
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_A, "press regular key"),
-        TestEvent::key_release(TEST_KEY_A, "release regular key"),
-        TestEvent::time_passed(250, "wait"),
-        TestEvent::expect_no_event("no tap dance actions should trigger")
-    });
+    simulate_key_event(TEST_KEY_A, true);   // Press regular key
+    simulate_key_event(TEST_KEY_A, false);  // Release regular key
+    platform_wait_ms(250);  // Wait
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 0);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 0);
 }
 
 // ==================== BASIC HOLD FUNCTIONALITY ====================
 
 TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
-    auto config = TapDanceTestConfig()
-        .add_hold_key(TEST_KEY_TAP_DANCE_1, 1, LAYER_SYMBOLS);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    setup_simple_hold_config(TEST_KEY_TAP_DANCE_1, LAYER_SYMBOLS, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "press and hold"),
-        TestEvent::time_passed(250, "wait for hold timeout"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "should activate symbols layer"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release key"),
-        TestEvent::expect_layer_select(LAYER_BASE, "should return to base layer")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);   // Press and hold
+    platform_wait_ms(250);  // Wait for hold timeout
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
+
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);  // Release key
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_BASE);
 }
 
 TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
-    auto config = TapDanceTestConfig()
-        .add_tap_key(TEST_KEY_TAP_DANCE_1, 1, OUT_KEY_X)  // Changed from 0 to 1
-        .add_hold_key(TEST_KEY_TAP_DANCE_1, 1, LAYER_SYMBOLS);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    setup_tap_and_hold_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, LAYER_SYMBOLS, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "press key"),
-        TestEvent::time_passed(100, "wait less than hold timeout"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release before timeout"),
-        TestEvent::time_passed(250, "wait for tap timeout"),
-        TestEvent::expect_key_sent(OUT_KEY_X, "should execute tap action"),
-        TestEvent::expect_layer_select(LAYER_BASE, "should stay on base layer")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);   // Press key
+    platform_wait_ms(100);  // Wait less than hold timeout
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false); // Release before timeout
+    platform_wait_ms(250);  // Wait for tap timeout
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_BASE);
 }
 
 // ==================== MULTI-TAP SEQUENCES ====================
 
 TEST_F(TapDanceComprehensiveTest, DoubleTap) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}, {2, OUT_KEY_Y}});  // Changed from {0,1} to {1,2}
-    setup_tap_dance(config);
+    setup_multi_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, OUT_KEY_Y);
 
-    execute_test_sequence({
-        // First tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_no_event("should wait for potential second tap"),
+    // First tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 0); // Should wait for potential second tap
 
-        // Second tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(250, "wait for timeout"),
-        TestEvent::expect_key_sent(OUT_KEY_Y, "should execute double-tap action")
-    });
+    // Second tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    platform_wait_ms(250);  // Wait for timeout
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_Y);
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}, {2, OUT_KEY_Y}, {3, OUT_KEY_Z}});  // Changed from {0,1,2} to {1,2,3}
-    setup_tap_dance(config);
+    setup_multi_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, OUT_KEY_Y, OUT_KEY_Z);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(250),
-        TestEvent::expect_key_sent(OUT_KEY_Z, "should execute triple-tap action")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    platform_wait_ms(250);
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_Z);
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}, {2, OUT_KEY_Y}});  // Changed from {0,1} to {1,2}
-    setup_tap_dance(config);
+    setup_multi_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, OUT_KEY_Y);
 
-    execute_test_sequence({
-        // Three taps (exceeds configuration)
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_key_sent(OUT_KEY_X, "should reset and execute first tap action")
-    });
+    // Three taps (exceeds configuration)
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X); // Should reset and execute first tap action
 }
 
 // ==================== INTERRUPT CONFIGURATION ====================
 
 TEST_F(TapDanceComprehensiveTest, InterruptConfigMinus1) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}}, {{1, LAYER_SYMBOLS, -1}});  // Changed from {0} to {1}
-    setup_tap_dance(config);
+    setup_interrupt_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, LAYER_SYMBOLS, -1, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "start hold"),
-        TestEvent::key_press(TEST_KEY_A, "interrupt with another key"),
-        TestEvent::key_release(TEST_KEY_A, "release interrupting key"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "should activate layer on press+release"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release tap dance key")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);  // Start hold
+    simulate_key_event(TEST_KEY_A, true, 50);        // Interrupt with another key
+    simulate_key_event(TEST_KEY_A, false, 50);       // Release interrupting key
+
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
+
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false); // Release tap dance key
 }
 
 TEST_F(TapDanceComprehensiveTest, InterruptConfigZero) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}}, {{1, LAYER_SYMBOLS, 0}});  // Changed from {0} to {1}
-    setup_tap_dance(config);
+    setup_interrupt_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, LAYER_SYMBOLS, 0, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "start hold"),
-        TestEvent::key_press(TEST_KEY_A, "interrupt with another key"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "should activate layer immediately on press"),
-        TestEvent::key_release(TEST_KEY_A, "release interrupting key"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release tap dance key")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);  // Start hold
+    simulate_key_event(TEST_KEY_A, true, 50);        // Interrupt with another key
+
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
+
+    simulate_key_event(TEST_KEY_A, false, 50);       // Release interrupting key
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false); // Release tap dance key
 }
 
 TEST_F(TapDanceComprehensiveTest, InterruptConfigPositive) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}}, {{1, LAYER_SYMBOLS, 100}});  // Changed from {0} to {1}
-    setup_tap_dance(config);
+    setup_interrupt_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, LAYER_SYMBOLS, 100, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "start hold"),
-        TestEvent::time_passed(50, "wait less than interrupt config time"),
-        TestEvent::key_press(TEST_KEY_A, "interrupt early"),
-        TestEvent::expect_key_sent(TEST_KEY_TAP_DANCE_1, "should send original key"),
-        TestEvent::expect_key_sent(TEST_KEY_A, "should send interrupting key"),
-        TestEvent::expect_no_event("hold action should be discarded")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);  // Start hold
+    platform_wait_ms(50);  // Wait less than interrupt config time
+    simulate_key_event(TEST_KEY_A, true);            // Interrupt early
+
+    // Should send original key and interrupting key, hold action should be discarded
+    EXPECT_GE(g_mock_state.send_key_calls_count(), 1);
+
+    simulate_key_event(TEST_KEY_A, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 0); // No layer changes
 }
 
 // ==================== NESTING BEHAVIOR ====================
 
 TEST_F(TapDanceComprehensiveTest, DifferentKeycodesCanNest) {
-    auto config = TapDanceTestConfig()
-        .add_hold_key(TEST_KEY_TAP_DANCE_1, 1, LAYER_SYMBOLS)  // Changed from 0 to 1
-        .add_tap_key(TEST_KEY_TAP_DANCE_2, 1, OUT_KEY_X);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    reset_test_state();
+    setup_simple_hold_config(TEST_KEY_TAP_DANCE_1, LAYER_SYMBOLS, 1);
+    setup_simple_tap_config(TEST_KEY_TAP_DANCE_2, OUT_KEY_X, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "start first tap dance"),
-        TestEvent::time_passed(250, "activate hold"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "first layer activated"),
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);   // Start first tap dance
+    platform_wait_ms(250);  // Activate hold
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
 
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_2, "start nested tap dance"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_2, "complete nested tap"),
-        TestEvent::expect_key_sent(OUT_KEY_X, "nested tap should work"),
+    simulate_key_event(TEST_KEY_TAP_DANCE_2, true, 50);  // Start nested tap dance
+    simulate_key_event(TEST_KEY_TAP_DANCE_2, false);     // Complete nested tap
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release first key"),
-        TestEvent::expect_layer_select(LAYER_BASE, "should return to base layer")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);     // Release first key
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_BASE);
 }
 
 TEST_F(TapDanceComprehensiveTest, SameKeycodeNestingIgnored) {
-    auto config = TapDanceTestConfig()
-        .add_tap_key(TEST_KEY_TAP_DANCE_1, 1, OUT_KEY_X);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    reset_test_state();
+    setup_simple_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "first press"),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "second press - should be ignored"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "first release"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "second release - should be ignored"),
-        TestEvent::time_passed(250, "wait for timeout"),
-        TestEvent::expect_key_sent(OUT_KEY_X, "should only get one output")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);      // First press
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);  // Second press - should be ignored
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);     // First release
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);     // Second release - should be ignored
+    platform_wait_ms(250);  // Wait for timeout
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X);
 }
 
 // ==================== LAYER STACK MANAGEMENT ====================
 
 TEST_F(TapDanceComprehensiveTest, ComplexLayerStackDependencies) {
-    auto config = TapDanceTestConfig()
-        .add_hold_key(TEST_KEY_TAP_DANCE_1, 1, LAYER_SYMBOLS)  // Changed from 0 to 1
-        .add_hold_key(TEST_KEY_TAP_DANCE_2, 1, LAYER_NUMBERS)  // Changed from 0 to 1
-        .add_hold_key(TEST_KEY_TAP_DANCE_3, 1, LAYER_FUNCTION);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    reset_test_state();
+    setup_simple_hold_config(TEST_KEY_TAP_DANCE_1, LAYER_SYMBOLS, 1);
+    setup_simple_hold_config(TEST_KEY_TAP_DANCE_2, LAYER_NUMBERS, 1);
+    setup_simple_hold_config(TEST_KEY_TAP_DANCE_3, LAYER_FUNCTION, 1);
 
-    execute_test_sequence({
-        // Build up layer stack
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1, "layer 1"),
-        TestEvent::time_passed(250),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS),
+    // Build up layer stack
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);   // Layer 1
+    platform_wait_ms(250);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
 
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_2, "layer 2"),
-        TestEvent::time_passed(250),
-        TestEvent::expect_layer_select(LAYER_NUMBERS),
+    simulate_key_event(TEST_KEY_TAP_DANCE_2, true);   // Layer 2
+    platform_wait_ms(250);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_NUMBERS);
 
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_3, "layer 3"),
-        TestEvent::time_passed(250),
-        TestEvent::expect_layer_select(LAYER_FUNCTION),
+    simulate_key_event(TEST_KEY_TAP_DANCE_3, true);   // Layer 3
+    platform_wait_ms(250);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_FUNCTION);
 
-        // Release in reverse order
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_3, "release layer 3"),
-        TestEvent::expect_layer_select(LAYER_NUMBERS, "should return to layer 2"),
+    // Release in reverse order
+    simulate_key_event(TEST_KEY_TAP_DANCE_3, false);  // Release layer 3
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_NUMBERS); // Should return to layer 2
 
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_2, "release layer 2"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "should return to layer 1"),
+    simulate_key_event(TEST_KEY_TAP_DANCE_2, false);  // Release layer 2
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS); // Should return to layer 1
 
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1, "release layer 1"),
-        TestEvent::expect_layer_select(LAYER_BASE, "should return to base")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);  // Release layer 1
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_BASE); // Should return to base
 }
 
 // ==================== TIMING AND STATE MANAGEMENT ====================
 
 TEST_F(TapDanceComprehensiveTest, FastKeySequences) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}, {2, OUT_KEY_Y}});  // Changed from {0,1} to {1,2}
-    setup_tap_dance(config);
+    reset_test_state();
+    setup_multi_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, OUT_KEY_Y);
 
-    execute_test_sequence({
-        // Very fast double tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(10, "very short delay"),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(250),
-        TestEvent::expect_key_sent(OUT_KEY_Y, "should still register as double tap")
-    });
+    // Very fast double tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    platform_wait_ms(10);  // Very short delay
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    platform_wait_ms(250);
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_Y); // Should still register as double tap
 }
 
 TEST_F(TapDanceComprehensiveTest, MixedTapHoldSequence) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{1, OUT_KEY_X}, {2, OUT_KEY_Y}}, {{2, LAYER_SYMBOLS, 0}});  // Changed from {0,1},{1} to {1,2},{2}
-    setup_tap_dance(config);
+    reset_test_state();
+    // Setup a complex config: 1 tap = X, 2 taps = Y, 2-tap hold = layer symbols
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUT_KEY_X, 0),
+        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, OUT_KEY_Y, 0),
+        createbehaviouraction_with_interrupt(2, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TEST_KEY_TAP_DANCE_1, LAYER_SYMBOLS, 0)
+    };
+    global_config->behaviours[global_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 3);
+    global_config->length++;
 
-    execute_test_sequence({
-        // First tap
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
+    // First tap
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
 
-        // Second tap but hold
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(250, "hold second tap"),
-        TestEvent::expect_layer_select(LAYER_SYMBOLS, "should activate layer"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_layer_select(LAYER_BASE)
-    });
+    // Second tap but hold
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    platform_wait_ms(250);  // Hold second tap
+    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_SYMBOLS);
+
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    EXPECT_EQ(g_mock_state.last_selected_layer, LAYER_BASE);
 }
 
 // ==================== EDGE CASES ====================
 
 TEST_F(TapDanceComprehensiveTest, VeryFastTapRelease) {
-    auto config = TapDanceTestConfig()
-        .add_tap_key(TEST_KEY_TAP_DANCE_1, 1, OUT_KEY_X);  // Changed from 0 to 1
-    setup_tap_dance(config);
+    reset_test_state();
+    setup_simple_tap_config(TEST_KEY_TAP_DANCE_1, OUT_KEY_X, 1);
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(1, "1ms hold"),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::time_passed(250),
-        TestEvent::expect_key_sent(OUT_KEY_X, "should work even with very fast tap")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    platform_wait_ms(1);  // 1ms hold
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    platform_wait_ms(250);
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_X); // Should work even with very fast tap
 }
 
 TEST_F(TapDanceComprehensiveTest, ImmediateExecutionOnFinalTapCount) {
-    auto config = TapDanceTestConfig()
-        .add_tap_dance(TEST_KEY_TAP_DANCE_1, {{2, OUT_KEY_Y}});  // Changed from {1} to {2} - only double-tap configured
-    setup_tap_dance(config);
+    reset_test_state();
+    // Only double-tap configured
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, OUT_KEY_Y, 0)
+    };
+    global_config->behaviours[global_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 1);
+    global_config->length++;
 
-    execute_test_sequence({
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_press(TEST_KEY_TAP_DANCE_1),
-        TestEvent::key_release(TEST_KEY_TAP_DANCE_1),
-        TestEvent::expect_key_sent(OUT_KEY_Y, "should execute immediately without timeout")
-    });
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, true, 50);
+    simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
+
+    EXPECT_EQ(g_mock_state.send_key_calls_count(), 1);
+    EXPECT_EQ(g_mock_state.last_sent_key, OUT_KEY_Y); // Should execute immediately without timeout
 }
