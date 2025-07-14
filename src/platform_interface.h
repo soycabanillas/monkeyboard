@@ -82,15 +82,28 @@ typedef struct {
     platform_time_t time;
 } abskeyevent_t;
 
+typedef struct {
+    uint8_t num_layers;
+    uint32_t num_positions;
+    uint8_t current_layer;
+    platform_keycode_t **layouts;  // Pointer to array of layout pointers
+} custom_layout_t;
+
 // Platform interface functions that must be implemented by each platform
 
 // Key operations
-void platform_send_key(platform_keycode_t keycode);
-void platform_register_key(platform_keycode_t keycode);
-void platform_unregister_key(platform_keycode_t keycode);
+void platform_tap_keycode(platform_keycode_t keycode);
+void platform_register_keycode(platform_keycode_t keycode);
+void platform_unregister_keycode(platform_keycode_t keycode);
+bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2);
 
 // Layer operations
-void platform_layer_select(uint8_t layer);
+void platform_layout_init(uint8_t num_layers, uint32_t num_positions, platform_keycode_t **external_layouts);
+void platform_layout_set_layer(uint8_t layer);
+uint8_t platform_layout_get_current_layer(void);
+platform_keycode_t platform_layout_get_keycode(uint32_t position);
+platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, uint32_t position);
+
 
 // Time operations
 void platform_wait_ms(platform_time_t ms);

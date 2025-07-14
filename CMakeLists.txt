@@ -20,6 +20,7 @@ set(CORE_SOURCES
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
+    src/platform_layout.c
 )
 
 # Create core headers list
@@ -29,6 +30,7 @@ set(CORE_HEADERS
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h
     src/platform_interface.h
+    src/platform_layout.h
 )
 
 add_library(tap_dance_engine ${CORE_SOURCES} ${CORE_HEADERS})
@@ -72,8 +74,8 @@ if(BUILD_TESTS)
     # Define UNIT_TESTING for the core library when building tests
     target_compile_definitions(tap_dance_engine PRIVATE UNIT_TESTING)
 
-    # Link the core library with the platform mock for tests
-    target_link_libraries(tap_dance_engine PRIVATE platform_mock)
+    # Link the platform mock with the core library (not the other way around)
+    target_link_libraries(platform_mock PRIVATE tap_dance_engine)
 
     # Find test files (excluding platform_mock.cpp since it's now a separate library)
     file(GLOB_RECURSE TEST_SOURCES

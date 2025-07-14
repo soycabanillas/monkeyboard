@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "key_buffer.h"
 #include "pipeline_executor.h"
 #include "platform_interface.h"
 
@@ -98,7 +99,7 @@ void layer_stack_push(uint8_t layer, size_t behaviour_index) {
         global_status->layer_stack.stack[global_status->layer_stack.top].marked_for_resolution = false;
         global_status->layer_stack.top++;
         global_status->layer_stack.current_layer = layer;
-        platform_layer_select(layer);
+        platform_layout_set_layer(layer);
     }
 }
 
@@ -146,7 +147,7 @@ void layer_stack_resolve_dependencies(void) {
                 } else {
                     global_status->layer_stack.current_layer = 0; // Default layer
                 }
-                platform_layer_select(global_status->layer_stack.current_layer);
+                platform_layout_set_layer(global_status->layer_stack.current_layer);
                 break; // Restart the loop
             }
         }
@@ -205,7 +206,10 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
     // Check if this interrupt should activate the hold action
     if (should_activate_hold_action_on_interrupt(hold_action, status, params->time, is_key_release)) {
         status->state = TAP_DANCE_HOLDING;
-        platform_layer_select(status->selected_layer);
+        platform_layout_set_layer(status->selected_layer);
+
+        add_to_press_buffer(status->key_buffer, params->keycode, params->keypos, params->time, status->selected_layer, true);
+
     }
 
     // For positive interrupt config, check if hold action should be discarded

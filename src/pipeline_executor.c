@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "key_buffer.h"
 #include "platform_interface.h"
+#include "platform_layout.h"
 
 pipeline_executor_state_t pipeline_executor_state;
 pipeline_executor_config_t *pipeline_executor_config;
@@ -14,28 +15,17 @@ bool info_is_pressed(platform_keycode_t keycode){
 }
 
 void intern_tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
-    abskeyevent_t abskeyevent;
-    abskeyevent.key = keypos;
-    abskeyevent.pressed = true;
-    abskeyevent.time = platform_timer_read();
-    platform_register_key(keycode);
-    add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, abskeyevent.pressed, true, true, pipeline_executor_state.pipeline_index);
+    platform_register_keycode(keycode);
+    //add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, abskeyevent.pressed, true, true, pipeline_executor_state.pipeline_index);
 }
 
 void intern_untap_key(platform_keycode_t keycode) {
-    abskeyevent_t abskeyevent;
-    // Use invalid keypos (-1, -1) to indicate pipeline-generated event
-    // This distinguishes it from real physical key positions
-    abskeyevent.key.col = 255;  // Use max value to indicate invalid/pipeline position
-    abskeyevent.key.row = 255;
-    abskeyevent.pressed = false;  // Fixed: untap should be false, not true
-    abskeyevent.time = platform_timer_read();
-    platform_unregister_key(keycode);
+    platform_unregister_keycode(keycode);
     // add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, 0, abskeyevent.pressed, true, pipeline_executor_state.pipeline_index);
 }
 
 void intern_add_key(platform_keycode_t keycode, platform_keypos_t keypos) {
-    platform_send_key(keycode);
+    platform_tap_keycode(keycode);
     // intern_tap_key(keycode, keypos);
     // intern_untap_key(keycode);
 }
@@ -157,7 +147,7 @@ pipeline_t* add_pipeline(pipeline_callback callback, void* user_data) {
 }
 
 bool pipeline_process_key(platform_keycode_t keycode, abskeyevent_t abskeyevent) {
-    if (add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, 0, abskeyevent.pressed, false, 0)) {
+    if (add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, platform_layout_get_current_layer_impl(), abskeyevent.pressed)) {
         return process_key_pool();
     }
     return true;

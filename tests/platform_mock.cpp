@@ -1,4 +1,5 @@
 #include "../src/platform_interface.h"
+#include "../src/platform_layout.h"
 #include "platform_mock.hpp"
 #include <stdlib.h>
 #include <stdio.h>
@@ -89,7 +90,7 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
 MockPlatformState g_mock_state;
 
 // Mock key operations
-void platform_send_key(platform_keycode_t keycode) {
+void platform_tap_keycode(platform_keycode_t keycode) {
     printf("MOCK: Send key %u\n", keycode);
     g_mock_state.send_key_calls.push_back(keycode);
     g_mock_state.last_sent_key = keycode;
@@ -98,26 +99,49 @@ void platform_send_key(platform_keycode_t keycode) {
     g_mock_state.record_key_event(keycode, false);
 }
 
-void platform_register_key(platform_keycode_t keycode) {
+void platform_register_keycode(platform_keycode_t keycode) {
     printf("MOCK: Register key %u\n", keycode);
     g_mock_state.register_key_calls.push_back(keycode);
     g_mock_state.last_registered_key = keycode;
     g_mock_state.record_key_event(keycode, true);
 }
 
-void platform_unregister_key(platform_keycode_t keycode) {
+void platform_unregister_keycode(platform_keycode_t keycode) {
     printf("MOCK: Unregister key %u\n", keycode);
     g_mock_state.unregister_key_calls.push_back(keycode);
     g_mock_state.last_unregistered_key = keycode;
     g_mock_state.record_key_event(keycode, false);
 }
 
+bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
+    return (key1.row == key2.row && key1.col == key2.col);
+}
+
 // Mock layer operations
-void platform_layer_select(uint8_t layer) {
+
+void platform_layout_init(uint8_t num_layers, uint32_t num_positions, platform_keycode_t **external_layouts) {
+    platform_layout_init_impl(num_layers,  num_positions, external_layouts);
+}
+
+void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
     g_mock_state.layer_select_calls.push_back(layer);
     g_mock_state.current_layer = layer;
     g_mock_state.last_selected_layer = layer;
+
+    platform_layout_set_layer_impl(layer);
+}
+
+uint8_t platform_layout_get_current_layer(void) {
+    return platform_layout_get_current_layer_impl();
+}
+
+platform_keycode_t platform_layout_get_keycode(uint32_t position) {
+    return platform_layout_get_keycode_impl(position);
+}
+
+platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, uint32_t position) {
+    return platform_layout_get_keycode_from_layer_impl(layer, position);
 }
 
 // Mock time operations

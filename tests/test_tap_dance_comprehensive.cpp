@@ -48,6 +48,23 @@ protected:
             malloc(sizeof(*global_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
         global_config->length = 0; // Will be set as we add configurations
 
+
+        platform_keycode_t layer0[4] = {
+            KC_A, KC_B, KC_C, KC_D, /* ... */
+        };
+
+        platform_keycode_t layer1[4] = {
+            KC_E, KC_F, KC_G, KC_H,
+        };
+
+        platform_keycode_t layer2[4] = {
+            KC_I, KC_J, KC_K, KC_L, /* ... */
+        };
+
+        // Array of pointers to your layouts
+        platform_keycode_t *my_layouts[] = {layer0, layer1, layer2};
+        platform_layout_init(3, 4, my_layouts);
+
         pipeline_executor_global_state_create();
         pipeline_executor_config->length = n_pipelines;
         pipeline_executor_config->pipelines[0] = add_pipeline(&pipeline_tap_dance_callback, global_config);

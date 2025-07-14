@@ -41,6 +41,17 @@ void pipeline_key_buffer_destroy(key_buffer_t* key_buffer) {
     free(key_buffer);
 }
 
+key_buffer_t* key_buffer_create(void){
+    key_buffer_t* key_buffer = (key_buffer_t*)malloc(sizeof(key_buffer_t));
+    if (key_buffer == NULL) {
+        return NULL;
+    }
+    key_buffer->only_press_buffer_pos = 0;
+    key_buffer->press_buffer_pos = 0;
+    return key_buffer;
+}
+
+
 bool key_buffer_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode){
     only_press_buffer_item_t* only_press_buffer = key_buffer->only_press_buffer;
     uint8_t only_press_buffer_pos = key_buffer->only_press_buffer_pos;
@@ -57,7 +68,7 @@ bool key_buffer_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode)
 // Add the key press or release to the press_buffer buffer.
 // Add the key to the only_press_buffer when is a pressed or update the key to set the key as released.
 // This buffers can be consumed after several key presses and releases. The same key (position) can be pressed and released and stored on this buffers. This is needed for example if a pipeline requires the information of repetition of a key.
-bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, platform_keypos_t key, platform_time_t time, uint8_t layer, bool is_press, bool is_from_pipeline, size_t pipeline_index) {
+bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, platform_keypos_t key, platform_time_t time, uint8_t layer, bool is_press) {
     // Checks the available space in press_buffer.
     // If there is a press, ensure that the buffer has enough space to store both the current key press and a future key release. Otherwise, if the buffer becomes full, releasing keys will be impossible.
     // This only applies in basic situations, such as when too many keys are pressed simultaneously. If a pipeline fails to remove keys from the buffer, it can still become full.
@@ -72,8 +83,7 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
         // Before adding the key to the press_buffer, make sure there is space available in only_press_buffer.
         if (is_press == true) {
             if (only_press_buffer_pos < ONLY_PRESS_BUFFER_MAX) {
-                only_press_buffer[only_press_buffer_pos].key.col = key.col;
-                only_press_buffer[only_press_buffer_pos].key.row = key.row;
+                only_press_buffer[only_press_buffer_pos].key = key;
                 only_press_buffer[only_press_buffer_pos].keycode = keycode;
                 only_press_buffer[only_press_buffer_pos].layer = layer;
                 only_press_buffer[only_press_buffer_pos].release_on_buffer = false;
@@ -88,7 +98,7 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
             bool key_is_in_buffer = false;
             for (size_t i = only_press_buffer_pos; i-- > 0;)
             {
-                if (only_press_buffer[i].key.col == key.col && only_press_buffer[i].key.row == key.row && only_press_buffer[i].release_on_buffer == false) {
+                if (platform_compare_keyposition(only_press_buffer[i].key, key) && only_press_buffer[i].release_on_buffer == false) {
                     only_press_buffer[i].release_on_buffer = true;
                     key_is_in_buffer = true;
                     untap_layer = only_press_buffer[i].layer; // Use the layer from the press
@@ -97,14 +107,11 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
             }
             if (key_is_in_buffer == false) return false;
         }
-        press_buffer[press_buffer_pos].key.col = key.col;
-        press_buffer[press_buffer_pos].key.row = key.row;
+        press_buffer[press_buffer_pos].key = key;
         press_buffer[press_buffer_pos].keycode = keycode;
         press_buffer[press_buffer_pos].layer = untap_layer;
         press_buffer[press_buffer_pos].is_press = is_press;
         press_buffer[press_buffer_pos].time = time;
-        press_buffer[press_buffer_pos].is_from_pipeline = is_from_pipeline;
-        press_buffer[press_buffer_pos].pipeline_index = pipeline_index;
         press_buffer_pos = press_buffer_pos + 1;
         key_buffer->press_buffer_pos = press_buffer_pos; // Fix: Update the key_buffer structure
         return true;
@@ -122,7 +129,7 @@ void remove_from_press_buffer(key_buffer_t *key_buffer, uint8_t pos) {
     if (press_buffer[pos].is_press == false) {
         for (size_t i = only_press_buffer_pos; i-- > 0;)
         {
-            if (only_press_buffer[i].key.col == press_buffer[pos].key.col && only_press_buffer[i].key.row == press_buffer[pos].key.row) {
+            if (platform_compare_keyposition(only_press_buffer[i].key, press_buffer[pos].key)) {
                 if (i < (size_t)(only_press_buffer_pos - 1)) {
                     memcpy(&only_press_buffer[i], &only_press_buffer[i + 1], sizeof(only_press_buffer_item_t) * ((size_t)(only_press_buffer_pos - 1) - i));
                 }
