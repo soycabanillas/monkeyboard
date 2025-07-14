@@ -49,11 +49,6 @@ typedef void (*pipeline_callback)(pipeline_callback_params_t*, pipeline_actions_
 typedef struct {
     pipeline_callback callback;
     void* data;
-} pipeline_definition_t;
-
-typedef struct {
-    key_buffer_t *key_buffer; // Pointer to the key buffer used by the pipeline
-    pipeline_definition_t* definition;
 } pipeline_t;
 
 typedef struct {

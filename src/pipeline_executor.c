@@ -72,7 +72,7 @@ void execute_pipeline(uint16_t callback_time, uint8_t pos, press_buffer_item_t* 
     actions.add_tap_fn = &intern_tap_key;
     actions.add_untap_fn = &intern_untap_key;
     actions.add_key_fn = &intern_add_key;
-    pipeline_executor_config->pipelines[pos]->definition->callback(&callback_params, &actions, pipeline_executor_config->pipelines[pos]->definition->data);
+    pipeline_executor_config->pipelines[pos]->callback(&callback_params, &actions, pipeline_executor_config->pipelines[pos]->data);
 }
 
 void deferred_exec_callback(void *cb_arg) {
@@ -148,14 +148,10 @@ void pipeline_executor_global_state_destroy(void) {
 }
 
 pipeline_t* add_pipeline(pipeline_callback callback, void* user_data) {
-    pipeline_definition_t* definition = malloc(sizeof(pipeline_definition_t));
-    definition->callback = callback;
-    definition->data = user_data;
-
     pipeline_t* pipeline;
     pipeline = malloc(sizeof(pipeline_t));
-    pipeline->key_buffer = malloc(sizeof(key_buffer_t)); // Use the global key buffer
-    pipeline->definition = definition;
+    pipeline->callback = callback;
+    pipeline->data = user_data;
 
     return pipeline;
 }
