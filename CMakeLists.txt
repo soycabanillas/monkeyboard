@@ -12,7 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build options
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_EXAMPLES "Build examples" ON)
 
 # Core library - platform-agnostic files (only core tap dance functionality)
 set(CORE_SOURCES
@@ -62,6 +61,9 @@ if(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(googletest)
 
+    # Define UNIT_TESTING for all test-related targets
+    add_compile_definitions(UNIT_TESTING)
+
     # Create platform mock library
     add_library(platform_mock tests/platform_mock.cpp)
     target_include_directories(platform_mock
@@ -69,10 +71,6 @@ if(BUILD_TESTS)
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
-    target_compile_definitions(platform_mock PRIVATE UNIT_TESTING)
-
-    # Define UNIT_TESTING for the core library when building tests
-    target_compile_definitions(tap_dance_engine PRIVATE UNIT_TESTING)
 
     # Link the platform mock with the core library (not the other way around)
     target_link_libraries(platform_mock PRIVATE tap_dance_engine)
@@ -114,20 +112,3 @@ if(BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(tests)
 endif()
-
-# Examples
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-# Install targets
-install(TARGETS tap_dance_engine
-    EXPORT tap_dance_engine_targets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-)
-
-install(FILES ${CORE_HEADERS}
-    DESTINATION include
-)

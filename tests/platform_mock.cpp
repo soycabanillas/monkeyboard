@@ -119,9 +119,19 @@ bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2
 
 // Mock layer operations
 
-void platform_layout_init(uint8_t num_layers, uint32_t num_positions, platform_keycode_t **external_layouts) {
-    platform_layout_init_impl(num_layers,  num_positions, external_layouts);
+void platform_layout_init_keymap(uint8_t num_layers, uint32_t num_positions, platform_keycode_t **external_layouts) {
+    platform_layout_init_keymap_impl(num_layers, num_positions, external_layouts);
 }
+
+#if defined(FRAMEWORK_QMK)
+void platform_layout_init_qmk_keymap(const uint16_t keymap[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
+    platform_layout_init_qmk_keymap_impl(keymap, num_layers);
+}
+#elif defined(FRAMEWORK_UNIT_TEST)
+void platform_layout_init_2d_keymap(const uint16_t* keymap_array, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+    platform_layout_init_2d_keymap_impl(keymap_array, num_layers, rows, cols);
+}
+#endif
 
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);

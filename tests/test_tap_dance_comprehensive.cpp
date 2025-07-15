@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
+#include "platform_types.h"
 
 extern "C" {
 #include "pipeline_tap_dance.h"
@@ -62,26 +63,34 @@ protected:
             malloc(sizeof(*global_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
         global_config->length = 0; // Will be set as we add configurations
 
-
-        platform_keycode_t layer0[4] = {
-            KC_A, KC_B, KC_C, KC_D, /* ... */
+        uint16_t keymaps[][4][4] = {
+            [LAYER_BASE] = {
+                { KC_A, KC_B, KC_C, KC_D},
+                {KC_E, KC_F, KC_G, KC_H},
+                {KC_I, KC_J, KC_K, KC_L},
+                {KC_M, KC_N, KC_O, KC_P}
+            },
+            [LAYER_SYMBOLS] = {
+                { KC_A, KC_B, KC_C, KC_D},
+                {KC_E, KC_F, KC_G, KC_H},
+                {KC_I, KC_J, KC_K, KC_L},
+                {KC_M, KC_N, KC_O, KC_P}
+            },
+            [LAYER_NUMBERS] = {
+                { KC_A, KC_B, KC_C, KC_D},
+                {KC_E, KC_F, KC_G, KC_H},
+                {KC_I, KC_J, KC_K, KC_L},
+                {KC_M, KC_N, KC_O, KC_P}
+            },
+            [LAYER_FUNCTION] = {
+                { KC_A, KC_B, KC_C, KC_D },
+                {KC_E, KC_F, KC_G, KC_H},
+                {KC_I, KC_J, KC_K, KC_L},
+                {KC_M, KC_N, KC_O, KC_P}
+            }
         };
 
-        platform_keycode_t layer1[4] = {
-            KC_E, KC_F, KC_G, KC_H,
-        };
-
-        platform_keycode_t layer2[4] = {
-            KC_I, KC_J, KC_K, KC_L, /* ... */
-        };
-
-        platform_keycode_t layer3[4] = {
-            KC_M, KC_N, KC_O, KC_P, /* ... */
-        };
-
-        // Array of pointers to your layouts
-        platform_keycode_t *my_layouts[] = {[LAYER_BASE] = layer0, [LAYER_SYMBOLS] = layer1, [LAYER_NUMBERS] = layer2, [LAYER_FUNCTION] = layer3};
-        platform_layout_init(4, 4, my_layouts);
+        platform_layout_init_2d_keymap((const uint16_t*)keymaps, 4, 4, 4);
 
         pipeline_executor_global_state_create();
         pipeline_executor_config->length = n_pipelines;
