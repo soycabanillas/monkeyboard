@@ -1,5 +1,6 @@
 #include "key_buffer.h"
 #include "platform_interface.h"
+#include "platform_types.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ key_buffer_t* key_buffer_create(void){
 }
 
 
-bool key_buffer_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode){
+bool platform_keycode_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode){
     only_press_buffer_item_t* only_press_buffer = key_buffer->only_press_buffer;
     uint8_t only_press_buffer_pos = key_buffer->only_press_buffer_pos;
 
@@ -65,10 +66,23 @@ bool key_buffer_is_pressed(key_buffer_t *key_buffer, platform_keycode_t keycode)
     return false;
 }
 
+bool platform_keypos_is_pressed(key_buffer_t *key_buffer, platform_keypos_t key) {
+    only_press_buffer_item_t* only_press_buffer = key_buffer->only_press_buffer;
+    uint8_t only_press_buffer_pos = key_buffer->only_press_buffer_pos;
+
+    for (size_t i = only_press_buffer_pos; i-- > 0;)
+    {
+        if (platform_compare_keyposition(only_press_buffer[i].key, key)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Add the key press or release to the press_buffer buffer.
 // Add the key to the only_press_buffer when is a pressed or update the key to set the key as released.
 // This buffers can be consumed after several key presses and releases. The same key (position) can be pressed and released and stored on this buffers. This is needed for example if a pipeline requires the information of repetition of a key.
-bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, platform_keypos_t key, platform_time_t time, uint8_t layer, bool is_press) {
+bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keypos_t key, platform_time_t time, uint8_t layer, bool is_press) {
     // Checks the available space in press_buffer.
     // If there is a press, ensure that the buffer has enough space to store both the current key press and a future key release. Otherwise, if the buffer becomes full, releasing keys will be impossible.
     // This only applies in basic situations, such as when too many keys are pressed simultaneously. If a pipeline fails to remove keys from the buffer, it can still become full.
@@ -77,6 +91,8 @@ bool add_to_press_buffer(key_buffer_t *key_buffer, platform_keycode_t keycode, p
     uint8_t press_buffer_pos = key_buffer->press_buffer_pos;
     only_press_buffer_item_t* only_press_buffer = key_buffer->only_press_buffer;
     uint8_t only_press_buffer_pos = key_buffer->only_press_buffer_pos;
+
+    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, key);
 
     uint8_t untap_layer = 0; // This variable is used to store the layer of the key press that is being released. If the key is released, it will be the layer of the press that was buffered.
     if ((is_press == true && press_buffer_pos + 1 < PRESS_BUFFER_MAX) || (is_press == false && press_buffer_pos < PRESS_BUFFER_MAX)) {

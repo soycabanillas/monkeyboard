@@ -10,21 +10,21 @@ pipeline_executor_config_t *pipeline_executor_config;
 
 //Functions available in the pipeline_info_t struct
 
-bool info_is_pressed(platform_keycode_t keycode){
-    return key_buffer_is_pressed(pipeline_executor_state.key_buffer, keycode);
+static bool is_keycode_pressed(platform_keycode_t keycode){
+    return platform_keycode_is_pressed(pipeline_executor_state.key_buffer, keycode);
 }
 
-void intern_tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
+static void register_key(platform_keycode_t keycode, platform_keypos_t keypos) {
     platform_register_keycode(keycode);
     //add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, abskeyevent.pressed, true, true, pipeline_executor_state.pipeline_index);
 }
 
-void intern_untap_key(platform_keycode_t keycode) {
+static void unregister_key(platform_keycode_t keycode) {
     platform_unregister_keycode(keycode);
     // add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, 0, abskeyevent.pressed, true, pipeline_executor_state.pipeline_index);
 }
 
-void intern_add_key(platform_keycode_t keycode, platform_keypos_t keypos) {
+static void tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
     platform_tap_keycode(keycode);
     // intern_tap_key(keycode, keypos);
     // intern_untap_key(keycode);
@@ -56,12 +56,12 @@ void execute_pipeline(uint16_t callback_time, uint8_t pos, press_buffer_item_t* 
         callback_params.callback_type = PIPELINE_CALLBACK_TIMER;
         callback_params.time = callback_time;
     }
-    callback_params.info.is_pressed_fn = &info_is_pressed;
+    callback_params.info.is_keycode_pressed = &is_keycode_pressed;
 
     pipeline_actions_t actions;
-    actions.add_tap_fn = &intern_tap_key;
-    actions.add_untap_fn = &intern_untap_key;
-    actions.add_key_fn = &intern_add_key;
+    actions.register_key_fn = &register_key;
+    actions.unregister_key_fn = &unregister_key;
+    actions.tap_key_fn = &tap_key;
     pipeline_executor_config->pipelines[pos]->callback(&callback_params, &actions, pipeline_executor_config->pipelines[pos]->data);
 }
 
@@ -146,8 +146,8 @@ pipeline_t* add_pipeline(pipeline_callback callback, void* user_data) {
     return pipeline;
 }
 
-bool pipeline_process_key(platform_keycode_t keycode, abskeyevent_t abskeyevent) {
-    if (add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, platform_layout_get_current_layer_impl(), abskeyevent.pressed)) {
+bool pipeline_process_key(abskeyevent_t abskeyevent) {
+    if (add_to_press_buffer(pipeline_executor_state.key_buffer, abskeyevent.key, abskeyevent.time, platform_layout_get_current_layer_impl(), abskeyevent.pressed)) {
         return process_key_pool();
     }
     return true;

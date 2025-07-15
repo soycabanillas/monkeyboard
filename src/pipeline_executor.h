@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "key_buffer.h"
-#include "platform_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +16,7 @@ typedef enum {
 
 typedef bool (*is_pressed)(platform_keycode_t);
 typedef struct {
-    is_pressed is_pressed_fn;
+    is_pressed is_keycode_pressed;
 } pipeline_info_t;
 
 typedef struct {
@@ -39,9 +38,9 @@ typedef void (*key_buffer_tap)(platform_keycode_t keycode, platform_keypos_t key
 typedef void (*key_buffer_untap)(platform_keycode_t keycode);
 typedef void (*key_buffer_key)(platform_keycode_t keycode, platform_keypos_t keypos);
 typedef struct {
-    key_buffer_tap add_tap_fn;
-    key_buffer_untap add_untap_fn;
-    key_buffer_key add_key_fn;
+    key_buffer_tap register_key_fn;
+    key_buffer_untap unregister_key_fn;
+    key_buffer_key tap_key_fn;
 } pipeline_actions_t;
 
 typedef void (*pipeline_callback)(pipeline_callback_params_t*, pipeline_actions_t*, void*);
@@ -72,7 +71,7 @@ void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t 
 void pipeline_executor_capture_next_keys(void);
 
 pipeline_t* add_pipeline(pipeline_callback callback, void* user_data);
-bool pipeline_process_key(platform_keycode_t keycode, abskeyevent_t abskeyevent);
+bool pipeline_process_key(abskeyevent_t abskeyevent);
 
 #ifdef __cplusplus
 }

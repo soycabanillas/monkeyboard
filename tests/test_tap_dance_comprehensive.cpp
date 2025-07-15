@@ -63,7 +63,7 @@ protected:
             malloc(sizeof(*global_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
         global_config->length = 0; // Will be set as we add configurations
 
-        uint16_t keymaps[][4][4] = {
+        platform_keycode_t keymaps[][4][4] = {
             [LAYER_BASE] = {
                 { KC_A, KC_B, KC_C, KC_D},
                 {KC_E, KC_F, KC_G, KC_H},
@@ -107,6 +107,26 @@ protected:
             free(global_config);
             global_config = nullptr;
         }
+    }
+
+    // This function is used to find the key position based on the keycode
+    // This assumes a 4x4 grid for simplicity, adjust as needed
+    // It returns a platform_keypos_t structure with row and column
+    platform_keypos_t get_keypos(uint16_t keycode) {
+        uint8_t layer = platform_layout_get_current_layer();
+        uint8_t row = 0, col = 0;
+
+        for (uint16_t i = 0; i < 4 * 4; i++) {
+            if (platform_layout_get_keycode_from_layer(layer, {row, col}) == keycode) {
+                return {row, col};
+            }
+            col++;
+            if (col >= 4) {
+                col = 0;
+                row++;
+            }
+        }
+        return {0, 0}; // Default return if not found
     }
 
     void setup_simple_tap_config(uint16_t keycode, uint16_t output_key, uint8_t tap_count = 1) {
@@ -166,13 +186,15 @@ protected:
             platform_wait_ms(time_offset);
         }
 
+        platform_keypos_t keypos = get_keypos(keycode);
+
         abskeyevent_t event;
-        event.key.row = 0;
-        event.key.col = 0;
+        event.key.row = keypos.row;
+        event.key.col = keypos.col;
         event.pressed = pressed;
         event.time = static_cast<uint16_t>(platform_timer_read());
 
-        pipeline_process_key(keycode, event);
+        pipeline_process_key(event);
     }
 
     void reset_test_state() {

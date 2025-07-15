@@ -208,15 +208,15 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
         status->state = TAP_DANCE_HOLDING;
         platform_layout_set_layer(status->selected_layer);
 
-        add_to_press_buffer(status->key_buffer, params->keycode, params->keypos, params->time, status->selected_layer, true);
+        add_to_press_buffer(status->key_buffer, params->keypos, params->time, status->selected_layer, true);
 
     }
 
     // For positive interrupt config, check if hold action should be discarded
     if (hold_action->interrupt_config > 0 && status->hold_action_discarded) {
         // Send the original trigger key press and the interrupting key
-        actions->add_key_fn(config->keycodemodifier, params->keypos);
-        actions->add_key_fn(params->keycode, params->keypos);
+        actions->tap_key_fn(config->keycodemodifier, params->keypos);
+        actions->tap_key_fn(params->keycode, params->keypos);
         status->state = TAP_DANCE_COMPLETED;
         reset_behaviour_state(status);
     }
@@ -303,7 +303,7 @@ void handle_key_release(pipeline_callback_params_t* params,
                 // No more actions, execute tap action immediately
                 pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
                 if (tap_action != NULL) {
-                    actions->add_key_fn(tap_action->keycode, params->keypos);
+                    actions->tap_key_fn(tap_action->keycode, params->keypos);
                 }
 
                 // Check for key repetition exception
@@ -371,7 +371,7 @@ void handle_timeout(pipeline_callback_params_t* params,
             // Tap timeout reached - execute tap action
             tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->add_key_fn(tap_action->keycode, params->keypos);
+                actions->tap_key_fn(tap_action->keycode, params->keypos);
             }
 
             // Check for key repetition exception

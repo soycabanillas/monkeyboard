@@ -79,10 +79,25 @@ typedef uint32_t platform_deferred_token;
 typedef uint32_t platform_time_t;
 
 // Platform-agnostic key position type
-typedef struct {
-    uint8_t row;
-    uint8_t col;
-} platform_keypos_t;
+
+#if defined(AGNOSTIC_USE_1D_ARRAY)      // Prioritize explicit selection over implicit framework detection
+#elif defined(AGNOSTIC_USE_2D_ARRAY)    // Prioritize explicit selection over implicit framework detection
+#elif defined(FRAMEWORK_QMK)            // If not explicitly defined, use framework detection. In this case, QMK uses a 2D array.
+    #define AGNOSTIC_USE_2D_ARRAY
+#elif defined(FRAMEWORK_ZMK)            // If not explicitly defined, use framework detection. In this case, ZMK uses a 1D array.
+    #define AGNOSTIC_USE_1D_ARRAY
+#elif defined(FRAMEWORK_UNIT_TEST)      // If not explicitly defined, use framework detection. In this case, Unit Test uses a 2D array.
+    #define AGNOSTIC_USE_2D_ARRAY
+#endif
+
+#if defined(AGNOSTIC_USE_1D_ARRAY)
+    typedef uint16_t platform_keypos_t;
+#elif defined(AGNOSTIC_USE_2D_ARRAY)
+    typedef struct {
+        uint8_t row;
+        uint8_t col;
+    } platform_keypos_t;
+#endif
 
 // Platform-agnostic key event type
 typedef struct {
