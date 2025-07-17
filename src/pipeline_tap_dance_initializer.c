@@ -2,13 +2,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "key_buffer.h"
+#include "key_event_buffer.h"
 #include "pipeline_tap_dance.h"
-#include "platform_interface.h"
+#include "platform_types.h"
 
 pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create(void) {
     pipeline_tap_dance_behaviour_status_t* behaviour_status = (pipeline_tap_dance_behaviour_status_t*)malloc(sizeof(pipeline_tap_dance_behaviour_status_t));
-    behaviour_status->key_buffer = key_buffer_create(); // Initialize the key buffer for this tap dance sequence
+    behaviour_status->key_buffer = platform_key_event_create(); // Initialize the key buffer for this tap dance sequence
     reset_behaviour_state(behaviour_status);
     return behaviour_status;
 }

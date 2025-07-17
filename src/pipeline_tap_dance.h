@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "key_buffer.h"
+#include "key_event_buffer.h"
 #include "pipeline_executor.h"
-#include "platform_interface.h"
+#include "platform_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,7 @@ typedef struct {
     bool hold_action_discarded;         // Flag for positive interrupt config when hold is discarded
     size_t behaviour_index;             // Index in global config for layer stack tracking
     bool is_nested_active;              // Whether this sequence is currently active (not idle)
-    key_buffer_t *key_buffer; // Key buffer for this tap dance sequence
+    platform_key_event_buffer_t *key_buffer; // Key buffer for this tap dance sequence
 } pipeline_tap_dance_behaviour_status_t;
 
 typedef struct {

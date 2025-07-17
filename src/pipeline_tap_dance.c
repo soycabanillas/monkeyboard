@@ -2,9 +2,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "key_buffer.h"
+#include "key_event_buffer.h"
 #include "pipeline_executor.h"
 #include "platform_interface.h"
+#include "platform_types.h"
 
 // Global timing configuration
 #define g_hold_timeout 200  // Hold timeout in milliseconds
@@ -208,7 +209,8 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
         status->state = TAP_DANCE_HOLDING;
         platform_layout_set_layer(status->selected_layer);
 
-        add_to_press_buffer(status->key_buffer, params->keypos, params->time, status->selected_layer, true);
+        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, params->keypos);
+        platform_key_event_add_event(status->key_buffer, params->time, status->selected_layer, params->keypos, keycode, true);
 
     }
 
