@@ -191,7 +191,8 @@ bool should_activate_hold_action_on_interrupt(pipeline_tap_dance_action_config_t
 void handle_interrupting_key(pipeline_callback_params_t* params,
                             pipeline_tap_dance_behaviour_config_t *config,
                             pipeline_tap_dance_behaviour_status_t *status,
-                            pipeline_actions_t* actions) {
+                            pipeline_actions_t* actions,
+                            platform_key_event_t* first_key_event) {
 
     // Only handle interruptions during hold waiting states
     if (status->state != TAP_DANCE_WAITING_FOR_HOLD &&
@@ -202,23 +203,23 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
     pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
     if (!hold_action) return;
 
-    bool is_key_release = (params->callback_type == PIPELINE_CALLBACK_KEY_RELEASE);
+    bool is_key_release = (first_key_event->is_press == false);
 
     // Check if this interrupt should activate the hold action
-    if (should_activate_hold_action_on_interrupt(hold_action, status, params->time, is_key_release)) {
+    if (should_activate_hold_action_on_interrupt(hold_action, status, first_key_event->time, is_key_release)) {
         status->state = TAP_DANCE_HOLDING;
         platform_layout_set_layer(status->selected_layer);
 
-        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, params->keypos);
-        platform_key_event_add_event(status->key_buffer, params->time, status->selected_layer, params->keypos, keycode, true);
+        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, first_key_event->keypos);
+        platform_key_event_add_event(status->key_buffer, first_key_event->time, status->selected_layer, first_key_event->keypos, keycode, true);
 
     }
 
     // For positive interrupt config, check if hold action should be discarded
     if (hold_action->interrupt_config > 0 && status->hold_action_discarded) {
         // Send the original trigger key press and the interrupting key
-        actions->tap_key_fn(config->keycodemodifier, params->keypos);
-        actions->tap_key_fn(params->keycode, params->keypos);
+        actions->tap_key_fn(config->keycodemodifier, first_key_event->keypos);
+        actions->tap_key_fn(first_key_event->keycode, first_key_event->keypos);
         status->state = TAP_DANCE_COMPLETED;
         reset_behaviour_state(status);
     }
@@ -227,14 +228,15 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
 void handle_key_press(pipeline_callback_params_t* params,
                      pipeline_tap_dance_behaviour_config_t *config,
                      pipeline_tap_dance_behaviour_status_t *status,
-                     pipeline_actions_t* actions) {
+                     pipeline_actions_t* actions,
+                     platform_key_event_t* first_key_event) {
 
     switch (status->state) {
         case TAP_DANCE_IDLE:
             // First press of a new sequence
             status->tap_count = 1;
             status->original_layer = layer_stack_get_current_layer(); // Use current layer from stack
-            status->key_press_time = params->time;
+            status->key_press_time = first_key_event->time;
             status->is_nested_active = true; // Mark as active
 
             // Check if we have a hold action for this tap count
@@ -258,7 +260,7 @@ void handle_key_press(pipeline_callback_params_t* params,
         case TAP_DANCE_WAITING_FOR_TAP:
             // Additional tap in sequence
             status->tap_count++;
-            status->key_press_time = params->time;
+            status->key_press_time = first_key_event->time;
 
             // Check for hold action at this tap count
             hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
@@ -290,9 +292,10 @@ void handle_key_press(pipeline_callback_params_t* params,
 void handle_key_release(pipeline_callback_params_t* params,
                        pipeline_tap_dance_behaviour_config_t *config,
                        pipeline_tap_dance_behaviour_status_t *status,
-                       pipeline_actions_t* actions) {
+                       pipeline_actions_t* actions,
+                       platform_key_event_t* first_key_event) {
 
-    status->last_release_time = params->time;
+    status->last_release_time = first_key_event->time;
 
     switch (status->state) {
         case TAP_DANCE_WAITING_FOR_HOLD:
@@ -305,7 +308,7 @@ void handle_key_release(pipeline_callback_params_t* params,
                 // No more actions, execute tap action immediately
                 pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
                 if (tap_action != NULL) {
-                    actions->tap_key_fn(tap_action->keycode, params->keypos);
+                    actions->tap_key_fn(tap_action->keycode, first_key_event->keypos);
                 }
 
                 // Check for key repetition exception
@@ -373,7 +376,7 @@ void handle_timeout(pipeline_callback_params_t* params,
             // Tap timeout reached - execute tap action
             tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->tap_key_fn(tap_action->keycode, params->keypos);
+                //actions->tap_key_fn(tap_action->keycode, params->keypos);
             }
 
             // Check for key repetition exception
@@ -397,23 +400,26 @@ void handle_timeout(pipeline_callback_params_t* params,
 void custom_switch_layer_custom_function(pipeline_callback_params_t* params,
                                         pipeline_tap_dance_behaviour_config_t *config,
                                         pipeline_tap_dance_behaviour_status_t *status,
-                                        pipeline_actions_t* actions) {
+                                        pipeline_actions_t* actions,
+                                        platform_key_event_t* first_key_event) {
 
     if (config->actionslength == 0) {
         return;
     }
 
     // Handle interrupting keys (keys other than our trigger key)
-    if (params->keycode != config->keycodemodifier) {
-        handle_interrupting_key(params, config, status, actions);
+    if (first_key_event->keycode != config->keycodemodifier) {
+        handle_interrupting_key(params, config, status, actions, first_key_event);
         return;
     }
 
     // Handle our trigger key events
-    if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS) {
-        handle_key_press(params, config, status, actions);
-    } else if (params->callback_type == PIPELINE_CALLBACK_KEY_RELEASE) {
-        handle_key_release(params, config, status, actions);
+    if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
+        if (first_key_event->is_press) {
+            handle_key_press(params, config, status, actions, first_key_event);
+        } else {
+            handle_key_release(params, config, status, actions, first_key_event);
+        }
     } else if (params->callback_type == PIPELINE_CALLBACK_TIMER) {
         handle_timeout(params, config, status, actions);
     }
@@ -436,10 +442,11 @@ void pipeline_tap_dance_global_state_create(void) {
 void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
-    if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS || params->callback_type == PIPELINE_CALLBACK_KEY_RELEASE) {
+    platform_key_event_t* first_key_event = &params->key_events->event_buffer[0];
+
+    if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         // Check for nesting behavior - ignore same keycode if already active
-        if (params->callback_type == PIPELINE_CALLBACK_KEY_PRESS &&
-            should_ignore_same_keycode_nesting(global_config, params->keycode)) {
+        if (first_key_event->is_press == true && should_ignore_same_keycode_nesting(global_config, first_key_event->keycode)) {
             return; // Ignore this key press completely
         }
 
@@ -451,13 +458,13 @@ void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_ac
             // Set behaviour index for layer stack tracking
             behaviour->status->behaviour_index = i;
 
-            custom_switch_layer_custom_function(params, behaviour->config, behaviour->status, actions);
+            custom_switch_layer_custom_function(params, behaviour->config, behaviour->status, actions, first_key_event);
         }
     } else if (params->callback_type == PIPELINE_CALLBACK_TIMER) {
         // Process timeout for the last active behavior
         if (global_status->last_behaviour < global_config->length) {
             pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[global_status->last_behaviour];
-            custom_switch_layer_custom_function(params, behaviour->config, behaviour->status, actions);
+            custom_switch_layer_custom_function(params, behaviour->config, behaviour->status, actions, first_key_event);
         }
     }
 }

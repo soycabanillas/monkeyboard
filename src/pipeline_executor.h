@@ -11,8 +11,7 @@ extern "C" {
 #endif
 
 typedef enum {
-    PIPELINE_CALLBACK_KEY_PRESS,
-    PIPELINE_CALLBACK_KEY_RELEASE,
+    PIPELINE_CALLBACK_KEY_EVENT,
     PIPELINE_CALLBACK_TIMER
 } pipeline_callback_type_t;
 
@@ -25,11 +24,9 @@ typedef struct {
 } capture_pipeline_t;
 
 typedef struct {
-    platform_keycode_t keycode;
-    platform_keypos_t keypos;
-    platform_time_t time;
-    uint8_t layer;
+    platform_key_event_buffer_t* key_events;
     pipeline_callback_type_t callback_type;
+    uint16_t callback_time;
 } pipeline_callback_params_t;
 
 typedef void (*key_buffer_tap)(platform_keycode_t keycode, platform_keypos_t keypos);

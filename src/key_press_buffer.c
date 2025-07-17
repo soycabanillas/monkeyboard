@@ -42,7 +42,7 @@ bool platform_key_press_keypos_is_pressed(platform_key_press_buffer_t *key_buffe
 
     for (size_t i = only_press_buffer_pos; i-- > 0;)
     {
-        if (platform_compare_keyposition(only_press_buffer[i].key, key)) {
+        if (platform_compare_keyposition(only_press_buffer[i].keypos, key)) {
             return true;
         }
     }
@@ -58,7 +58,7 @@ bool platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platf
 
     if (is_press == true) {
         if (only_press_buffer_pos < PLATFORM_KEY_BUFFER_MAX_ELEMENTS) {
-            only_press_buffer[only_press_buffer_pos].key = key;
+            only_press_buffer[only_press_buffer_pos].keypos = key;
             only_press_buffer[only_press_buffer_pos].keycode = keycode;
             only_press_buffer[only_press_buffer_pos].time = time;
             only_press_buffer_pos = only_press_buffer_pos + 1;

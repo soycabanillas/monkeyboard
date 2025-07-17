@@ -28,7 +28,7 @@ bool platform_key_event_add_event(platform_key_event_buffer_t *event_buffer, pla
     // Add the key event to the buffer
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     uint8_t press_buffer_pos = event_buffer->event_buffer_pos;
-    press_buffer[press_buffer_pos].key = keypos;
+    press_buffer[press_buffer_pos].keypos = keypos;
     press_buffer[press_buffer_pos].keycode = keycode;
     press_buffer[press_buffer_pos].layer = layer;
     press_buffer[press_buffer_pos].is_press = is_press;

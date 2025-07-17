@@ -12,7 +12,7 @@ extern "C" {
 #define PLATFORM_KEY_BUFFER_MAX_ELEMENTS 5
 
 typedef struct {
-    platform_keypos_t key;
+    platform_keypos_t keypos;
     platform_keycode_t keycode;
     platform_time_t time;
 } platform_key_press_key_press_t;

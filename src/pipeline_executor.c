@@ -42,21 +42,14 @@ static void tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
  * - If timeout is set, callback is triggered after specified time
  * - Used for multi-key sequences, tap dance timing, etc.
  */
-void execute_pipeline(uint16_t callback_time, uint8_t pos, platform_key_event_t* press_buffer_selected, capture_pipeline_t return_data) {
+static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, platform_key_event_buffer_t* key_events, platform_key_event_t* press_buffer_selected, capture_pipeline_t* return_data) {
     pipeline_callback_params_t callback_params;
     if (callback_time == 0) {
-        callback_params.keycode = press_buffer_selected->keycode;
-        callback_params.keypos = press_buffer_selected->key;
-        callback_params.time = callback_time;
-        callback_params.layer = press_buffer_selected->layer;
-        if (press_buffer_selected->is_press == true) {
-            callback_params.callback_type = PIPELINE_CALLBACK_KEY_PRESS;
-        } else {
-            callback_params.callback_type = PIPELINE_CALLBACK_KEY_RELEASE;
-        }
+        callback_params.key_events = key_events;
+        callback_params.callback_type = PIPELINE_CALLBACK_KEY_EVENT;
     } else {
         callback_params.callback_type = PIPELINE_CALLBACK_TIMER;
-        callback_params.time = callback_time;
+        callback_params.callback_time = callback_time;
     }
 
     pipeline_actions_t keybuffer;
@@ -64,12 +57,12 @@ void execute_pipeline(uint16_t callback_time, uint8_t pos, platform_key_event_t*
     keybuffer.unregister_key_fn = &unregister_key;
     keybuffer.tap_key_fn = &tap_key;
     keybuffer.is_keycode_pressed = &is_keycode_pressed;
-    pipeline_executor_config->pipelines[pos]->callback(&callback_params, &keybuffer, pipeline_executor_config->pipelines[pos]->data);
+    pipeline_executor_config->pipelines[pipeline_index]->callback(&callback_params, &keybuffer, pipeline_executor_config->pipelines[pipeline_index]->data);
 }
 
-void deferred_exec_callback(void *cb_arg) {
+static void deferred_exec_callback(void *cb_arg) {
     (void)cb_arg; // Unused parameter
-    execute_pipeline(pipeline_executor_state.capture_pipeline.callback_time, pipeline_executor_state.capture_pipeline.pipeline_index, NULL, pipeline_executor_state.capture_pipeline);
+    execute_pipeline(pipeline_executor_state.capture_pipeline.callback_time, pipeline_executor_state.capture_pipeline.pipeline_index, pipeline_executor_state.key_event_buffer, NULL, &pipeline_executor_state.capture_pipeline);
 }
 
 static bool key_has_been_processed_on_pipeline_execution(capture_pipeline_t* capture_pipeline) {
@@ -77,12 +70,13 @@ static bool key_has_been_processed_on_pipeline_execution(capture_pipeline_t* cap
 }
 
 static void execute_middleware(uint8_t middleware_pos, platform_key_event_t* press_buffer_selected, bool* key_digested, bool* last_pipeline_execution_changed_buffer, bool* last_pipeline_execution_captured_key_processing) {
-    execute_pipeline(0, middleware_pos, press_buffer_selected, pipeline_executor_state.capture_pipeline);
+    execute_pipeline(0, middleware_pos, pipeline_executor_state.key_event_buffer, press_buffer_selected, &pipeline_executor_state.capture_pipeline);
     *last_pipeline_execution_changed_buffer = pipeline_executor_state.capture_pipeline.key_event_buffer;
     if (pipeline_executor_state.capture_pipeline.key_event_buffer == true) {
-        pipeline_executor_state.key_event_buffer_swap = pipeline_executor_state.capture_pipeline.key_buffer;
+        // Swap buffers if the middleware has changed the key event buffer
+        pipeline_executor_state.key_event_buffer_swap = pipeline_executor_state.key_event_buffer;
+        pipeline_executor_state.key_event_buffer = pipeline_executor_state.capture_pipeline.key_buffer;
         platform_key_event_reset(pipeline_executor_state.key_event_buffer_swap);
-        pipeline_executor_state.capture_pipeline.key_buffer = pipeline_executor_state.capture_pipeline.key_buffer;
         pipeline_executor_state.capture_pipeline.key_event_buffer = false; // Reset swap buffer flag
     }
     else {

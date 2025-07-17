@@ -12,7 +12,7 @@ extern "C" {
 #define PLATFORM_KEY_EVENT_MAX_ELEMENTS 10
 
 typedef struct {
-    platform_keypos_t key;
+    platform_keypos_t keypos;
     platform_keycode_t keycode;
     uint8_t layer;
     bool is_press;
