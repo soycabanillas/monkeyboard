@@ -94,7 +94,7 @@ protected:
 
         pipeline_executor_global_state_create();
         pipeline_executor_config->length = n_pipelines;
-        pipeline_executor_config->pipelines[0] = add_pipeline(&pipeline_tap_dance_callback, global_config);
+        pipeline_executor_config->pipelines[0] = add_pipeline(&pipeline_tap_dance_callback, global_config, true);
     }
 
     void TearDown() override {

@@ -442,6 +442,8 @@ void pipeline_tap_dance_global_state_create(void) {
 void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
+    if (params->calls_on_iteration > 1) return; // Ignore if called multiple times in one iteration
+
     platform_key_event_t* first_key_event = &params->key_events->event_buffer[0];
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {

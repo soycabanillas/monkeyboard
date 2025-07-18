@@ -23,6 +23,7 @@ typedef struct {
 } capture_pipeline_t;
 
 typedef struct {
+    uint8_t calls_on_iteration; // Number of times this middleware is called in the current iteration
     platform_key_event_buffer_t* key_events;
     pipeline_callback_type_t callback_type;
     uint16_t callback_time;
@@ -45,6 +46,8 @@ typedef void (*pipeline_callback)(pipeline_callback_params_t*, pipeline_actions_
 typedef struct {
     pipeline_callback callback;
     void* data;
+    bool process_just_once; // If true, this middleware will only process the first key event and will not capture subsequent events during the same iteration
+    uint8_t calls_on_iteration; // Number of times this pipeline is called in the current iteration
 } pipeline_t;
 
 typedef struct {
@@ -52,7 +55,7 @@ typedef struct {
     platform_key_event_buffer_t *key_event_buffer;
     platform_key_event_buffer_t *key_event_buffer_swap; // Swap buffer for double buffering
     capture_pipeline_t return_data;
-    size_t pipeline_index;
+    size_t pipeline_index; // Index of the current pipeline being executed
     platform_deferred_token deferred_exec_callback_token;
 } pipeline_executor_state_t;
 
@@ -68,7 +71,7 @@ void pipeline_executor_global_state_create(void);
 void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
 void pipeline_executor_capture_next_keys(void);
 
-pipeline_t* add_pipeline(pipeline_callback callback, void* user_data);
+pipeline_t* add_pipeline(pipeline_callback callback, void* user_data, bool process_just_once);
 bool pipeline_process_key(abskeyevent_t abskeyevent);
 
 #ifdef __cplusplus
