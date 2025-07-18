@@ -62,62 +62,58 @@ static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, pla
 
 static void deferred_exec_callback(void *cb_arg) {
     (void)cb_arg; // Unused parameter
-    execute_pipeline(pipeline_executor_state.capture_pipeline.callback_time, pipeline_executor_state.capture_pipeline.pipeline_index, pipeline_executor_state.key_event_buffer, NULL, &pipeline_executor_state.capture_pipeline);
+    execute_pipeline(pipeline_executor_state.return_data.callback_time, pipeline_executor_state.pipeline_index, pipeline_executor_state.key_event_buffer, NULL, &pipeline_executor_state.return_data);
 }
 
-static bool key_has_been_processed_on_pipeline_execution(capture_pipeline_t* capture_pipeline) {
-    return (capture_pipeline->key_event_buffer == true || capture_pipeline->captured == true);
-}
-
-static void execute_middleware(uint8_t middleware_pos, platform_key_event_t* press_buffer_selected, bool* key_digested, bool* last_pipeline_execution_changed_buffer, bool* last_pipeline_execution_captured_key_processing) {
-    execute_pipeline(0, middleware_pos, pipeline_executor_state.key_event_buffer, press_buffer_selected, &pipeline_executor_state.capture_pipeline);
-    *last_pipeline_execution_changed_buffer = pipeline_executor_state.capture_pipeline.key_event_buffer;
-    if (pipeline_executor_state.capture_pipeline.key_event_buffer == true) {
+static void execute_middleware(pipeline_executor_state_t* pipeline_executor_state, uint8_t middleware_pos, platform_key_event_t* press_buffer_selected, bool* last_pipeline_execution_changed_buffer, bool* last_pipeline_execution_captured_key_processing) {
+    execute_pipeline(0, middleware_pos, pipeline_executor_state->key_event_buffer, press_buffer_selected, &pipeline_executor_state->return_data);
+    *last_pipeline_execution_changed_buffer = pipeline_executor_state->return_data.key_buffer_changed;
+    if (pipeline_executor_state->return_data.key_buffer_changed == true) {
         // Swap buffers if the middleware has changed the key event buffer
-        pipeline_executor_state.key_event_buffer_swap = pipeline_executor_state.key_event_buffer;
-        pipeline_executor_state.key_event_buffer = pipeline_executor_state.capture_pipeline.key_buffer;
-        platform_key_event_reset(pipeline_executor_state.key_event_buffer_swap);
-        pipeline_executor_state.capture_pipeline.key_event_buffer = false; // Reset swap buffer flag
+        pipeline_executor_state->key_event_buffer_swap = pipeline_executor_state->key_event_buffer;
+        pipeline_executor_state->key_event_buffer = pipeline_executor_state->return_data.key_buffer;
+        platform_key_event_reset(pipeline_executor_state->key_event_buffer_swap);
+        pipeline_executor_state->return_data.key_buffer_changed = false; // Reset swap buffer flag
     }
     else {
-        platform_key_event_reset(pipeline_executor_state.key_event_buffer_swap);
+        platform_key_event_reset(pipeline_executor_state->key_event_buffer_swap);
     }
-    *key_digested = key_digested || key_has_been_processed_on_pipeline_execution(&pipeline_executor_state.capture_pipeline);
-    *last_pipeline_execution_captured_key_processing = pipeline_executor_state.capture_pipeline.captured;
+    *last_pipeline_execution_captured_key_processing = pipeline_executor_state->return_data.captured;
 }
 
 static bool process_key_pool(void) {
 
-    pipeline_executor_state.capture_pipeline.callback_time = 0;
-    pipeline_executor_state.capture_pipeline.captured = false;
-    pipeline_executor_state.capture_pipeline.pipeline_index = 0;
-    pipeline_executor_state.capture_pipeline.key_event_buffer = false; // Reset swap buffer flag
-    pipeline_executor_state.capture_pipeline.key_buffer = pipeline_executor_state.key_event_buffer_swap;
-
-    if (pipeline_executor_state.capture_pipeline.callback_time > 0) {
+    if (pipeline_executor_state.return_data.callback_time > 0) {
         platform_cancel_deferred_exec(pipeline_executor_state.deferred_exec_callback_token);
     }
+
+    pipeline_executor_state.return_data.callback_time = 0;
+    pipeline_executor_state.return_data.captured = false;
+    pipeline_executor_state.return_data.key_buffer_changed = false; // Reset swap buffer flag
+    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer_swap;
 
     bool key_digested = false;
     bool last_pipeline_execution_changed_buffer = false;
     bool last_pipeline_execution_captured_key_processing = false;
 
-    while (last_pipeline_execution_changed_buffer == true) {
-        platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
-        if (pipeline_executor_state.capture_pipeline.captured == true) {
-            execute_middleware(pipeline_executor_state.capture_pipeline.pipeline_index, press_buffer_selected, &key_digested, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
-        } else {
+
+    platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
+    if (pipeline_executor_state.return_data.captured == true) {
+        execute_middleware(&pipeline_executor_state, pipeline_executor_state.pipeline_index, press_buffer_selected, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
+        key_digested = pipeline_executor_state.return_data.key_buffer_changed == true;
+    } else {
+        while (last_pipeline_execution_changed_buffer == true) {
             for (size_t i = 0; i < pipeline_executor_config->length; i++) {
                 pipeline_executor_state.pipeline_index = i;
-                execute_middleware(i, press_buffer_selected, &key_digested, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
+                execute_middleware(&pipeline_executor_state, i, press_buffer_selected, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
+                key_digested = key_digested || pipeline_executor_state.return_data.key_buffer_changed == true;
                 if (last_pipeline_execution_captured_key_processing == true) break;
-            };
+            }
         }
-        //remove_from_press_buffer(pipeline_executor_state.key_buffer,  0);
     }
 
-    if (pipeline_executor_state.capture_pipeline.captured == true && pipeline_executor_state.capture_pipeline.callback_time > 0) {
-        pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.capture_pipeline.callback_time, deferred_exec_callback, NULL);
+    if (pipeline_executor_state.return_data.captured == true && pipeline_executor_state.return_data.callback_time > 0) {
+        pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.return_data.callback_time, deferred_exec_callback, NULL);
     }
 
     // if (press_buffer_selected->keycode <= 0xFF) {
@@ -132,31 +128,28 @@ static bool process_key_pool(void) {
     // }
     // print_press_buffers(10);
 
-    key_digested = (key_digested && pipeline_executor_state.capture_pipeline.captured == true);
-    return (key_digested == false);
+    bool requieres_further_processing = (key_digested == false && pipeline_executor_state.return_data.captured == false);
+    return (requieres_further_processing);
 }
 
 void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time) {
-    pipeline_executor_state.capture_pipeline.callback_time = callback_time;
-    pipeline_executor_state.capture_pipeline.captured = true;
-    pipeline_executor_state.capture_pipeline.pipeline_index = pipeline_executor_state.pipeline_index;
+    pipeline_executor_state.return_data.callback_time = callback_time;
+    pipeline_executor_state.return_data.captured = true;
 }
 
 void pipeline_executor_capture_next_keys(void) {
-    pipeline_executor_state.capture_pipeline.callback_time = 0;
-    pipeline_executor_state.capture_pipeline.captured = true;
-    pipeline_executor_state.capture_pipeline.pipeline_index = pipeline_executor_state.pipeline_index;
+    pipeline_executor_state.return_data.callback_time = 0;
+    pipeline_executor_state.return_data.captured = true;
 }
 
 void pipeline_executor_global_state_create(void) {
     pipeline_executor_state.key_press_buffer = platform_key_press_create();
     pipeline_executor_state.key_event_buffer = platform_key_event_create();
     pipeline_executor_state.key_event_buffer_swap = platform_key_event_create();
-    pipeline_executor_state.capture_pipeline.callback_time = 0;
-    pipeline_executor_state.capture_pipeline.captured = false;
-    pipeline_executor_state.capture_pipeline.pipeline_index = 0;
-    pipeline_executor_state.capture_pipeline.key_event_buffer = false;
-    pipeline_executor_state.capture_pipeline.key_buffer = pipeline_executor_state.key_event_buffer_swap;
+    pipeline_executor_state.return_data.callback_time = 0;
+    pipeline_executor_state.return_data.captured = false;
+    pipeline_executor_state.return_data.key_buffer_changed = false;
+    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer_swap;
     pipeline_executor_state.pipeline_index = 0; // Initialize the pipeline index
     pipeline_executor_state.deferred_exec_callback_token = 0; // Initialize the deferred execution callback token
 }

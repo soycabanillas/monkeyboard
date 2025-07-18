@@ -18,8 +18,7 @@ typedef enum {
 typedef struct {
     platform_time_t callback_time;
     bool captured;
-    size_t pipeline_index; // Index of the pipeline that captured the callback
-    bool key_event_buffer;
+    bool key_buffer_changed;
     platform_key_event_buffer_t *key_buffer;
 } capture_pipeline_t;
 
@@ -52,7 +51,7 @@ typedef struct {
     platform_key_press_buffer_t *key_press_buffer;
     platform_key_event_buffer_t *key_event_buffer;
     platform_key_event_buffer_t *key_event_buffer_swap; // Swap buffer for double buffering
-    capture_pipeline_t capture_pipeline;
+    capture_pipeline_t return_data;
     size_t pipeline_index;
     platform_deferred_token deferred_exec_callback_token;
 } pipeline_executor_state_t;
