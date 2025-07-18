@@ -1,5 +1,8 @@
 #include "pipeline_executor.h"
 #include <stdint.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <stdlib.h>
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
@@ -86,7 +89,7 @@ static void deferred_exec_callback(void *cb_arg) {
 }
 
 // Execute the middleware when a key event occurs
-// Returns true if any key was digested by the middleware
+// Returns false if any key was digested by the middleware
 // This function is called by the platform when a key event occurs
 // It processes the key events and executes the pipelines accordingly
 // It also cancels any pending deferred execution callbacks
@@ -107,6 +110,12 @@ static bool process_key_pool(void) {
     bool last_pipeline_execution_captured_key_processing = false;
 
     platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
+
+    #ifdef DEBUGf
+    // Print the press buffer for debugging
+    print_key_event_buffer(pipeline_executor_state.key_event_buffer,    10);
+    #endif
+
     if (pipeline_executor_state.return_data.captured == true) {
         execute_middleware(&pipeline_executor_state, pipeline_executor_state.pipeline_index, 1, press_buffer_selected, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
         key_digested = last_pipeline_execution_changed_buffer || last_pipeline_execution_captured_key_processing;
@@ -149,7 +158,7 @@ static bool process_key_pool(void) {
     // }
     // print_press_buffers(10);
 
-    return (key_digested);
+    return (key_digested == false);
 }
 
 void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time) {
@@ -186,6 +195,11 @@ pipeline_t* add_pipeline(pipeline_callback callback, void* user_data, bool proce
 }
 
 bool pipeline_process_key(abskeyevent_t abskeyevent) {
+    #ifdef DEBUG
+    // Print the abskeyevent for debugging
+    printf("Processing key event: Row: %u, Col: %u, Pressed: %d, Time: %u\n",
+            abskeyevent.key.row, abskeyevent.key.col, abskeyevent.pressed, abskeyevent.time);
+    #endif
     uint8_t layer = platform_layout_get_current_layer_impl();
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, abskeyevent.key);
 
@@ -193,5 +207,5 @@ bool pipeline_process_key(abskeyevent_t abskeyevent) {
         platform_key_event_add_event(pipeline_executor_state.key_event_buffer, abskeyevent.time, layer, abskeyevent.key, keycode, abskeyevent.pressed);
         return process_key_pool();
     }
-    return true;
+    return false;
 }

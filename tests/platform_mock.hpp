@@ -27,7 +27,6 @@ struct MockPlatformState {
 
     std::vector<key_event_t> key_events;
     std::set<platform_keycode_t> pressed_keys;
-    std::vector<platform_keycode_t> send_key_calls;
     std::vector<platform_keycode_t> register_key_calls;
     std::vector<platform_keycode_t> unregister_key_calls;
     std::vector<uint8_t> layer_select_calls;

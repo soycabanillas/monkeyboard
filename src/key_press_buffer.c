@@ -3,6 +3,9 @@
 #include "platform_types.h"
 #include <stdbool.h>
 #include <stdint.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,6 +54,14 @@ bool platform_key_press_keypos_is_pressed(platform_key_press_buffer_t *key_buffe
 
 bool platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_time_t time, uint8_t layer, platform_keypos_t key, bool is_press) {
 
+    #ifdef DEBUG
+    if (key_buffer == NULL) {
+        printf("Error: Key buffer is NULL");
+        return false;
+    }
+    printf("Adding press: Time: %u, Layer: %u, Keypos: (%u, %u), Press: %d\n",
+           time, layer, key.row, key.col, is_press);
+    #endif
     platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
     uint8_t only_press_buffer_pos = key_buffer->press_buffer_pos;
 

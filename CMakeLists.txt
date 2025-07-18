@@ -53,6 +53,11 @@ target_compile_options(tap_dance_engine PRIVATE
     $<$<CONFIG:Release>:-O2 -DNDEBUG>
 )
 
+# Add DEBUG definition for debug builds
+target_compile_definitions(tap_dance_engine PRIVATE
+    $<$<CONFIG:Debug>:DEBUG>
+)
+
 # Tests
 if(BUILD_TESTS)
     # Google Test

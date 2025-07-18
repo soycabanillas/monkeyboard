@@ -1,5 +1,8 @@
 #include "pipeline_tap_dance.h"
 #include <stdint.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include "key_event_buffer.h"
@@ -442,6 +445,14 @@ void pipeline_tap_dance_global_state_create(void) {
 void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
+    #ifdef DEBUG
+    if (global_config == NULL) {
+        printf("Tap Dance: Global config is NULL");
+        return;
+    }
+    printf("Tap Dance: Callback called with type %d, calls_on_iteration %d, row %d, col %d, keycode %d",
+           params->callback_type, params->calls_on_iteration, params->key_events->event_buffer[0].keypos.row, params->key_events->event_buffer[0].keypos.col, params->key_events->event_buffer[0].keycode);
+    #endif
     if (params->calls_on_iteration > 1) return; // Ignore if called multiple times in one iteration
 
     platform_key_event_t* first_key_event = &params->key_events->event_buffer[0];

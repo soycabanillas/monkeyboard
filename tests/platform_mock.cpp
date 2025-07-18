@@ -36,7 +36,6 @@ void MockPlatformState::reset() {
 
     key_events.clear();
     pressed_keys.clear();
-    send_key_calls.clear();
     register_key_calls.clear();
     unregister_key_calls.clear();
     layer_select_calls.clear();
@@ -76,7 +75,6 @@ void MockPlatformState::print_state() const {
     printf("==================\n");
 }
 
-int MockPlatformState::send_key_calls_count() const { return send_key_calls.size(); }
 int MockPlatformState::register_key_calls_count() const { return register_key_calls.size(); }
 int MockPlatformState::unregister_key_calls_count() const { return unregister_key_calls.size(); }
 int MockPlatformState::layer_select_calls_count() const { return layer_select_calls.size(); }
@@ -92,9 +90,12 @@ MockPlatformState g_mock_state;
 
 // Mock key operations
 void platform_tap_keycode(platform_keycode_t keycode) {
-    printf("MOCK: Send key %u\n", keycode);
-    g_mock_state.send_key_calls.push_back(keycode);
-    g_mock_state.last_sent_key = keycode;
+    printf("MOCK: Tap key %u (register + unregister)\n", keycode);
+    // Tap is implemented as register followed by unregister
+    g_mock_state.register_key_calls.push_back(keycode);
+    g_mock_state.unregister_key_calls.push_back(keycode);
+    g_mock_state.last_registered_key = keycode;
+    g_mock_state.last_unregistered_key = keycode;
     // Record as press then release
     g_mock_state.record_key_event(keycode, true);
     g_mock_state.record_key_event(keycode, false);

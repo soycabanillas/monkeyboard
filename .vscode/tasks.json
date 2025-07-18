@@ -47,9 +47,9 @@
             }
         },
         {
-            "label": "Test",
+            "label": "Test CMake",
             "type": "shell",
-            "command": "cd build && ctest",
+            "command": "cd build && ctest --verbose",
             "group": "test",
             "presentation": {
                 "echo": true,
@@ -58,6 +58,41 @@
                 "panel": "shared"
             },
             "dependsOn": "Build"
+        },
+        {
+            "label": "Test Google Test",
+            "type": "shell",
+            "command": "./build/tests",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "dependsOn": "Build"
+        },
+        {
+            "label": "Test Single",
+            "type": "shell",
+            "command": "./build/tests",
+            "args": ["--gtest_filter=${input:testFilter}"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "dependsOn": "Build"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testFilter",
+            "description": "Test filter pattern (e.g., TapDanceComprehensiveTest.BasicSingleTap)",
+            "type": "promptString",
+            "default": "*"
         }
     ]
 }
