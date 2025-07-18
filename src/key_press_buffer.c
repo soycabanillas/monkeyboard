@@ -75,7 +75,7 @@ bool platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platf
             only_press_buffer_pos = only_press_buffer_pos + 1;
             key_buffer->press_buffer_pos = only_press_buffer_pos;
         } else {
-            return false;
+            return true; // The release is not added, but the press is still valid
         }
     }
     return false;
