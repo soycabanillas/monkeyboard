@@ -111,11 +111,6 @@ static bool process_key_pool(void) {
 
     platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
 
-    #ifdef DEBUGf
-    // Print the press buffer for debugging
-    print_key_event_buffer(pipeline_executor_state.key_event_buffer,    10);
-    #endif
-
     if (pipeline_executor_state.return_data.captured == true) {
         execute_middleware(&pipeline_executor_state, pipeline_executor_state.pipeline_index, 1, press_buffer_selected, &last_pipeline_execution_changed_buffer, &last_pipeline_execution_captured_key_processing);
         key_digested = last_pipeline_execution_changed_buffer || last_pipeline_execution_captured_key_processing;
@@ -203,7 +198,15 @@ bool pipeline_process_key(abskeyevent_t abskeyevent) {
     uint8_t layer = platform_layout_get_current_layer_impl();
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, abskeyevent.key);
 
+    #ifdef DEBUG
+    // Print the keycode for debugging
+    printf("Keycode: %u, Layer: %u\n", keycode, layer);
+    #endif
     if (platform_key_press_add_press(pipeline_executor_state.key_press_buffer, abskeyevent.time, layer, abskeyevent.key, abskeyevent.pressed)) {
+        #ifdef DEBUG
+        // Print the press buffer for debugging
+        print_key_event_buffer(pipeline_executor_state.key_event_buffer,    10);
+        #endif
         platform_key_event_add_event(pipeline_executor_state.key_event_buffer, abskeyevent.time, layer, abskeyevent.key, keycode, abskeyevent.pressed);
         return process_key_pool();
     }
