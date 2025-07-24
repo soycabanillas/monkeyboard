@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
-#include "key_virtual_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 
@@ -17,27 +16,18 @@ pipeline_executor_config_t *pipeline_executor_config;
 
 static void register_key(platform_keycode_t keycode, platform_keypos_t keypos) {
     platform_register_keycode(keycode);
-    //add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, abskeyevent.pressed, true, true, pipeline_executor_state.pipeline_index);
 }
 
 static void unregister_key(platform_keycode_t keycode) {
     platform_unregister_keycode(keycode);
-    // add_to_press_buffer(pipeline_executor_state.key_buffer, keycode, abskeyevent.key, abskeyevent.time, 0, abskeyevent.pressed, true, pipeline_executor_state.pipeline_index);
 }
 
 static void tap_key(platform_keycode_t keycode, platform_keypos_t keypos) {
     platform_tap_keycode(keycode);
-    // intern_tap_key(keycode, keypos);
-    // intern_untap_key(keycode);
 }
 
 static void remove_physical_press_and_release(platform_keypos_t keypos) {
-    platform_key_event_remove_type_t press_and_release_output = platform_key_event_remove_physical_press_and_release(pipeline_executor_state.key_event_buffer, keypos);
-    if (press_and_release_output == PLATFORM_KEY_EVENT_TYPE_PHYSICAL_PRESS_REMOVED) {
-        // Only press was removed, ignore release
-        platform_key_press_ignore_release(pipeline_executor_state.key_press_buffer, keypos);
-        return;
-    }
+    platform_key_event_remove_physical_press_and_release(pipeline_executor_state.key_event_buffer, keypos);
 }
 
 static void update_layer_for_physical_events(uint8_t layer, uint8_t pos) {
@@ -75,17 +65,6 @@ static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, pla
 
 static void execute_middleware(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_key_event_t* press_buffer_selected) {
     execute_pipeline(0, pipeline_index, pipeline_executor_state->key_event_buffer, press_buffer_selected, &pipeline_executor_state->return_data);
-
-    if (pipeline_executor_state->return_data.key_buffer_changed == true) {
-        // Swap buffers if the middleware has changed the key event buffer
-        pipeline_executor_state->key_event_buffer_swap = pipeline_executor_state->key_event_buffer;
-        pipeline_executor_state->key_event_buffer = pipeline_executor_state->return_data.key_buffer;
-        platform_key_event_reset(pipeline_executor_state->key_event_buffer_swap);
-        pipeline_executor_state->return_data.key_buffer_changed = false; // Reset swap buffer flag
-    }
-    else {
-        platform_key_event_reset(pipeline_executor_state->key_event_buffer_swap);
-    }
 }
 
 // Executes the middleware when the timer callback is triggered
@@ -113,7 +92,6 @@ static bool process_key_pool(void) {
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.return_data.key_buffer_changed = false; // Reset swap buffer flag
-    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer_swap;
 
     platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
 
@@ -144,7 +122,6 @@ static bool process_key_pool(void) {
                 platform_unregister_keycode(pipeline_executor_state.key_event_buffer->event_buffer[pos].keycode);
             }
         }
-        platform_key_event_reset(pipeline_executor_state.key_event_buffer);
     }
 
     bool key_digested = last_execution.key_buffer_changed || last_execution.capture_key_events;
@@ -166,14 +143,11 @@ void pipeline_executor_end_with_buffer_swap(void) {
 }
 
 static void pipeline_executor_create_state(void) {
-    pipeline_executor_state.key_press_buffer = platform_key_press_create();
-    pipeline_executor_state.virtual_press_buffer = platform_virtual_press_create();
     pipeline_executor_state.key_event_buffer = platform_key_event_create();
-    pipeline_executor_state.key_event_buffer_swap = platform_key_event_create();
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.return_data.key_buffer_changed = false;
-    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer_swap;
+    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer;
     pipeline_executor_state.pipeline_index = 0; // Initialize the pipeline index
     pipeline_executor_state.deferred_exec_callback_token = 0; // Initialize the deferred execution callback token
 }
@@ -184,14 +158,11 @@ static void pipeline_executor_create_state(void) {
  * This function should be called to reinitialize the pipeline executor to a clean state.
  */
 void pipeline_executor_reset_state(void) {
-    platform_key_press_reset(pipeline_executor_state.key_press_buffer);
-    platform_virtual_press_reset(pipeline_executor_state.virtual_press_buffer);
     platform_key_event_reset(pipeline_executor_state.key_event_buffer);
-    platform_key_event_reset(pipeline_executor_state.key_event_buffer_swap);
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.return_data.key_buffer_changed = false;
-    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer_swap;
+    pipeline_executor_state.return_data.key_buffer = pipeline_executor_state.key_event_buffer;
     pipeline_executor_state.pipeline_index = 0; // Reset the pipeline index
     pipeline_executor_state.deferred_exec_callback_token = 0; // Reset the deferred execution callback token
     for (uint8_t i = 0; i < pipeline_executor_config->length; i++) {
@@ -236,58 +207,30 @@ bool pipeline_process_key(abskeyevent_t abskeyevent) {
     #endif
 
     bool further_process_required = false;
-    platform_key_press_key_press_t* key_press = NULL;
-    bool pressed = abskeyevent.pressed;
-    platform_time_t time = abskeyevent.time;
-    platform_keypos_t keypos = abskeyevent.keypos;
 
-    if (pressed == true) {
-        key_press = platform_key_press_add_press(pipeline_executor_state.key_press_buffer, keypos);
+    bool event_added = false;
+    if (abskeyevent.pressed) {
+        uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos);
+        if (press_id > 0) {
+            event_added = true;
+        }
     } else {
-        key_press = platform_key_press_get_press_from_keypos(pipeline_executor_state.key_press_buffer, keypos);
+        if (platform_key_event_add_physical_release(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos)) {
+            event_added = true;
+        }
     }
-    if (key_press != NULL) {
-        bool event_added = false;
-        printf("-- Key position: %u, Press ID: %u, Ignore Release: %d\n", key_press->keypos.col, key_press->press_id, key_press->ignore_release);
-        if (pressed) {
-            uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, time, key_press->keypos);
-            printf("-- Adding physical press: %u\n", press_id);
-            if (press_id > 0) {
-                key_press->press_id = press_id;
-                key_press->layer = platform_layout_get_current_layer();
-                event_added = true;
-            }
-        } else {
-            printf("-- Adding physical release for press ID: %u\n", key_press->press_id);
-            if (key_press->ignore_release) {
-                printf("Ignoring release for key position: %u\n", key_press->keypos.col);
-                platform_key_press_remove_press(pipeline_executor_state.key_press_buffer, key_press->keypos);
-                further_process_required = false;
-                return further_process_required; // Ignore the release event
-            }
-            if (platform_key_event_add_physical_release(pipeline_executor_state.key_event_buffer, pipeline_executor_state.key_press_buffer, time, key_press->press_id)) {
-                printf("-- Physical release added successfully\n");
-                event_added = true;
-            }
-        }
-
-        if (event_added) {
-            #ifdef DEBUG
-            // Print the event buffer for debugging
-            print_key_event_buffer(pipeline_executor_state.key_event_buffer, PLATFORM_KEY_EVENT_MAX_ELEMENTS);
-            #endif
-            further_process_required = process_key_pool();
-
-            if (pressed == false) platform_key_press_remove_press(pipeline_executor_state.key_press_buffer, key_press->keypos);
-        } else {
-            #ifdef DEBUG
-            printf("Error: Key event buffer is full, cannot add event\n");
-            #endif
-            // Reset the global state
-            pipeline_executor_reset_state();
-            further_process_required = false;
-        }
+    #ifdef DEBUG
+    print_key_press_buffer(pipeline_executor_state.key_event_buffer->key_press_buffer, PLATFORM_KEY_BUFFER_MAX_ELEMENTS);
+    print_key_event_buffer(pipeline_executor_state.key_event_buffer, PLATFORM_KEY_EVENT_MAX_ELEMENTS);
+    #endif
+    if (event_added) {
+        further_process_required = process_key_pool();
     } else {
+        #ifdef DEBUG
+        printf("Error: Key event buffer is full, cannot add event\n");
+        #endif
+        // Reset the global state
+        pipeline_executor_reset_state();
         further_process_required = false;
     }
     return further_process_required;

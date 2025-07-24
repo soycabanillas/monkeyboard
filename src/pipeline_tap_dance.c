@@ -381,14 +381,14 @@ void handle_timeout(pipeline_callback_params_t* params,
             // Tap timeout reached - execute tap action
             tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                params->key_events->event_buffer_pos ++;
-                params->key_events->event_buffer[0].keypos = status->key_buffer->event_buffer[0].keypos;
-                params->key_events->event_buffer[0].keycode = tap_action->keycode;
-                params->key_events->event_buffer[0].layer = status->selected_layer;
-                params->key_events->event_buffer[0].is_press = true;
-                params->key_events->event_buffer[0].time = params->key_events->event_buffer[0].time;
+                // params->key_events->event_buffer_pos ++;
+                // params->key_events->event_buffer[0].keypos = status->key_buffer->event_buffer[0].keypos;
+                // params->key_events->event_buffer[0].keycode = tap_action->keycode;
+                // params->key_events->event_buffer[0].layer = status->selected_layer;
+                // params->key_events->event_buffer[0].is_press = true;
+                // params->key_events->event_buffer[0].time = params->key_events->event_buffer[0].time;
 
-                pipeline_executor_end_with_buffer_swap();
+                // pipeline_executor_end_with_buffer_swap();
             }
 
             // Check for key repetition exception

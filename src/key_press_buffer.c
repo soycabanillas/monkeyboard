@@ -25,7 +25,7 @@ void platform_key_press_reset(platform_key_press_buffer_t* key_buffer) {
     key_buffer->press_buffer_pos = 0;
 }
 
-platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos) {
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos, uint8_t layer, uint8_t press_id) {
 
     if (key_buffer == NULL) {
         return NULL;
@@ -40,7 +40,8 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
 
     if (key_buffer->press_buffer_pos < PLATFORM_KEY_BUFFER_MAX_ELEMENTS) {
         only_press_buffer[key_buffer->press_buffer_pos].keypos = keypos;
-        only_press_buffer[key_buffer->press_buffer_pos].press_id = 0;
+        only_press_buffer[key_buffer->press_buffer_pos].press_id = press_id;
+        only_press_buffer[key_buffer->press_buffer_pos].layer = layer;
         only_press_buffer[key_buffer->press_buffer_pos].ignore_release = false; // Default to not ignoring release
         ++key_buffer->press_buffer_pos;
         return &only_press_buffer[key_buffer->press_buffer_pos - 1]; // Return the newly added press
@@ -127,3 +128,19 @@ bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer
 
     return false;
 }
+
+#ifdef DEBUG
+void print_key_press_buffer(platform_key_press_buffer_t *event_buffer, size_t n_elements) {
+    if (event_buffer == NULL) {
+        printf("Error: Key press buffer is NULL\n");
+        return;
+    }
+    printf("Key Press Buffer: %u\n", event_buffer->press_buffer_pos);
+    platform_key_press_key_press_t* press_buffer = event_buffer->press_buffer;
+    for (size_t i = 0; i < n_elements && i < event_buffer->press_buffer_pos; i++) {
+        printf("Events: %d Event %zu: Layer: %u, Ignored: %d, Press_Id: %u\n",
+               event_buffer->press_buffer_pos, i, press_buffer[i].layer,
+               press_buffer[i].ignore_release, press_buffer[i].press_id);
+    }
+}
+#endif

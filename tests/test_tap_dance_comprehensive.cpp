@@ -194,7 +194,6 @@ protected:
         event.time = static_cast<uint16_t>(platform_timer_read());
 
         if (pipeline_process_key(event) == false) {
-            printf("Key %d not processed by tap dance pipeline\n", keycode);
             // If the key was not processed, we can simulate a fallback action
             if (pressed) {
                 platform_register_keycode(keycode);

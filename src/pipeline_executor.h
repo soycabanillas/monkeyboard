@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "key_event_buffer.h"
-#include "key_press_buffer.h"
-#include "key_virtual_buffer.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
@@ -53,10 +51,7 @@ typedef struct {
 } pipeline_t;
 
 typedef struct {
-    platform_key_press_buffer_t *key_press_buffer;
-    platform_virtual_press_buffer_t *virtual_press_buffer; // Buffer for virtual key presses
     platform_key_event_buffer_t *key_event_buffer;
-    platform_key_event_buffer_t *key_event_buffer_swap; // Swap buffer for double buffering
     capture_pipeline_t return_data;
     size_t pipeline_index; // Index of the current pipeline being executed
     platform_deferred_token deferred_exec_callback_token;

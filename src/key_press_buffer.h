@@ -27,12 +27,16 @@ typedef struct {
 platform_key_press_buffer_t* platform_key_press_create(void);
 void platform_key_press_reset(platform_key_press_buffer_t* press_buffer);
 
-platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos, uint8_t layer, uint8_t press_id);
 bool platform_key_press_remove_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 
 platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id);
 bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+
+#ifdef DEBUG
+void print_key_press_buffer(platform_key_press_buffer_t *event_buffer, size_t n_elements);
+#endif
 
 #ifdef __cplusplus
 }

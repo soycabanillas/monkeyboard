@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "key_press_buffer.h"
+#include "key_virtual_buffer.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
@@ -25,6 +26,8 @@ typedef struct {
 typedef struct {
     platform_key_event_t event_buffer[PLATFORM_KEY_EVENT_MAX_ELEMENTS];
     uint8_t event_buffer_pos;
+    platform_virtual_press_buffer_t* virtual_press_buffer; // Buffer for virtual key presses
+    platform_key_press_buffer_t* key_press_buffer; // Buffer for physical key presses
 } platform_key_event_buffer_t;
 
 typedef enum {
@@ -39,7 +42,7 @@ void platform_key_event_reset(platform_key_event_buffer_t* event_buffer);
 
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
 uint8_t platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keycode_t keycode);
-bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_key_press_buffer_t *key_press_buffer, platform_time_t time, uint8_t press_id);
+bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
 platform_key_event_remove_type_t platform_key_event_remove_physical_press_and_release(platform_key_event_buffer_t *event_buffer, platform_keypos_t keypos);
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);
 

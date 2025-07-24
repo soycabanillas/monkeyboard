@@ -1,5 +1,6 @@
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
+#include "key_virtual_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 #include <regex.h>
@@ -27,6 +28,8 @@ platform_key_event_buffer_t* platform_key_event_create(void) {
         return NULL;
     }
     key_buffer->event_buffer_pos = 0;
+    key_buffer->virtual_press_buffer = platform_virtual_press_create();
+    key_buffer->key_press_buffer = platform_key_press_create();
     return key_buffer;
 }
 
@@ -35,6 +38,8 @@ void platform_key_event_reset(platform_key_event_buffer_t* event_buffer) {
         return;
     }
     event_buffer->event_buffer_pos = 0;
+    platform_virtual_press_reset(event_buffer->virtual_press_buffer);
+    platform_key_press_reset(event_buffer->key_press_buffer);
 }
 
 static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *event_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, platform_keycode_t keycode, bool is_press, uint8_t press_id, bool is_physical) {
@@ -61,8 +66,16 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos) {
     uint8_t press_id = get_keypress_id();
     uint8_t layer = platform_layout_get_current_layer();
+    platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, layer, press_id);
+    if (key_press == NULL) {
+        return 0; // Failed to add press to key press buffer
+    }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
     bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, true);
+    if (!press_added) {
+        platform_key_press_remove_press(event_buffer->key_press_buffer, keypos); // Clean up if event could not be added
+        return 0; // Failed to add press to event buffer
+    }
     return (press_added ? press_id : 0);
 }
 
@@ -72,24 +85,27 @@ uint8_t platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_
     return (press_added ? press_id : 0);
 }
 
-bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_key_press_buffer_t *key_press_buffer, platform_time_t time, uint8_t press_id) {
-    if (event_buffer == NULL) {
-        return false; // Buffer is NULL
+bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos) {
+    print_key_event_buffer(event_buffer, PLATFORM_KEY_EVENT_MAX_ELEMENTS);
+    platform_key_press_buffer_t *key_press_buffer = event_buffer->key_press_buffer;
+    if (key_press_buffer == NULL) {
+        return false; // Key press buffer is not initialized
     }
-
-    platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(key_press_buffer, press_id);
+    platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_keypos(key_press_buffer, keypos);
     if (key_press == NULL) {
         return false; // Press ID not found
     }
     if (key_press->ignore_release) {
-        printf("Ignoring release for press ID: %u\n", press_id);
         platform_key_press_remove_press(key_press_buffer, key_press->keypos);
         return false; // Ignore the release event
     }
-    printf("Adding release for press ID: %u\n", press_id);
-    printf("Current event buffer position: %u\n", event_buffer->event_buffer_pos);
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(key_press->layer, key_press->keypos);
-    return platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, press_id, true);
+    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, true);
+    if (!press_added) {
+        platform_key_press_remove_press(event_buffer->key_press_buffer, key_press->keypos);
+        return false;
+    }
+    return true;
 }
 
 
@@ -124,6 +140,7 @@ platform_key_event_remove_type_t platform_key_event_remove_physical_press_and_re
         }
     }
     if (found_release == false) {
+        platform_key_press_ignore_release(event_buffer->key_press_buffer, keypos);
         return PLATFORM_KEY_EVENT_TYPE_PHYSICAL_PRESS_REMOVED; // No release found
     }
     return PLATFORM_KEY_EVENT_TYPE_PHYSICAL_PRESS_AND_RELEASE_REMOVED; // Both press and release found and removed
@@ -167,9 +184,9 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer, size_t n_
     }
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     for (size_t i = 0; i < n_elements && i < event_buffer->event_buffer_pos; i++) {
-        printf("Events: %d Event %zu: Keycode: %u, Layer: %u, Press: %d, Press_Id: %u, Time: %u\n",
-               event_buffer->event_buffer_pos, i, press_buffer[i].keycode, press_buffer[i].layer,
-               press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
+        printf("Events: %d Event %zu: Row: %u, Col: %u, Keycode: %u, Layer: %u, Press: %d, Press_Id: %u, Time: %u\n",
+               event_buffer->event_buffer_pos, i, press_buffer[i].keypos.row, press_buffer[i].keypos.col,
+               press_buffer[i].keycode, press_buffer[i].layer, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
     }
 }
 #endif
