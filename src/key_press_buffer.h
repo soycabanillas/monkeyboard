@@ -9,12 +9,13 @@
 extern "C" {
 #endif
 
-#define PLATFORM_KEY_BUFFER_MAX_ELEMENTS 5
+#define PLATFORM_KEY_BUFFER_MAX_ELEMENTS 10
 
 typedef struct {
     platform_keypos_t keypos;
-    platform_keycode_t keycode;
-    platform_time_t time;
+    uint8_t press_id; // Unique ID for the key press, used to track presses/releases
+    uint8_t layer; // Layer associated with the key press
+    bool ignore_release; // If true, the release of this key will be ignored
 } platform_key_press_key_press_t;
 
 typedef struct {
@@ -26,10 +27,12 @@ typedef struct {
 platform_key_press_buffer_t* platform_key_press_create(void);
 void platform_key_press_reset(platform_key_press_buffer_t* press_buffer);
 
-bool platform_key_press_keycode_is_pressed(platform_key_press_buffer_t *press_buffer, platform_keycode_t keycode);
-bool platform_key_press_keypos_is_pressed(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
-bool platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, bool is_press);
-void platform_key_press_remove_press(platform_key_press_buffer_t *press_buffer, uint8_t pos);
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+bool platform_key_press_remove_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+
+platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id);
+bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 
 #ifdef __cplusplus
 }

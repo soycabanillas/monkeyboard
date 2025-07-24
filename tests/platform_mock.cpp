@@ -26,6 +26,15 @@ void MockPlatformState::record_key_event(platform_keycode_t keycode, bool presse
 
 void MockPlatformState::advance_timer(platform_time_t ms) {
     timer += ms;
+    for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
+        if (it->execution_time <= timer) {
+            // Execute the deferred callback
+            it->callback(it->data);
+            // Remove the executed deferred call
+            it = g_mock_state.deferred_calls.erase(it);
+            if (it == g_mock_state.deferred_calls.end()) break; // Avoid invalid iterator
+        }
+    }
 }
 
 void MockPlatformState::reset() {
@@ -177,13 +186,18 @@ platform_time_t platform_timer_elapsed(platform_time_t last) {
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
     printf("MOCK: Defer exec for %u ms\n", delay_ms);
-    (void)callback;
-    (void)data;
-    return g_mock_state.next_token++;
+    g_mock_state.deferred_calls.push_back({g_mock_state.next_token++, g_mock_state.timer + delay_ms, callback, data});
+    return g_mock_state.next_token;
 }
 
 bool platform_cancel_deferred_exec(platform_deferred_token token) {
     printf("MOCK: Cancel deferred exec token %u\n", token);
+    for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
+        if (it->token == token) {
+            g_mock_state.deferred_calls.erase(it);
+            return true;
+        }
+    }
     return true;
 }
 

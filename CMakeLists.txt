@@ -17,21 +17,25 @@ option(BUILD_TESTS "Build tests" ON)
 set(CORE_SOURCES
     src/key_event_buffer.c
     src/key_press_buffer.c
+    src/key_virtual_buffer.c
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
     src/platform_layout.c
+    src/platform_types.c
 )
 
 # Create core headers list
 set(CORE_HEADERS
     src/key_event_buffer.h
     src/key_press_buffer.h
+    src/key_virtual_buffer.h
     src/pipeline_executor.h
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h
     src/platform_interface.h
     src/platform_layout.h
+    src/platform_types.h
 )
 
 add_library(tap_dance_engine ${CORE_SOURCES} ${CORE_HEADERS})

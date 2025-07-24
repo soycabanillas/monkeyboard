@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
+#include "key_virtual_buffer.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
@@ -17,13 +18,12 @@ typedef enum {
 
 typedef struct {
     platform_time_t callback_time;
-    bool captured;
+    bool capture_key_events;
     bool key_buffer_changed;
     platform_key_event_buffer_t *key_buffer;
 } capture_pipeline_t;
 
 typedef struct {
-    uint8_t calls_on_iteration; // Number of times this middleware is called in the current iteration
     platform_key_event_buffer_t* key_events;
     pipeline_callback_type_t callback_type;
     uint16_t callback_time;
@@ -32,26 +32,29 @@ typedef struct {
 typedef void (*key_buffer_tap)(platform_keycode_t keycode, platform_keypos_t keypos);
 typedef void (*key_buffer_untap)(platform_keycode_t keycode);
 typedef void (*key_buffer_key)(platform_keycode_t keycode, platform_keypos_t keypos);
-typedef bool (*is_pressed)(platform_keycode_t);
+typedef void (*key_buffer_remove_physical_press_and_release)(platform_keypos_t keypos);
+typedef void (*key_buffer_update_layer_for_physical_events)(uint8_t layer, uint8_t pos);
 
 typedef struct {
     key_buffer_tap register_key_fn;
     key_buffer_untap unregister_key_fn;
     key_buffer_key tap_key_fn;
-    is_pressed is_keycode_pressed;
+    key_buffer_remove_physical_press_and_release remove_physical_press_and_release_fn;
+    key_buffer_update_layer_for_physical_events update_layer_for_physical_events_fn;
 } pipeline_actions_t;
 
 typedef void (*pipeline_callback)(pipeline_callback_params_t*, pipeline_actions_t*, void*);
+typedef void (*pipeline_callback_reset)(void*);
 
 typedef struct {
     pipeline_callback callback;
+    pipeline_callback_reset callback_reset;
     void* data;
-    bool process_just_once; // If true, this middleware will only process the first key event and will not capture subsequent events during the same iteration
-    uint8_t calls_on_iteration; // Number of times this pipeline is called in the current iteration
 } pipeline_t;
 
 typedef struct {
     platform_key_press_buffer_t *key_press_buffer;
+    platform_virtual_press_buffer_t *virtual_press_buffer; // Buffer for virtual key presses
     platform_key_event_buffer_t *key_event_buffer;
     platform_key_event_buffer_t *key_event_buffer_swap; // Swap buffer for double buffering
     capture_pipeline_t return_data;
@@ -66,12 +69,14 @@ typedef struct {
 
 extern pipeline_executor_config_t *pipeline_executor_config;
 
-void pipeline_executor_global_state_create(void);
+void pipeline_executor_reset_state(void);
+void pipeline_executor_create_config(uint8_t pipeline_count);
+void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_callback callback, pipeline_callback_reset callback_reset, void* user_data);
 
-void pipeline_executor_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
-void pipeline_executor_capture_next_keys(void);
+void pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
+void pipeline_executor_end_with_capture_next_keys(void);
+void pipeline_executor_end_with_buffer_swap(void);
 
-pipeline_t* add_pipeline(pipeline_callback callback, void* user_data, bool process_just_once);
 bool pipeline_process_key(abskeyevent_t abskeyevent);
 
 #ifdef __cplusplus

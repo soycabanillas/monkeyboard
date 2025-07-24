@@ -97,7 +97,8 @@ void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_stat
 
 pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create(void);
 
-void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data);
+void pipeline_tap_dance_callback_process_data(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data);
+void pipeline_tap_dance_callback_reset(void* user_data);
 
 #ifdef __cplusplus
 }

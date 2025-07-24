@@ -25,70 +25,105 @@ void platform_key_press_reset(platform_key_press_buffer_t* key_buffer) {
     key_buffer->press_buffer_pos = 0;
 }
 
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos) {
 
-bool platform_key_press_keycode_is_pressed(platform_key_press_buffer_t *key_buffer, platform_keycode_t keycode){
-    platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
-    uint8_t only_press_buffer_pos = key_buffer->press_buffer_pos;
-
-    for (size_t i = only_press_buffer_pos; i-- > 0;)
-    {
-        if (only_press_buffer[i].keycode == keycode) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool platform_key_press_keypos_is_pressed(platform_key_press_buffer_t *key_buffer, platform_keypos_t key) {
-    platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
-    uint8_t only_press_buffer_pos = key_buffer->press_buffer_pos;
-
-    for (size_t i = only_press_buffer_pos; i-- > 0;)
-    {
-        if (platform_compare_keyposition(only_press_buffer[i].keypos, key)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_time_t time, uint8_t layer, platform_keypos_t key, bool is_press) {
-
-    #ifdef DEBUG
     if (key_buffer == NULL) {
-        printf("Error: Key buffer is NULL");
+        return NULL;
+    }
+    platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
+
+    for (size_t pos = 0; pos < key_buffer->press_buffer_pos; pos++) {
+        if (platform_compare_keyposition(only_press_buffer[pos].keypos, keypos)) {
+            return NULL;
+        }
+    }
+
+    if (key_buffer->press_buffer_pos < PLATFORM_KEY_BUFFER_MAX_ELEMENTS) {
+        only_press_buffer[key_buffer->press_buffer_pos].keypos = keypos;
+        only_press_buffer[key_buffer->press_buffer_pos].press_id = 0;
+        only_press_buffer[key_buffer->press_buffer_pos].ignore_release = false; // Default to not ignoring release
+        ++key_buffer->press_buffer_pos;
+        return &only_press_buffer[key_buffer->press_buffer_pos - 1]; // Return the newly added press
+    }
+    return NULL;
+}
+
+// Removes a key press from the key buffer corresponding to the given key position.
+// Returns true if the key was found and removed, false if the key was not found or the buffer is empty.
+// Parameters:
+//   key_buffer - pointer to the key press buffer structure
+//   keypos     - key position to remove from the buffer (matches by key position, not keycode)
+bool platform_key_press_remove_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos) {
+
+    if (key_buffer == NULL) {
         return false;
     }
-    printf("Adding press: Time: %u, Layer: %u, Keypos: (%u, %u), Press: %d\n",
-           time, layer, key.row, key.col, is_press);
-    #endif
     platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
-    uint8_t only_press_buffer_pos = key_buffer->press_buffer_pos;
 
-    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, key);
+    if (key_buffer->press_buffer_pos > 0){
+        size_t pos = 0;
+        for (pos = 0; pos < key_buffer->press_buffer_pos; pos++) {
+            if (platform_compare_keyposition(only_press_buffer[pos].keypos, keypos)) {
+                break;
+            }
+        }
 
-    if (is_press == true) {
-        if (only_press_buffer_pos < PLATFORM_KEY_BUFFER_MAX_ELEMENTS) {
-            only_press_buffer[only_press_buffer_pos].keypos = key;
-            only_press_buffer[only_press_buffer_pos].keycode = keycode;
-            only_press_buffer[only_press_buffer_pos].time = time;
-            only_press_buffer_pos = only_press_buffer_pos + 1;
-            key_buffer->press_buffer_pos = only_press_buffer_pos;
-        } else {
-            return false;
+        if (pos < key_buffer->press_buffer_pos) {
+            size_t num_elements_to_shift = key_buffer->press_buffer_pos - pos - 1;
+            if (num_elements_to_shift > 0) {
+                memcpy(&only_press_buffer[pos], &only_press_buffer[pos + 1], sizeof(platform_key_press_key_press_t) * num_elements_to_shift);
+            }
+            // No memcpy needed if pos is the last element; just decrement the count.
+            key_buffer->press_buffer_pos--;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
-void platform_key_press_remove_press(platform_key_press_buffer_t *key_buffer, uint8_t pos) {
-
-    platform_key_press_key_press_t* only_press_buffer = key_buffer->press_buffer;
-    uint8_t only_press_buffer_pos = key_buffer->press_buffer_pos;
-
-    if (pos < (size_t)(only_press_buffer_pos - 1)) {
-        memcpy(&only_press_buffer[pos], &only_press_buffer[pos + 1], sizeof(platform_key_press_key_press_t) * ((size_t)(only_press_buffer_pos - 1) -pos));
+platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos) {
+    if (press_buffer == NULL) {
+        return NULL;
     }
-    only_press_buffer_pos = only_press_buffer_pos - 1;
-    key_buffer->press_buffer_pos = only_press_buffer_pos;
+    platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
+    uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
+
+    for (size_t i = 0; i < only_press_buffer_pos; i++) {
+        if (platform_compare_keyposition(only_press_buffer[i].keypos, keypos)) {
+            return &only_press_buffer[i];
+        }
+    }
+    return NULL; // Key position not found
+}
+
+platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id) {
+    if (press_buffer == NULL) {
+        return NULL;
+    }
+    platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
+    uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
+
+    for (size_t i = 0; i < only_press_buffer_pos; i++) {
+        if (only_press_buffer[i].press_id == press_id) {
+            return &only_press_buffer[i];
+        }
+    }
+    return NULL; // Press ID not found
+}
+
+bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos) {
+    if (press_buffer == NULL) {
+        return false;
+    }
+    platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
+    uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
+
+    for (size_t i = 0; i < only_press_buffer_pos; i++) {
+        if (platform_compare_keyposition(only_press_buffer[i].keypos, keypos)) {
+            only_press_buffer[i].ignore_release = true;
+            return true;
+        }
+    }
+
+    return false;
 }

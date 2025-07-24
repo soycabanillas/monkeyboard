@@ -18,6 +18,14 @@ struct key_event_t {
     platform_time_t timestamp;
 };
 
+// Deferred call structure
+struct deferred_call_t {
+    platform_deferred_token token; // Token for deferred execution
+    uint32_t execution_time;
+    void (*callback)(void*);
+    void* data;
+};
+
 // MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
@@ -30,6 +38,7 @@ struct MockPlatformState {
     std::vector<platform_keycode_t> register_key_calls;
     std::vector<platform_keycode_t> unregister_key_calls;
     std::vector<uint8_t> layer_select_calls;
+    std::vector<deferred_call_t> deferred_calls;
 
     platform_keycode_t last_sent_key;
     platform_keycode_t last_registered_key;

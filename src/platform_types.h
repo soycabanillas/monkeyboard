@@ -92,16 +92,18 @@ typedef uint32_t platform_time_t;
 
 #if defined(AGNOSTIC_USE_1D_ARRAY)
     typedef uint16_t platform_keypos_t;
+    extern platform_keypos_t dummy_keypos; // Declaration only
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
     typedef struct {
         uint8_t row;
         uint8_t col;
     } platform_keypos_t;
+    extern platform_keypos_t dummy_keypos; // Declaration only
 #endif
 
 // Platform-agnostic key event type
 typedef struct {
-    platform_keypos_t key;
+    platform_keypos_t keypos;
     bool pressed;
     platform_time_t time;
 } abskeyevent_t;

@@ -56,8 +56,9 @@ void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *status) {
     status->key_press_time = 0;
     status->last_release_time = 0;
     status->hold_action_discarded = false;
-    status->is_nested_active = false;
     // behaviour_index is set during initialization, don't reset it
+    status->is_nested_active = false;
+    platform_key_event_reset(status->key_buffer);
 }
 
 // Helper function to check key repetition exception
@@ -213,8 +214,8 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
         status->state = TAP_DANCE_HOLDING;
         platform_layout_set_layer(status->selected_layer);
 
-        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, first_key_event->keypos);
-        platform_key_event_add_event(status->key_buffer, first_key_event->time, status->selected_layer, first_key_event->keypos, keycode, true);
+        // platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, first_key_event->keypos);
+        // platform_key_event_add_event(status->key_buffer, first_key_event->time, status->selected_layer, first_key_event->keypos, keycode, true);
 
     }
 
@@ -224,6 +225,7 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
         actions->tap_key_fn(config->keycodemodifier, first_key_event->keypos);
         actions->tap_key_fn(first_key_event->keycode, first_key_event->keypos);
         status->state = TAP_DANCE_COMPLETED;
+        pipeline_executor_end_with_buffer_swap();
         reset_behaviour_state(status);
     }
 }
@@ -250,9 +252,9 @@ void handle_key_press(pipeline_callback_params_t* params,
 
                 // For positive interrupt config, set up interrupt config timeout first
                 if (hold_action->interrupt_config > 0) {
-                    pipeline_executor_capture_next_keys_or_callback_on_timeout(hold_action->interrupt_config);
+                    pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(hold_action->interrupt_config);
                 } else {
-                    pipeline_executor_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
+                    pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
                 }
             } else {
                 // No hold action, just wait for release
@@ -273,9 +275,9 @@ void handle_key_press(pipeline_callback_params_t* params,
 
                 // For positive interrupt config, set up interrupt config timeout first
                 if (hold_action->interrupt_config > 0) {
-                    pipeline_executor_capture_next_keys_or_callback_on_timeout(hold_action->interrupt_config);
+                    pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(hold_action->interrupt_config);
                 } else {
-                    pipeline_executor_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
+                    pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
                 }
             } else {
                 // No hold action, stay in waiting for tap state
@@ -306,7 +308,7 @@ void handle_key_release(pipeline_callback_params_t* params,
             if (has_subsequent_actions(config, status->tap_count)) {
                 // More actions available, wait for next tap
                 status->state = TAP_DANCE_WAITING_FOR_TAP;
-                pipeline_executor_capture_next_keys_or_callback_on_timeout(g_tap_timeout);
+                pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_tap_timeout);
             } else {
                 // No more actions, execute tap action immediately
                 pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
@@ -356,7 +358,7 @@ void handle_timeout(pipeline_callback_params_t* params,
                 status->state = TAP_DANCE_INTERRUPT_CONFIG_ACTIVE;
                 platform_time_t remaining_time = g_hold_timeout - hold_action->interrupt_config;
                 if (remaining_time > 0) {
-                    pipeline_executor_capture_next_keys_or_callback_on_timeout(remaining_time);
+                    pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(remaining_time);
                 } else {
                     // Hold timeout already reached
                     status->state = TAP_DANCE_HOLDING;
@@ -379,7 +381,14 @@ void handle_timeout(pipeline_callback_params_t* params,
             // Tap timeout reached - execute tap action
             tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                //actions->tap_key_fn(tap_action->keycode, params->keypos);
+                params->key_events->event_buffer_pos ++;
+                params->key_events->event_buffer[0].keypos = status->key_buffer->event_buffer[0].keypos;
+                params->key_events->event_buffer[0].keycode = tap_action->keycode;
+                params->key_events->event_buffer[0].layer = status->selected_layer;
+                params->key_events->event_buffer[0].is_press = true;
+                params->key_events->event_buffer[0].time = params->key_events->event_buffer[0].time;
+
+                pipeline_executor_end_with_buffer_swap();
             }
 
             // Check for key repetition exception
@@ -442,19 +451,26 @@ void pipeline_tap_dance_global_state_create(void) {
     }
 }
 
-void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
-    pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
-
-    #ifdef DEBUG
-    if (global_config == NULL) {
-        printf("Tap Dance: Global config is NULL");
-        return;
+static void pipeline_tap_dance_global_state_reset(pipeline_tap_dance_global_config_t* global_config ) {
+    // Reset all behaviours
+    for (size_t i = 0; i < global_config->length; i++) {
+        pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
+        reset_behaviour_state(behaviour->status);
     }
-    printf("Tap Dance: Callback called with type %d, calls_on_iteration %d, row %d, col %d, keycode %d",
-           params->callback_type, params->calls_on_iteration, params->key_events->event_buffer[0].keypos.row, params->key_events->event_buffer[0].keypos.col, params->key_events->event_buffer[0].keycode);
-    #endif
-    if (params->calls_on_iteration > 1) return; // Ignore if called multiple times in one iteration
 
+    global_status->last_behaviour = 0;
+
+    // Reset layer stack
+    global_status->layer_stack.top = 0;
+    global_status->layer_stack.current_layer = 0;
+    for (size_t i = 0; i < 16; i++) {
+        global_status->layer_stack.stack[i].layer = 0;
+        global_status->layer_stack.stack[i].behaviour_index = 0;
+        global_status->layer_stack.stack[i].marked_for_resolution = false;
+    }
+}
+
+static void pipeline_tap_dance_process(pipeline_callback_params_t* params, pipeline_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
     platform_key_event_t* first_key_event = &params->key_events->event_buffer[0];
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
@@ -480,4 +496,32 @@ void pipeline_tap_dance_callback(pipeline_callback_params_t* params, pipeline_ac
             custom_switch_layer_custom_function(params, behaviour->config, behaviour->status, actions, first_key_event);
         }
     }
+}
+
+void pipeline_tap_dance_callback_process_data(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
+    pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
+
+    #ifdef DEBUG
+    if (global_config == NULL) {
+        printf("Tap Dance: Global config is NULL");
+        return;
+    }
+    printf("Tap Dance: Callback called with type %d, row %d, col %d, keycode %d\n",
+           params->callback_type, params->key_events->event_buffer[0].keypos.row, params->key_events->event_buffer[0].keypos.col, params->key_events->event_buffer[0].keycode);
+    #endif
+    pipeline_tap_dance_process(params, actions, global_config);
+}
+
+void pipeline_tap_dance_callback_reset(void* user_data) {
+    pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
+
+    #ifdef DEBUG
+    if (global_config == NULL) {
+        printf("Tap Dance: Global config is NULL on reset");
+        return;
+    }
+    printf("Tap Dance: Resetting all behaviours\n");
+    #endif
+
+    pipeline_tap_dance_global_state_reset(global_config);
 }

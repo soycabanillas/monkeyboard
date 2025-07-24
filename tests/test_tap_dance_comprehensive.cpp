@@ -92,9 +92,8 @@ protected:
 
         platform_layout_init_2d_keymap((const uint16_t*)keymaps, 4, 4, 4);
 
-        pipeline_executor_global_state_create();
-        pipeline_executor_config->length = n_pipelines;
-        pipeline_executor_config->pipelines[0] = add_pipeline(&pipeline_tap_dance_callback, global_config, true);
+        pipeline_executor_create_config(1);
+        pipeline_executor_add_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, global_config);
     }
 
     void TearDown() override {
@@ -189,8 +188,8 @@ protected:
         platform_keypos_t keypos = get_keypos(keycode);
 
         abskeyevent_t event;
-        event.key.row = keypos.row;
-        event.key.col = keypos.col;
+        event.keypos.row = keypos.row;
+        event.keypos.col = keypos.col;
         event.pressed = pressed;
         event.time = static_cast<uint16_t>(platform_timer_read());
 
