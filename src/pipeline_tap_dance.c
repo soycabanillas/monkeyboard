@@ -194,6 +194,8 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
                             pipeline_actions_t* actions,
                             platform_key_event_t* first_key_event) {
 
+    DEBUG_TAP_DANCE("-- Interrupting Key Event: %d, state: %d", first_key_event->keycode, status->state);
+
     // Only handle interruptions during hold waiting states
     if (status->state != TAP_DANCE_WAITING_FOR_HOLD &&
         status->state != TAP_DANCE_INTERRUPT_CONFIG_ACTIVE) {
@@ -232,7 +234,7 @@ void handle_key_press(pipeline_callback_params_t* params,
                      pipeline_actions_t* actions,
                      platform_key_event_t* first_key_event) {
 
-    DEBUG_TAP_DANCE("-- Key press: %d, state: %d", first_key_event->keycode, status->state);
+    DEBUG_TAP_DANCE("-- Main Key press: %d, state: %d", first_key_event->keycode, status->state);
 
     switch (status->state) {
         case TAP_DANCE_IDLE:
@@ -262,7 +264,7 @@ void handle_key_press(pipeline_callback_params_t* params,
             break;
 
         case TAP_DANCE_WAITING_FOR_TAP:
-
+            DEBUG_TAP_DANCE("-- Main Key press: TAP_DANCE_WAITING_FOR_TAP");
             // Additional tap in sequence
             status->tap_count++;
             status->key_press_time = first_key_event->time;
@@ -286,16 +288,16 @@ void handle_key_press(pipeline_callback_params_t* params,
             break;
 
         case TAP_DANCE_WAITING_FOR_HOLD:
-            DEBUG_TAP_DANCE("-- Key press: TAP_DANCE_WAITING_FOR_HOLD");
+            DEBUG_TAP_DANCE("-- Main Key press: TAP_DANCE_WAITING_FOR_HOLD");
             break;
         case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
-            DEBUG_TAP_DANCE("-- Key press: TAP_DANCE_INTERRUPT_CONFIG_ACTIVE");
+            DEBUG_TAP_DANCE("-- Main Key press: TAP_DANCE_INTERRUPT_CONFIG_ACTIVE");
             break;
         case TAP_DANCE_HOLDING:
-            DEBUG_TAP_DANCE("-- Key press: TAP_DANCE_HOLDING");
+            DEBUG_TAP_DANCE("-- Main Key press: TAP_DANCE_HOLDING");
             break;
         case TAP_DANCE_COMPLETED:
-            DEBUG_TAP_DANCE("-- Key press: TAP_DANCE_IDLE");
+            DEBUG_TAP_DANCE("-- Main Key press: TAP_DANCE_COMPLETED");
             break;
     }
 }
@@ -306,13 +308,13 @@ void handle_key_release(pipeline_callback_params_t* params,
                        pipeline_actions_t* actions,
                        platform_key_event_t* first_key_event) {
 
-    DEBUG_TAP_DANCE("-- Key release: %d, state: %d", first_key_event->keycode, status->state);
+    DEBUG_TAP_DANCE("-- Main Key release: %d, state: %d", first_key_event->keycode, status->state);
 
     status->last_release_time = first_key_event->time;
 
     switch (status->state) {
         case TAP_DANCE_WAITING_FOR_HOLD:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_WAITING_FOR_HOLD");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_WAITING_FOR_HOLD");
             // Key released before hold timeout
             if (has_subsequent_actions(config, status->tap_count)) {
                 // More actions available, wait for next tap
@@ -341,7 +343,7 @@ void handle_key_release(pipeline_callback_params_t* params,
             break;
 
         case TAP_DANCE_HOLDING:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_HOLDING");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_HOLDING");
             // Release from hold state - mark for resolution but don't immediately change layer
             layer_stack_mark_for_resolution(status->behaviour_index);
             layer_stack_resolve_dependencies();
@@ -350,16 +352,16 @@ void handle_key_release(pipeline_callback_params_t* params,
             break;
 
         case TAP_DANCE_WAITING_FOR_TAP:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_WAITING_FOR_TAP");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_WAITING_FOR_TAP");
             break;
         case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_INTERRUPT_CONFIG_ACTIVE");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_INTERRUPT_CONFIG_ACTIVE");
             break;
         case TAP_DANCE_COMPLETED:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_COMPLETED");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_COMPLETED");
             break;
         case TAP_DANCE_IDLE:
-            DEBUG_TAP_DANCE("-- Key release: TAP_DANCE_IDLE");
+            DEBUG_TAP_DANCE("-- Main Key release: TAP_DANCE_IDLE");
             break;
     }
 }
@@ -529,12 +531,11 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
 static void pipeline_tap_dance_process(pipeline_callback_params_t* params, pipeline_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
     platform_key_event_t* first_key_event = &params->key_events->event_buffer[0];
 
-    DEBUG_STATE("Processing tap dance event");
-
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         DEBUG_TAP_DANCE("PIPELINE_CALLBACK_KEY_EVENT: %d", first_key_event->keycode);
         // Check for nesting behavior - ignore same keycode if already active
         if (first_key_event->is_press == true && should_ignore_same_keycode_nesting(global_config, first_key_event->keycode)) {
+            DEBUG_TAP_DANCE("Ignoring nested key press for keycode %d", first_key_event->keycode);
             return; // Ignore this key press completely
         }
 
