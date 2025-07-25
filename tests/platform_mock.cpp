@@ -56,6 +56,7 @@ void MockPlatformState::reset() {
 }
 
 void MockPlatformState::print_state() const {
+    printf("\n");
     printf("=== MOCK STATE ===\n");
     printf("Current time: %u ms\n", timer);
     printf("Current layer: %u\n", current_layer);
@@ -82,6 +83,7 @@ void MockPlatformState::print_state() const {
         }
     }
     printf("==================\n");
+    printf("\n");
 }
 
 int MockPlatformState::register_key_calls_count() const { return register_key_calls.size(); }

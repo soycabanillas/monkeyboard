@@ -495,31 +495,32 @@ static void pipeline_tap_dance_global_state_reset(pipeline_tap_dance_global_conf
 #ifdef DEBUG
 void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     if (global_config == NULL) {
-        DEBUG_PRINT_ERROR("Tap Dance: Global config is NULL");
+        DEBUG_PRINT_ERROR("@ Tap Dance: Global config is NULL");
         return;
     }
 
-    DEBUG_TAP_DANCE("Tap Dance Global Status:");
+    DEBUG_PRINT_RAW("# %zu", global_config->length);
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
-        DEBUG_TAP_DANCE("Behaviour %zu: Keycode %d, State %d, Tap Count %d, Layer %d",
-                        i, behaviour->config->keycodemodifier, behaviour->status->state,
-                        behaviour->status->tap_count, behaviour->status->selected_layer);
+        DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %d, Tap Count %d, Layer %d",
+                    i, behaviour->config->keycodemodifier, behaviour->status->state,
+                    behaviour->status->tap_count, behaviour->status->selected_layer);
     }
-    DEBUG_TAP_DANCE("Current Layer Stack:");
+    DEBUG_PRINT_NL();
+    DEBUG_PRINT_RAW("# %d %zu", global_status->layer_stack.current_layer, global_status->layer_stack.top);
     for (size_t i = 0; i < global_status->layer_stack.top; i++) {
-        DEBUG_TAP_DANCE("Layer %d, Behaviour Index %zu, Marked for Resolution %d",
-                        global_status->layer_stack.stack[i].layer,
-                        global_status->layer_stack.stack[i].behaviour_index,
+        DEBUG_PRINT_RAW(" # Layer %d, Behaviour Index %zu, Marked for Resolution %d",
+                    global_status->layer_stack.stack[i].layer,
+                    global_status->layer_stack.stack[i].behaviour_index,
                         global_status->layer_stack.stack[i].marked_for_resolution);
-
     }
+    DEBUG_PRINT_NL();
 }
 #endif
 
 #if defined(DEBUG)
     #define DEBUG_STATE(caption) \
-        printf("%s\n", caption); \
+        DEBUG_PRINT_RAW("%s\n", caption); \
         print_tap_dance_status(global_config);
 #else
     #define DEBUG_STATE(caption) ((void)0)

@@ -136,13 +136,13 @@ void print_key_press_buffer(platform_key_press_buffer_t *event_buffer) {
         DEBUG_PRINT_ERROR("Key press buffer is NULL\n");
         return;
     }
-    printf("%03hhu", event_buffer->press_buffer_pos);
+    DEBUG_PRINT_RAW("| %03hhu", event_buffer->press_buffer_pos);
     platform_key_press_key_press_t* press_buffer = event_buffer->press_buffer;
     for (size_t i = 0; i < event_buffer->press_buffer_pos; i++) {
-        printf(" | %zu L:%u, I:%d, Id:%03u",
+        DEBUG_PRINT_RAW(" | %zu L:%u, I:%d, Id:%03u",
                i, press_buffer[i].layer,
                press_buffer[i].ignore_release, press_buffer[i].press_id);
     }
-    printf("\n");
+    DEBUG_PRINT_NL();
 }
 #endif

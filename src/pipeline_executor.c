@@ -103,8 +103,6 @@ static void flush_key_event_buffer(void) {
 // It also cancels any pending deferred execution callbacks
 // and resets the key event buffer for the next iteration
 static bool process_key_pool(void) {
-    DEBUG_EXECUTOR("Processing key pool with %hu events", pipeline_executor_state.key_event_buffer->event_buffer_pos);
-
     if (pipeline_executor_state.return_data.callback_time > 0) {
         DEBUG_EXECUTOR("Cancelling deferred execution callback");
         platform_cancel_deferred_exec(pipeline_executor_state.deferred_exec_callback_token);
@@ -120,7 +118,6 @@ static bool process_key_pool(void) {
     bool key_digested = false;
 
     if (last_execution.capture_key_events == true) {
-        DEBUG_EXECUTOR("Executing middleware with capture key events");
         execute_middleware(&pipeline_executor_state, pipeline_index, press_buffer_selected);
         last_execution = pipeline_executor_state.return_data;
         if (last_execution.key_buffer_changed == true || last_execution.capture_key_events == true) {
@@ -133,7 +130,6 @@ static bool process_key_pool(void) {
     }
     if (last_execution.capture_key_events == false)
     {
-        DEBUG_EXECUTOR("Executing middleware without capture key events");
         for (size_t i = pipeline_index; i < pipeline_executor_config->length; i++) {
             pipeline_executor_state.pipeline_index = i;
             execute_middleware(&pipeline_executor_state, i, press_buffer_selected);
@@ -237,7 +233,7 @@ void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_callback
 
 #if defined(DEBUG)
     #define DEBUG_BUFFERS(caption) \
-        printf("%s\n", caption); \
+        DEBUG_PRINT_RAW("%s\n", caption); \
         print_key_press_buffer(pipeline_executor_state.key_event_buffer->key_press_buffer); \
         print_key_event_buffer(pipeline_executor_state.key_event_buffer);
 #else
@@ -245,7 +241,8 @@ void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_callback
 #endif
 
 bool pipeline_process_key(abskeyevent_t abskeyevent) {
-    DEBUG_PRINT("-- ITERATION --");
+    DEBUG_PRINT_NL();
+    DEBUG_PRINT("=== ITERATION ===");
 
     bool further_process_required = false;
 
@@ -272,5 +269,6 @@ bool pipeline_process_key(abskeyevent_t abskeyevent) {
         further_process_required = false;
     }
     DEBUG_BUFFERS(event_added ? "Key event buffer after processing:" : "Key event buffer not modified:");
+    DEBUG_PRINT("=================");
     return further_process_required;
 }

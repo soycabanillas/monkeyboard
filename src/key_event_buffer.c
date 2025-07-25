@@ -197,13 +197,13 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
         DEBUG_PRINT_ERROR("Key event buffer is NULL\n");
         return;
     }
-    printf("%03hhu", event_buffer->event_buffer_pos);
+    DEBUG_PRINT_RAW("| %03hhu", event_buffer->event_buffer_pos);
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     for (size_t i = 0; i < event_buffer->event_buffer_pos; i++) {
-        printf(" | %zu R:%u, C:%u, K:%02u, L:%u, P:%d, Id:%u, T:%04u",
+        DEBUG_PRINT_RAW(" | %zu R:%u, C:%u, K:%02u, L:%u, P:%d, Id:%u, T:%04u",
                i, press_buffer[i].keypos.row, press_buffer[i].keypos.col,
                press_buffer[i].keycode, press_buffer[i].layer, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
     }
-    printf("\n");
+    DEBUG_PRINT_NL();
 }
 #endif
