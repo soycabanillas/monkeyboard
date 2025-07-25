@@ -41,13 +41,15 @@ platform_key_event_buffer_t* platform_key_event_create(void);
 void platform_key_event_reset(platform_key_event_buffer_t* event_buffer);
 
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
-uint8_t platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keycode_t keycode);
+bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode);
 bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
+bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode);
 platform_key_event_remove_type_t platform_key_event_remove_physical_press_and_release(platform_key_event_buffer_t *event_buffer, platform_keypos_t keypos);
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);
+void platform_key_event_clear_event_buffer(platform_key_event_buffer_t* event_buffer);
 
 #ifdef DEBUG
-void print_key_event_buffer(platform_key_event_buffer_t *event_buffer, size_t n_elements);
+void print_key_event_buffer(platform_key_event_buffer_t *event_buffer);
 #endif
 
 #ifdef __cplusplus

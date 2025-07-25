@@ -41,6 +41,18 @@ bool platform_cancel_deferred_exec(platform_deferred_token token);
 void* platform_malloc(size_t size);
 void platform_free(void* ptr);
 
+#ifdef DEBUG
+    #define DEBUG_PRINT(fmt, ...) printf("" fmt "\n", ##__VA_ARGS__)
+    #define DEBUG_EXECUTOR(fmt, ...) printf("EXECUTOR: " fmt "\n", ##__VA_ARGS__)
+    #define DEBUG_TAP_DANCE(fmt, ...) printf("TAP DANCE: " fmt "\n", ##__VA_ARGS__)
+    #define DEBUG_PRINT_ERROR(fmt, ...) printf("# ERROR #: " fmt "\n", ##__VA_ARGS__)
+#else
+    #define DEBUG_PRINT(fmt, ...) ((void)0)
+    #define DEBUG_EXECUTOR(fmt, ...) ((void)0)
+    #define DEBUG_TAP_DANCE(fmt, ...) ((void)0)
+    #define DEBUG_PRINT_ERROR(fmt, ...) ((void)0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

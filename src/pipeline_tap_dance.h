@@ -3,13 +3,26 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "key_event_buffer.h"
 #include "pipeline_executor.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// typedef struct {
+//     platform_keypos_t keypos;
+//     uint8_t press_id; // Unique ID for the key press, used to track presses/releases
+//     uint8_t layer; // Layer associated with the key press
+//     bool ignore_release; // If true, the release of this key will be ignored
+// } pipeline_tap_dance_key_event_t;
+
+// #define MAX_NUM_EVENTS 10 // Maximum number of events in the buffer
+
+// typedef struct {
+//     pipeline_tap_dance_key_event_t press_buffer[MAX_NUM_EVENTS];
+//     uint8_t press_buffer_pos;
+// } pipeline_tap_dance_key_event_buffer_t;
 
 typedef enum {
     TDCL_TAP_KEY_SENDKEY,
@@ -45,7 +58,7 @@ typedef struct {
     bool hold_action_discarded;         // Flag for positive interrupt config when hold is discarded
     size_t behaviour_index;             // Index in global config for layer stack tracking
     bool is_nested_active;              // Whether this sequence is currently active (not idle)
-    platform_key_event_buffer_t *key_buffer; // Key buffer for this tap dance sequence
+    // pipeline_tap_dance_key_event_buffer_t *key_buffer; // Key buffer for this tap dance sequence
 } pipeline_tap_dance_behaviour_status_t;
 
 typedef struct {
@@ -90,7 +103,6 @@ bool should_ignore_same_keycode_nesting(pipeline_tap_dance_global_config_t* glob
 void layer_stack_push(uint8_t layer, size_t behaviour_index);
 void layer_stack_mark_for_resolution(size_t behaviour_index);
 void layer_stack_resolve_dependencies(void);
-uint8_t layer_stack_get_current_layer(void);
 
 void pipeline_tap_dance_global_state_create(void);
 void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_status);

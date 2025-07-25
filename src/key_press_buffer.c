@@ -84,16 +84,17 @@ bool platform_key_press_remove_press(platform_key_press_buffer_t *key_buffer, pl
 
 platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos) {
     if (press_buffer == NULL) {
+        DEBUG_PRINT_ERROR("Key press buffer is NULL");
         return NULL;
     }
     platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
     uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
-
     for (size_t i = 0; i < only_press_buffer_pos; i++) {
         if (platform_compare_keyposition(only_press_buffer[i].keypos, keypos)) {
             return &only_press_buffer[i];
         }
     }
+    DEBUG_PRINT_ERROR("Key press not found for keypos: %d, %d", keypos.row, keypos.col);
     return NULL; // Key position not found
 }
 
@@ -130,17 +131,18 @@ bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer
 }
 
 #ifdef DEBUG
-void print_key_press_buffer(platform_key_press_buffer_t *event_buffer, size_t n_elements) {
+void print_key_press_buffer(platform_key_press_buffer_t *event_buffer) {
     if (event_buffer == NULL) {
-        printf("Error: Key press buffer is NULL\n");
+        DEBUG_PRINT_ERROR("Key press buffer is NULL\n");
         return;
     }
-    printf("Key Press Buffer: %u\n", event_buffer->press_buffer_pos);
+    printf("%03hhu", event_buffer->press_buffer_pos);
     platform_key_press_key_press_t* press_buffer = event_buffer->press_buffer;
-    for (size_t i = 0; i < n_elements && i < event_buffer->press_buffer_pos; i++) {
-        printf("Events: %d Event %zu: Layer: %u, Ignored: %d, Press_Id: %u\n",
-               event_buffer->press_buffer_pos, i, press_buffer[i].layer,
+    for (size_t i = 0; i < event_buffer->press_buffer_pos; i++) {
+        printf(" | %zu L:%u, I:%d, Id:%03u",
+               i, press_buffer[i].layer,
                press_buffer[i].ignore_release, press_buffer[i].press_id);
     }
+    printf("\n");
 }
 #endif

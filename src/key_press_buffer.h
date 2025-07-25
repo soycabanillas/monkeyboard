@@ -35,7 +35,7 @@ platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platf
 bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 
 #ifdef DEBUG
-void print_key_press_buffer(platform_key_press_buffer_t *event_buffer, size_t n_elements);
+void print_key_press_buffer(platform_key_press_buffer_t *event_buffer);
 #endif
 
 #ifdef __cplusplus

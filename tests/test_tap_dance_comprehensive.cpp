@@ -196,8 +196,10 @@ protected:
         if (pipeline_process_key(event) == false) {
             // If the key was not processed, we can simulate a fallback action
             if (pressed) {
+                DEBUG_PRINT("Key %d pressed but not processed, simulating fallback action", keycode);
                 platform_register_keycode(keycode);
             } else {
+                DEBUG_PRINT("Key %d released but not processed, simulating fallback action", keycode);
                 platform_unregister_keycode(keycode);
             }
         }

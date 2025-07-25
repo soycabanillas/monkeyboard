@@ -18,7 +18,6 @@ typedef struct {
     platform_time_t callback_time;
     bool capture_key_events;
     bool key_buffer_changed;
-    platform_key_event_buffer_t *key_buffer;
 } capture_pipeline_t;
 
 typedef struct {
@@ -27,9 +26,9 @@ typedef struct {
     uint16_t callback_time;
 } pipeline_callback_params_t;
 
-typedef void (*key_buffer_tap)(platform_keycode_t keycode, platform_keypos_t keypos);
+typedef void (*key_buffer_tap)(platform_keycode_t keycode);
 typedef void (*key_buffer_untap)(platform_keycode_t keycode);
-typedef void (*key_buffer_key)(platform_keycode_t keycode, platform_keypos_t keypos);
+typedef void (*key_buffer_key)(platform_keycode_t keycode);
 typedef void (*key_buffer_remove_physical_press_and_release)(platform_keypos_t keypos);
 typedef void (*key_buffer_update_layer_for_physical_events)(uint8_t layer, uint8_t pos);
 
