@@ -178,13 +178,6 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
     }
 }
 
-void platform_key_event_clear_event_buffer(platform_key_event_buffer_t* event_buffer) {
-    if (event_buffer == NULL) {
-        return;
-    }
-    event_buffer->event_buffer_pos = 0;
-}
-
 #ifdef DEBUG
 void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
     if (event_buffer == NULL) {

@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "key_event_buffer.h"
+#include "key_virtual_buffer.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
@@ -64,6 +65,7 @@ typedef struct {
 
 typedef struct {
     platform_key_event_buffer_t *key_event_buffer;
+    platform_virtual_event_buffer_t *virtual_event_buffer;
     capture_pipeline_t return_data;
     size_t pipeline_index; // Index of the current pipeline being executed
     platform_deferred_token deferred_exec_callback_token;

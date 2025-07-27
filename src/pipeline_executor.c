@@ -1,5 +1,6 @@
 #include "pipeline_executor.h"
 #include <stdint.h>
+#include "key_virtual_buffer.h"
 #ifdef DEBUG
 #include <stdio.h>
 #endif
@@ -16,18 +17,18 @@ pipeline_actions_t actions;
 //Functions available in the pipeline_info_t struct
 
 static void register_key(platform_keycode_t keycode) {
-    platform_key_event_add_virtual_press(pipeline_executor_state.key_event_buffer, keycode);
+    platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, keycode);
     pipeline_executor_state.return_data.key_buffer_changed = true;
 }
 
 static void unregister_key(platform_keycode_t keycode) {
-    platform_key_event_add_virtual_release(pipeline_executor_state.key_event_buffer, keycode);
+    platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, keycode);
     pipeline_executor_state.return_data.key_buffer_changed = true;
 }
 
 static void tap_key(platform_keycode_t keycode) {
-    platform_key_event_add_virtual_press(pipeline_executor_state.key_event_buffer, keycode);
-    platform_key_event_add_virtual_release(pipeline_executor_state.key_event_buffer, keycode);
+    platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, keycode);
+    platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, keycode);
     pipeline_executor_state.return_data.key_buffer_changed = true;
 }
 
@@ -85,15 +86,18 @@ static void deferred_exec_callback(void *cb_arg) {
     execute_pipeline(callback_time, pipeline_executor_state.pipeline_index, pipeline_executor_state.key_event_buffer, NULL, &pipeline_executor_state.return_data);
 }
 
-static void flush_key_event_buffer(void) {
-    for (size_t pos = 0; pos < pipeline_executor_state.key_event_buffer->event_buffer_pos; pos++) {
-        if (pipeline_executor_state.key_event_buffer->event_buffer[pos].is_press) {
-            platform_register_keycode(pipeline_executor_state.key_event_buffer->event_buffer[pos].keycode);
+static void flush_virtual_event_buffer(void) {
+    for (size_t pos = 0; pos < pipeline_executor_state.virtual_event_buffer->press_buffer_pos; pos++) {
+        if (pipeline_executor_state.virtual_event_buffer->press_buffer[pos].is_press) {
+            DEBUG_EXECUTOR("Registering virtual keycode %d", pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
+            platform_register_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
         } else {
-            platform_unregister_keycode(pipeline_executor_state.key_event_buffer->event_buffer[pos].keycode);
+            DEBUG_EXECUTOR("Unregistering virtual keycode %d", pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
+            platform_unregister_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
         }
     }
-    platform_key_event_clear_event_buffer(pipeline_executor_state.key_event_buffer);
+
+    platform_virtual_event_reset(pipeline_executor_state.virtual_event_buffer);
 }
 
 // Execute the middleware when a key event occurs
@@ -123,9 +127,6 @@ static bool process_key_pool(void) {
         if (last_execution.key_buffer_changed == true || last_execution.capture_key_events == true) {
             key_digested = true;
         }
-        if (last_execution.capture_key_events == false) {
-            flush_key_event_buffer();
-        }
         pipeline_index = pipeline_executor_state.pipeline_index + 1; // Move to the next pipeline
     }
     if (last_execution.capture_key_events == false)
@@ -146,14 +147,18 @@ static bool process_key_pool(void) {
         pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.return_data.callback_time, deferred_exec_callback, NULL);
     }
 
+    for (size_t i = pipeline_index; i < pipeline_executor_config->virtual_pipelines_length; i++) {
+        // pipeline_executor_state.pipeline_index = i;
+        // execute_middleware(&pipeline_executor_state, i, press_buffer_selected);
+        // last_execution = pipeline_executor_state.return_data;
+        // if (last_execution.key_buffer_changed == true || last_execution.capture_key_events == true) {
+        //     key_digested = true;
+        // }
+        // if (last_execution.capture_key_events == true) break;
+    }
+
     if (last_execution.capture_key_events == false && last_execution.callback_time == 0) {
-        for (size_t pos = 0; pos < pipeline_executor_state.key_event_buffer->event_buffer_pos; pos++) {
-            if (pipeline_executor_state.key_event_buffer->event_buffer[pos].is_press) {
-                platform_register_keycode(pipeline_executor_state.key_event_buffer->event_buffer[pos].keycode);
-            } else {
-                platform_unregister_keycode(pipeline_executor_state.key_event_buffer->event_buffer[pos].keycode);
-            }
-        }
+        flush_virtual_event_buffer();
     }
 
     return (key_digested == false);
@@ -171,6 +176,7 @@ void pipeline_executor_end_with_capture_next_keys(void) {
 
 static void pipeline_executor_create_state(void) {
     pipeline_executor_state.key_event_buffer = platform_key_event_create();
+    pipeline_executor_state.virtual_event_buffer = platform_virtual_event_create();
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.return_data.key_buffer_changed = false;
@@ -185,6 +191,7 @@ static void pipeline_executor_create_state(void) {
  */
 void pipeline_executor_reset_state(void) {
     platform_key_event_reset(pipeline_executor_state.key_event_buffer);
+    platform_virtual_event_reset(pipeline_executor_state.virtual_event_buffer);
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.return_data.key_buffer_changed = false;
