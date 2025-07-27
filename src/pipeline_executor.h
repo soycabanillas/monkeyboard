@@ -69,7 +69,6 @@ void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_callback
 
 void pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
 void pipeline_executor_end_with_capture_next_keys(void);
-void pipeline_executor_end_with_buffer_swap(void);
 
 bool pipeline_process_key(abskeyevent_t abskeyevent);
 

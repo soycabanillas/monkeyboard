@@ -169,10 +169,6 @@ void pipeline_executor_end_with_capture_next_keys(void) {
     pipeline_executor_state.return_data.capture_key_events = true;
 }
 
-void pipeline_executor_end_with_buffer_swap(void) {
-    pipeline_executor_state.return_data.capture_key_events = true;
-}
-
 static void pipeline_executor_create_state(void) {
     pipeline_executor_state.key_event_buffer = platform_key_event_create();
     pipeline_executor_state.return_data.callback_time = 0;

@@ -33,10 +33,10 @@ typedef enum {
 typedef enum {
     TAP_DANCE_IDLE,
     TAP_DANCE_WAITING_FOR_HOLD,      // Key pressed, waiting for hold timeout
+    TAP_DANCE_WAITING_FOR_RELEASE,   // Key pressed, no hold action, waiting for release
     TAP_DANCE_WAITING_FOR_TAP,       // Key released, waiting for tap timeout or next press
     TAP_DANCE_INTERRUPT_CONFIG_ACTIVE, // Interrupt config timeout expired, waiting for hold timeout
     TAP_DANCE_HOLDING,               // Hold action activated, key still pressed
-    TAP_DANCE_COMPLETED              // Action executed, ready to reset
 } tap_dance_state_t;
 
 typedef struct {
@@ -72,22 +72,9 @@ typedef struct {
     pipeline_tap_dance_behaviour_status_t* status;
 } pipeline_tap_dance_behaviour_t;
 
-// Global layer stack for nesting management
-typedef struct {
-    uint8_t layer;                   // The layer selected by this entry
-    size_t behaviour_index;          // Which tap dance behaviour owns this layer selection
-    bool marked_for_resolution;      // Whether this layer selection is waiting to be resolved
-} layer_stack_entry_t;
-
-typedef struct {
-    layer_stack_entry_t stack[16];   // Fixed size stack - max nesting = max behaviours
-    size_t top;                      // Index of top of stack (0 = empty)
-    uint8_t current_layer;           // Currently active layer
-} global_layer_stack_t;
 
 typedef struct {
     size_t last_behaviour; // The last behaviour that was processed
-    global_layer_stack_t layer_stack; // Global layer stack for nesting
 } pipeline_tap_dance_global_status_t;
 
 typedef struct {
@@ -96,13 +83,7 @@ typedef struct {
 } pipeline_tap_dance_global_config_t;
 
 // Helper functions
-bool is_key_repetition_exception(pipeline_tap_dance_behaviour_config_t* config);
 bool should_ignore_same_keycode_nesting(pipeline_tap_dance_global_config_t* global_config, platform_keycode_t keycode);
-
-// Layer stack management functions
-void layer_stack_push(uint8_t layer, size_t behaviour_index);
-void layer_stack_mark_for_resolution(size_t behaviour_index);
-void layer_stack_resolve_dependencies(void);
 
 void pipeline_tap_dance_global_state_create(void);
 void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_status);

@@ -158,19 +158,16 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
         return;
     }
     for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
-        uint8_t press_id = event_buffer->event_buffer[i].press_id;
         bool is_physical = event_buffer->event_buffer[i].is_physical;
-        if (press_id == 0 && !is_physical) {
-            continue; // Skip events without a press_id or virtual events
-        }
-        // Update the layer for all events with the same press_id
-        if (event_buffer->event_buffer[i].is_press) {
+        bool is_press = event_buffer->event_buffer[i].is_press;
+        if (is_physical && is_press) {
+            uint8_t press_id = event_buffer->event_buffer[i].press_id;
             // Update the layer for the press event
             event_buffer->event_buffer[i].layer = layer;
             event_buffer->event_buffer[i].keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
             // Update the layer for the release event
             for (uint8_t j = i + 1; j < event_buffer->event_buffer_pos; j++) {
-                if (event_buffer->event_buffer[j].press_id == press_id) {
+                if (event_buffer->event_buffer[j].press_id == press_id && event_buffer->event_buffer[j].is_physical) {
                     if (event_buffer->event_buffer[j].is_press) {
                         break;
                     } else {

@@ -45,23 +45,10 @@ enum KEY_LAYERS {
 
 class TapDanceComprehensiveTest : public ::testing::Test {
 protected:
-    pipeline_tap_dance_global_config_t* global_config;
+    pipeline_tap_dance_global_config_t* tap_dance_config;
 
     void SetUp() override {
         reset_mock_state();
-
-        // Create pipeline executor
-        size_t n_pipelines = 1;
-        pipeline_executor_config = static_cast<pipeline_executor_config_t*>(
-            malloc(sizeof(pipeline_executor_config_t) + n_pipelines * sizeof(pipeline_t*)));
-
-        pipeline_tap_dance_global_state_create();
-
-        // Create tap dance configuration with enough space for comprehensive tests
-        size_t n_elements = 10;
-        global_config = static_cast<pipeline_tap_dance_global_config_t*>(
-            malloc(sizeof(*global_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
-        global_config->length = 0; // Will be set as we add configurations
 
         platform_keycode_t keymaps[][4][4] = {
             [LAYER_BASE] = {
@@ -89,11 +76,18 @@ protected:
                 {KC_M, KC_N, KC_O, KC_P}
             }
         };
-
         platform_layout_init_2d_keymap((const uint16_t*)keymaps, 4, 4, 4);
 
+        pipeline_tap_dance_global_state_create();
+
+        // Create tap dance configuration with enough space for comprehensive tests
+        size_t n_elements = 10;
+        tap_dance_config = static_cast<pipeline_tap_dance_global_config_t*>(
+            malloc(sizeof(*tap_dance_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
+        tap_dance_config->length = 0; // Will be set as we add configurations
+
         pipeline_executor_create_config(1);
-        pipeline_executor_add_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, global_config);
+        pipeline_executor_add_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, tap_dance_config);
     }
 
     void TearDown() override {
@@ -102,9 +96,9 @@ protected:
             free(pipeline_executor_config);
             pipeline_executor_config = nullptr;
         }
-        if (global_config) {
-            free(global_config);
-            global_config = nullptr;
+        if (tap_dance_config) {
+            free(tap_dance_config);
+            tap_dance_config = nullptr;
         }
     }
 
@@ -132,16 +126,16 @@ protected:
         pipeline_tap_dance_action_config_t* actions[] = {
             createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, output_key, 0)
         };
-        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 1);
-        global_config->length++;
+        tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 1);
+        tap_dance_config->length++;
     }
 
     void setup_simple_hold_config(uint16_t keycode, uint8_t layer, uint8_t tap_count = 1) {
         pipeline_tap_dance_action_config_t* actions[] = {
             createbehaviouraction(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer)
         };
-        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 1);
-        global_config->length++;
+        tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 1);
+        tap_dance_config->length++;
     }
 
     void setup_tap_and_hold_config(uint16_t keycode, uint16_t tap_key, uint8_t layer, uint8_t tap_count = 1) {
@@ -149,8 +143,8 @@ protected:
             createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, tap_key, 0),
             createbehaviouraction(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer)
         };
-        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
-        global_config->length++;
+        tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 2);
+        tap_dance_config->length++;
     }
 
     void setup_multi_tap_config(uint16_t keycode, uint16_t key1, uint16_t key2, uint16_t key3 = 0) {
@@ -160,15 +154,15 @@ protected:
                 createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, key2, 0),
                 createbehaviouraction(3, TDCL_TAP_KEY_SENDKEY, key3, 0)
             };
-            global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 3);
+            tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 3);
         } else {
             pipeline_tap_dance_action_config_t* actions[] = {
                 createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, key1, 0),
                 createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, key2, 0)
             };
-            global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
+            tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 2);
         }
-        global_config->length++;
+        tap_dance_config->length++;
     }
 
     void setup_interrupt_config(uint16_t keycode, uint16_t tap_key, uint8_t layer, int16_t interrupt_config, uint8_t tap_count = 1) {
@@ -176,8 +170,8 @@ protected:
             createbehaviouraction(tap_count, TDCL_TAP_KEY_SENDKEY, tap_key, 0),
             createbehaviouraction_with_interrupt(tap_count, TDCL_HOLD_KEY_CHANGELAYERTEMPO, keycode, layer, interrupt_config)
         };
-        global_config->behaviours[global_config->length] = createbehaviour(keycode, actions, 2);
-        global_config->length++;
+        tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(keycode, actions, 2);
+        tap_dance_config->length++;
     }
 
     void simulate_key_event(uint16_t keycode, bool pressed, uint16_t time_offset = 0) {
@@ -193,13 +187,13 @@ protected:
         event.pressed = pressed;
         event.time = static_cast<uint16_t>(platform_timer_read());
 
-        if (pipeline_process_key(event) == false) {
+        if (pipeline_process_key(event) == true) {
             // If the key was not processed, we can simulate a fallback action
             if (pressed) {
-                DEBUG_PRINT("Key %d pressed but not processed, simulating fallback action", keycode);
+                printf("Key %d pressed but not processed, simulating fallback action", keycode);
                 platform_register_keycode(keycode);
             } else {
-                DEBUG_PRINT("Key %d released but not processed, simulating fallback action", keycode);
+                printf("Key %d released but not processed, simulating fallback action", keycode);
                 platform_unregister_keycode(keycode);
             }
         }
@@ -207,7 +201,7 @@ protected:
 
     void reset_test_state() {
         reset_mock_state();
-        global_config->length = 0;
+        tap_dance_config->length = 0;
     }
 };
 
@@ -499,8 +493,8 @@ TEST_F(TapDanceComprehensiveTest, MixedTapHoldSequence) {
         createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, KC_C, 0),
         createbehaviouraction_with_interrupt(2, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TEST_KEY_TAP_DANCE_1, LAYER_SYMBOLS, 0)
     };
-    global_config->behaviours[global_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 3);
-    global_config->length++;
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 3);
+    tap_dance_config->length++;
 
     // First tap
     simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
@@ -540,8 +534,8 @@ TEST_F(TapDanceComprehensiveTest, ImmediateExecutionOnFinalTapCount) {
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, KC_C, 0)
     };
-    global_config->behaviours[global_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 1);
-    global_config->length++;
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TEST_KEY_TAP_DANCE_1, actions, 1);
+    tap_dance_config->length++;
 
     simulate_key_event(TEST_KEY_TAP_DANCE_1, true);
     simulate_key_event(TEST_KEY_TAP_DANCE_1, false);
