@@ -102,11 +102,10 @@ bool should_activate_hold_action_on_interrupt(pipeline_tap_dance_action_config_t
     }
 }
 
-void handle_interrupting_key(pipeline_physical_callback_params_t* params,
-                            pipeline_tap_dance_behaviour_config_t *config,
-                            pipeline_tap_dance_behaviour_status_t *status,
-                            pipeline_actions_t* actions,
-                            platform_key_event_t* last_key_event) {
+void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
+                             pipeline_tap_dance_behaviour_status_t *status,
+                             pipeline_actions_t* actions,
+                             platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Interrupting Key Event: %d, state: %d", last_key_event->keycode, status->state);
 
@@ -140,11 +139,10 @@ void handle_interrupting_key(pipeline_physical_callback_params_t* params,
     }
 }
 
-void generic_key_press_handler(pipeline_physical_callback_params_t* params,
-                                  pipeline_tap_dance_behaviour_config_t *config,
-                                  pipeline_tap_dance_behaviour_status_t *status,
-                                  pipeline_actions_t* actions,
-                                  platform_key_event_t* last_key_event) {
+void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
+                               pipeline_tap_dance_behaviour_status_t *status,
+                               pipeline_actions_t* actions,
+                               platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Press Handler: %d", last_key_event->keycode);
     status->tap_count++;
     status->key_press_time = last_key_event->time;
@@ -174,11 +172,10 @@ void generic_key_press_handler(pipeline_physical_callback_params_t* params,
     }
 }
 
-void generic_key_release_when_not_holding_handler(pipeline_physical_callback_params_t* params,
-                                  pipeline_tap_dance_behaviour_config_t *config,
-                                  pipeline_tap_dance_behaviour_status_t *status,
-                                  pipeline_actions_t* actions,
-                                  platform_key_event_t* last_key_event) {
+void generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
+                                                 pipeline_tap_dance_behaviour_status_t *status,
+                                                 pipeline_actions_t* actions,
+                                                 platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Not Holding): %d", last_key_event->keycode);
     if (has_subsequent_actions(config, status->tap_count)) {
         status->state = TAP_DANCE_WAITING_FOR_TAP;
@@ -188,13 +185,13 @@ void generic_key_release_when_not_holding_handler(pipeline_physical_callback_par
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
                 actions->tap_key_fn(tap_action->keycode);
-                actions->remove_physical_press_and_release_fn(params->key_event->keypos);
+                actions->remove_physical_press_and_release_fn(last_key_event->keypos);
             }
             reset_behaviour_state(status);
         } else if (status->state == TAP_DANCE_WAITING_FOR_RELEASE) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->remove_physical_press_and_release_fn(params->key_event->keypos);
+                actions->remove_physical_press_and_release_fn(last_key_event->keypos);
                 actions->unregister_key_fn(tap_action->keycode);
             }
             reset_behaviour_state(status);
@@ -202,18 +199,16 @@ void generic_key_release_when_not_holding_handler(pipeline_physical_callback_par
     }
 }
 
-void generic_key_release_when_holding_handler(pipeline_physical_callback_params_t* params,
-                                  pipeline_tap_dance_behaviour_config_t *config,
-                                  pipeline_tap_dance_behaviour_status_t *status,
-                                  pipeline_actions_t* actions,
-                                  platform_key_event_t* last_key_event) {
+void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
+                                              pipeline_tap_dance_behaviour_status_t *status,
+                                              pipeline_actions_t* actions,
+                                              platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Holding): %d", last_key_event->keycode);
     // Release from hold state - mark for resolution but don't immediately change layer
     reset_behaviour_state(status);
 }
 
-void handle_key_press(pipeline_physical_callback_params_t* params,
-                     pipeline_tap_dance_behaviour_config_t *config,
+void handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
                      pipeline_tap_dance_behaviour_status_t *status,
                      pipeline_actions_t* actions,
                      platform_key_event_t* last_key_event) {
@@ -226,7 +221,7 @@ void handle_key_press(pipeline_physical_callback_params_t* params,
             // First press of a new sequence
             status->original_layer = platform_layout_get_current_layer(); // Use current layer from stack
             status->is_nested_active = true; // Mark as active
-            generic_key_press_handler(params, config, status, actions, last_key_event);
+            generic_key_press_handler(config, status, actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_HOLD:
             DEBUG_TAP_DANCE("-- Main Key press: WAITING_FOR_HOLD");
@@ -236,7 +231,7 @@ void handle_key_press(pipeline_physical_callback_params_t* params,
             break;
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Main Key press: WAITING_FOR_TAP");
-            generic_key_press_handler(params, config, status, actions, last_key_event);
+            generic_key_press_handler(config, status, actions, last_key_event);
             break;
         case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
             DEBUG_TAP_DANCE("-- Main Key press: INTERRUPT_CONFIG_ACTIVE");
@@ -247,11 +242,10 @@ void handle_key_press(pipeline_physical_callback_params_t* params,
     }
 }
 
-void handle_key_release(pipeline_physical_callback_params_t* params,
-                       pipeline_tap_dance_behaviour_config_t *config,
-                       pipeline_tap_dance_behaviour_status_t *status,
-                       pipeline_actions_t* actions,
-                       platform_key_event_t* last_key_event) {
+void handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
+                        pipeline_tap_dance_behaviour_status_t *status,
+                        pipeline_actions_t* actions,
+                        platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key release: %d, state: %d", last_key_event->keycode, status->state);
 
@@ -263,11 +257,11 @@ void handle_key_release(pipeline_physical_callback_params_t* params,
             break;
         case TAP_DANCE_WAITING_FOR_HOLD:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_HOLD");
-            generic_key_release_when_not_holding_handler(params, config, status, actions, last_key_event);
+            generic_key_release_when_not_holding_handler(config, status, actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_RELEASE:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_RELEASE");
-            generic_key_release_when_not_holding_handler(params, config, status, actions, last_key_event);
+            generic_key_release_when_not_holding_handler(config, status, actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_TAP");
@@ -277,15 +271,14 @@ void handle_key_release(pipeline_physical_callback_params_t* params,
             break;
         case TAP_DANCE_HOLDING:
             DEBUG_TAP_DANCE("-- Main Key release: HOLDING");
-            generic_key_release_when_holding_handler(params, config, status, actions, last_key_event);
+            generic_key_release_when_holding_handler(config, status, actions, last_key_event);
             break;
     }
 }
 
-void handle_timeout(pipeline_physical_callback_params_t* params,
-                   pipeline_tap_dance_behaviour_config_t *config,
-                   pipeline_tap_dance_behaviour_status_t *status,
-                   pipeline_actions_t* actions) {
+void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
+                    pipeline_tap_dance_behaviour_status_t *status,
+                    pipeline_actions_t* actions) {
 
     DEBUG_TAP_DANCE("-- Timer callback");
 
@@ -358,19 +351,19 @@ void custom_switch_layer_custom_function(pipeline_physical_callback_params_t* pa
 
     // Handle interrupting keys (keys other than our trigger key)
     if (last_key_event->keycode != config->keycodemodifier) {
-        handle_interrupting_key(params, config, status, actions, last_key_event);
+        handle_interrupting_key(config, status, actions, last_key_event);
         return;
     }
 
     // Handle our trigger key events
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         if (last_key_event->is_press) {
-            handle_key_press(params, config, status, actions, last_key_event);
+            handle_key_press(config, status, actions, last_key_event);
         } else {
-            handle_key_release(params, config, status, actions, last_key_event);
+            handle_key_release(config, status, actions, last_key_event);
         }
     } else if (params->callback_type == PIPELINE_CALLBACK_TIMER) {
-        handle_timeout(params, config, status, actions);
+        handle_timeout(config, status, actions);
     }
 }
 
