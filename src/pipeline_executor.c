@@ -52,10 +52,10 @@ static void update_layer_for_physical_events(uint8_t layer, uint8_t pos) {
  * - If timeout is set, callback is triggered after specified time
  * - Used for multi-key sequences, tap dance timing, etc.
  */
-static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, platform_key_event_buffer_t* key_events, platform_key_event_t* press_buffer_selected, capture_pipeline_t* return_data) {
+static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, platform_key_event_t* key_event, capture_pipeline_t* return_data) {
     pipeline_physical_callback_params_t callback_params;
     if (callback_time == 0) {
-        callback_params.key_event = &key_events->event_buffer[key_events->event_buffer_pos - 1];
+        callback_params.key_event = key_event;
         callback_params.callback_type = PIPELINE_CALLBACK_KEY_EVENT;
         DEBUG_EXECUTOR("Executing pipeline %hhu with key event", pipeline_index);
     } else {
@@ -73,9 +73,9 @@ static void reset_return_data(capture_pipeline_t* return_data) {
     return_data->key_buffer_changed = false;
 }
 
-static void execute_middleware(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_key_event_t* press_buffer_selected) {
+static void execute_middleware(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_key_event_t* key_event) {
     reset_return_data(&pipeline_executor_state->return_data);
-    execute_pipeline(0, pipeline_index, pipeline_executor_state->key_event_buffer, press_buffer_selected, &pipeline_executor_state->return_data);
+    execute_pipeline(0, pipeline_index, key_event, &pipeline_executor_state->return_data);
 }
 
 // Executes the middleware when the timer callback is triggered
@@ -83,7 +83,7 @@ static void deferred_exec_callback(void *cb_arg) {
     (void)cb_arg; // Unused parameter
     platform_time_t callback_time = pipeline_executor_state.return_data.callback_time;
     reset_return_data(&pipeline_executor_state.return_data);
-    execute_pipeline(callback_time, pipeline_executor_state.pipeline_index, pipeline_executor_state.key_event_buffer, NULL, &pipeline_executor_state.return_data);
+    execute_pipeline(callback_time, pipeline_executor_state.pipeline_index, NULL, &pipeline_executor_state.return_data);
 }
 
 static void flush_virtual_event_buffer(void) {
@@ -116,13 +116,13 @@ static bool process_key_pool(void) {
         pipeline_index = pipeline_executor_state.pipeline_index;
     }
 
-    platform_key_event_t* press_buffer_selected = &pipeline_executor_state.key_event_buffer->event_buffer[0];
+    platform_key_event_t* key_event = &pipeline_executor_state.key_event_buffer->event_buffer[pipeline_executor_state.key_event_buffer->event_buffer_pos - 1];
     capture_pipeline_t last_execution = pipeline_executor_state.return_data;
 
     bool key_digested = false;
 
     if (last_execution.capture_key_events == true) {
-        execute_middleware(&pipeline_executor_state, pipeline_index, press_buffer_selected);
+        execute_middleware(&pipeline_executor_state, pipeline_index, key_event);
         last_execution = pipeline_executor_state.return_data;
         if (last_execution.key_buffer_changed == true || last_execution.capture_key_events == true) {
             key_digested = true;
@@ -133,7 +133,7 @@ static bool process_key_pool(void) {
     {
         for (size_t i = pipeline_index; i < pipeline_executor_config->physical_pipelines_length; i++) {
             pipeline_executor_state.pipeline_index = i;
-            execute_middleware(&pipeline_executor_state, i, press_buffer_selected);
+            execute_middleware(&pipeline_executor_state, i, key_event);
             last_execution = pipeline_executor_state.return_data;
             if (last_execution.key_buffer_changed == true || last_execution.capture_key_events == true) {
                 key_digested = true;
