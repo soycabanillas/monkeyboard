@@ -204,7 +204,9 @@ void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_confi
                                               pipeline_physical_actions_t* actions,
                                               platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Holding): %d", last_key_event->keycode);
-    // Release from hold state - mark for resolution but don't immediately change layer
+
+    platform_layout_set_layer(status->original_layer);
+    actions->remove_physical_press_and_release_fn(last_key_event->keypos);
     reset_behaviour_state(status);
 }
 

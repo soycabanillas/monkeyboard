@@ -48,7 +48,7 @@ target_include_directories(tap_dance_engine
 # Set compiler flags for better debugging and warnings
 target_compile_options(tap_dance_engine PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-c99-designator -Wno-vla-extension>
 )
 
 # Add debug symbols for development
@@ -115,7 +115,7 @@ if(BUILD_TESTS)
 
     # Set C++ compile options for tests (separate from C library)
     target_compile_options(tests PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-c99-designator -Wno-vla-extension -Wno-gnu-statement-expression>
     )
 
     # Enable testing

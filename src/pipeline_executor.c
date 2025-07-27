@@ -64,6 +64,8 @@ static void physical_event_triggered(pipeline_executor_state_t* pipeline_executo
 static void physical_event_deferred_exec_callback(void *cb_arg) {
     (void)cb_arg; // Unused parameter
 
+    DEBUG_PRINT("=== TIMER ===");
+
     platform_time_t callback_time = pipeline_executor_state.return_data.callback_time;
     uint8_t pipeline_index = pipeline_executor_state.physical_pipeline_index;
 
@@ -75,6 +77,9 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     DEBUG_EXECUTOR("Executing pipeline %hhu with callback time %hu", pipeline_index, callback_time);
 
     pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &physical_actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
+
+    DEBUG_PRINT("=============");
+    DEBUG_PRINT_NL();
 }
 
 static void virtual_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_virtual_event_buffer_t* press_buffer_selected) {
@@ -225,6 +230,7 @@ void pipeline_executor_reset_state(void) {
 }
 
 void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count) {
+    DEBUG_PRINT_NL();
     pipeline_executor_create_state();
     pipeline_executor_config = malloc(sizeof(pipeline_executor_config_t));
     pipeline_executor_config->physical_pipelines_length = physical_pipeline_count;
@@ -281,7 +287,6 @@ void pipeline_executor_add_virtual_pipeline(uint8_t pipeline_position, pipeline_
 #endif
 
 bool pipeline_process_key(abskeyevent_t abskeyevent) {
-    DEBUG_PRINT_NL();
     DEBUG_PRINT("=== ITERATION ===");
 
     bool further_process_required = false;
@@ -310,5 +315,6 @@ bool pipeline_process_key(abskeyevent_t abskeyevent) {
     }
     DEBUG_BUFFERS(event_added ? "Key event buffer after processing:" : "Key event buffer not modified:");
     DEBUG_PRINT("=================");
+    DEBUG_PRINT_NL();
     return further_process_required;
 }
