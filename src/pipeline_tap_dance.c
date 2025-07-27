@@ -104,7 +104,7 @@ bool should_activate_hold_action_on_interrupt(pipeline_tap_dance_action_config_t
 
 void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
                              pipeline_tap_dance_behaviour_status_t *status,
-                             pipeline_actions_t* actions,
+                             pipeline_physical_actions_t* actions,
                              platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Interrupting Key Event: %d, state: %d", last_key_event->keycode, status->state);
@@ -141,7 +141,7 @@ void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
 
 void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
                                pipeline_tap_dance_behaviour_status_t *status,
-                               pipeline_actions_t* actions,
+                               pipeline_physical_actions_t* actions,
                                platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Press Handler: %d", last_key_event->keycode);
     status->tap_count++;
@@ -174,7 +174,7 @@ void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
 
 void generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
                                                  pipeline_tap_dance_behaviour_status_t *status,
-                                                 pipeline_actions_t* actions,
+                                                 pipeline_physical_actions_t* actions,
                                                  platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Not Holding): %d", last_key_event->keycode);
     if (has_subsequent_actions(config, status->tap_count)) {
@@ -201,7 +201,7 @@ void generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_c
 
 void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
                                               pipeline_tap_dance_behaviour_status_t *status,
-                                              pipeline_actions_t* actions,
+                                              pipeline_physical_actions_t* actions,
                                               platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Holding): %d", last_key_event->keycode);
     // Release from hold state - mark for resolution but don't immediately change layer
@@ -210,7 +210,7 @@ void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_confi
 
 void handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
                      pipeline_tap_dance_behaviour_status_t *status,
-                     pipeline_actions_t* actions,
+                     pipeline_physical_actions_t* actions,
                      platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key press: %d, state: %d", last_key_event->keycode, status->state);
@@ -244,7 +244,7 @@ void handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
 
 void handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
                         pipeline_tap_dance_behaviour_status_t *status,
-                        pipeline_actions_t* actions,
+                        pipeline_physical_actions_t* actions,
                         platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key release: %d, state: %d", last_key_event->keycode, status->state);
@@ -278,7 +278,7 @@ void handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
 
 void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
                     pipeline_tap_dance_behaviour_status_t *status,
-                    pipeline_actions_t* actions) {
+                    pipeline_physical_actions_t* actions) {
 
     DEBUG_TAP_DANCE("-- Timer callback");
 
@@ -342,7 +342,7 @@ void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
 void custom_switch_layer_custom_function(pipeline_physical_callback_params_t* params,
                                         pipeline_tap_dance_behaviour_config_t *config,
                                         pipeline_tap_dance_behaviour_status_t *status,
-                                        pipeline_actions_t* actions,
+                                        pipeline_physical_actions_t* actions,
                                         platform_key_event_t* last_key_event) {
 
     if (config->actionslength == 0) {
@@ -421,7 +421,7 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     #define DEBUG_STATE(caption) ((void)0)
 #endif
 
-static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
+static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
     platform_key_event_t* last_key_event = params->key_event;
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
@@ -447,7 +447,7 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
     DEBUG_STATE("Finished processing tap dance event:");
 }
 
-void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
     #ifdef DEBUG

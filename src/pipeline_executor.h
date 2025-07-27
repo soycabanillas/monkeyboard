@@ -28,9 +28,7 @@ typedef struct {
 } pipeline_physical_callback_params_t;
 
 typedef struct {
-    platform_key_event_buffer_t* key_events;
-    pipeline_callback_type_t callback_type;
-    uint16_t callback_time;
+    platform_virtual_event_buffer_t* key_events;
 } pipeline_virtual_callback_params_t;
 
 typedef void (*key_buffer_tap)(platform_keycode_t keycode);
@@ -45,10 +43,16 @@ typedef struct {
     key_buffer_key tap_key_fn;
     key_buffer_remove_physical_press_and_release remove_physical_press_and_release_fn;
     key_buffer_update_layer_for_physical_events update_layer_for_physical_events_fn;
-} pipeline_actions_t;
+} pipeline_physical_actions_t;
 
-typedef void (*pipeline_physical_callback)(pipeline_physical_callback_params_t*, pipeline_actions_t*, void*);
-typedef void (*pipeline_virtual_callback)(pipeline_virtual_callback_params_t*, pipeline_actions_t*, void*);
+typedef struct {
+    key_buffer_tap register_key_fn;
+    key_buffer_untap unregister_key_fn;
+    key_buffer_key tap_key_fn;
+} pipeline_virtual_actions_t;
+
+typedef void (*pipeline_physical_callback)(pipeline_physical_callback_params_t*, pipeline_physical_actions_t*, void*);
+typedef void (*pipeline_virtual_callback)(pipeline_virtual_callback_params_t*, pipeline_virtual_actions_t*, void*);
 typedef void (*pipeline_callback_reset)(void*);
 
 typedef struct {
@@ -67,7 +71,7 @@ typedef struct {
     platform_key_event_buffer_t *key_event_buffer;
     platform_virtual_event_buffer_t *virtual_event_buffer;
     capture_pipeline_t return_data;
-    size_t pipeline_index; // Index of the current pipeline being executed
+    size_t physical_pipeline_index; // Index of the current pipeline being executed
     platform_deferred_token deferred_exec_callback_token;
 } pipeline_executor_state_t;
 
@@ -82,7 +86,8 @@ extern pipeline_executor_config_t *pipeline_executor_config;
 
 void pipeline_executor_reset_state(void);
 void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count);
-void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data);
+void pipeline_executor_add_physical_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data);
+void pipeline_executor_add_virtual_pipeline(uint8_t pipeline_position, pipeline_virtual_callback callback, pipeline_callback_reset callback_reset, void* user_data);
 
 void pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
 void pipeline_executor_end_with_capture_next_keys(void);

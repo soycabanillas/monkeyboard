@@ -87,7 +87,7 @@ protected:
         tap_dance_config->length = 0; // Will be set as we add configurations
 
         pipeline_executor_create_config(1, 0);
-        pipeline_executor_add_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, tap_dance_config);
+        pipeline_executor_add_physical_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, tap_dance_config);
     }
 
     void TearDown() override {
