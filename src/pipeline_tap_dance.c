@@ -102,7 +102,7 @@ bool should_activate_hold_action_on_interrupt(pipeline_tap_dance_action_config_t
     }
 }
 
-void handle_interrupting_key(pipeline_callback_params_t* params,
+void handle_interrupting_key(pipeline_physical_callback_params_t* params,
                             pipeline_tap_dance_behaviour_config_t *config,
                             pipeline_tap_dance_behaviour_status_t *status,
                             pipeline_actions_t* actions,
@@ -140,7 +140,7 @@ void handle_interrupting_key(pipeline_callback_params_t* params,
     }
 }
 
-void generic_key_press_handler(pipeline_callback_params_t* params,
+void generic_key_press_handler(pipeline_physical_callback_params_t* params,
                                   pipeline_tap_dance_behaviour_config_t *config,
                                   pipeline_tap_dance_behaviour_status_t *status,
                                   pipeline_actions_t* actions,
@@ -174,7 +174,7 @@ void generic_key_press_handler(pipeline_callback_params_t* params,
     }
 }
 
-void generic_key_release_when_not_holding_handler(pipeline_callback_params_t* params,
+void generic_key_release_when_not_holding_handler(pipeline_physical_callback_params_t* params,
                                   pipeline_tap_dance_behaviour_config_t *config,
                                   pipeline_tap_dance_behaviour_status_t *status,
                                   pipeline_actions_t* actions,
@@ -188,13 +188,13 @@ void generic_key_release_when_not_holding_handler(pipeline_callback_params_t* pa
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
                 actions->tap_key_fn(tap_action->keycode);
-                actions->remove_physical_press_and_release_fn(params->key_events->event_buffer[0].keypos);
+                actions->remove_physical_press_and_release_fn(params->key_event->keypos);
             }
             reset_behaviour_state(status);
         } else if (status->state == TAP_DANCE_WAITING_FOR_RELEASE) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->remove_physical_press_and_release_fn(params->key_events->event_buffer[0].keypos);
+                actions->remove_physical_press_and_release_fn(params->key_event->keypos);
                 actions->unregister_key_fn(tap_action->keycode);
             }
             reset_behaviour_state(status);
@@ -202,7 +202,7 @@ void generic_key_release_when_not_holding_handler(pipeline_callback_params_t* pa
     }
 }
 
-void generic_key_release_when_holding_handler(pipeline_callback_params_t* params,
+void generic_key_release_when_holding_handler(pipeline_physical_callback_params_t* params,
                                   pipeline_tap_dance_behaviour_config_t *config,
                                   pipeline_tap_dance_behaviour_status_t *status,
                                   pipeline_actions_t* actions,
@@ -212,7 +212,7 @@ void generic_key_release_when_holding_handler(pipeline_callback_params_t* params
     reset_behaviour_state(status);
 }
 
-void handle_key_press(pipeline_callback_params_t* params,
+void handle_key_press(pipeline_physical_callback_params_t* params,
                      pipeline_tap_dance_behaviour_config_t *config,
                      pipeline_tap_dance_behaviour_status_t *status,
                      pipeline_actions_t* actions,
@@ -247,7 +247,7 @@ void handle_key_press(pipeline_callback_params_t* params,
     }
 }
 
-void handle_key_release(pipeline_callback_params_t* params,
+void handle_key_release(pipeline_physical_callback_params_t* params,
                        pipeline_tap_dance_behaviour_config_t *config,
                        pipeline_tap_dance_behaviour_status_t *status,
                        pipeline_actions_t* actions,
@@ -282,7 +282,7 @@ void handle_key_release(pipeline_callback_params_t* params,
     }
 }
 
-void handle_timeout(pipeline_callback_params_t* params,
+void handle_timeout(pipeline_physical_callback_params_t* params,
                    pipeline_tap_dance_behaviour_config_t *config,
                    pipeline_tap_dance_behaviour_status_t *status,
                    pipeline_actions_t* actions) {
@@ -346,7 +346,7 @@ void handle_timeout(pipeline_callback_params_t* params,
     }
 }
 
-void custom_switch_layer_custom_function(pipeline_callback_params_t* params,
+void custom_switch_layer_custom_function(pipeline_physical_callback_params_t* params,
                                         pipeline_tap_dance_behaviour_config_t *config,
                                         pipeline_tap_dance_behaviour_status_t *status,
                                         pipeline_actions_t* actions,
@@ -428,8 +428,8 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     #define DEBUG_STATE(caption) ((void)0)
 #endif
 
-static void pipeline_tap_dance_process(pipeline_callback_params_t* params, pipeline_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
-    platform_key_event_t* last_key_event = &params->key_events->event_buffer[params->key_events->event_buffer_pos - 1];
+static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
+    platform_key_event_t* last_key_event = params->key_event;
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         DEBUG_TAP_DANCE("PIPELINE_CALLBACK_KEY_EVENT: %d", last_key_event->keycode);
@@ -454,7 +454,7 @@ static void pipeline_tap_dance_process(pipeline_callback_params_t* params, pipel
     DEBUG_STATE("Finished processing tap dance event:");
 }
 
-void pipeline_tap_dance_callback_process_data(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
     #ifdef DEBUG
@@ -463,7 +463,7 @@ void pipeline_tap_dance_callback_process_data(pipeline_callback_params_t* params
         return;
     }
     DEBUG_TAP_DANCE("Callback called with type %d, row %d, col %d, keycode %d",
-           params->callback_type, params->key_events->event_buffer[0].keypos.row, params->key_events->event_buffer[0].keypos.col, params->key_events->event_buffer[0].keycode);
+           params->callback_type, params->key_event->keypos.row, params->key_event->keypos.col, params->key_event->keycode);
     #endif
     pipeline_tap_dance_process(params, actions, global_config);
 }

@@ -1,6 +1,5 @@
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
-#include "key_virtual_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 #include <regex.h>
@@ -28,7 +27,6 @@ platform_key_event_buffer_t* platform_key_event_create(void) {
         return NULL;
     }
     key_buffer->event_buffer_pos = 0;
-    key_buffer->virtual_press_buffer = platform_virtual_press_create();
     key_buffer->key_press_buffer = platform_key_press_create();
     return key_buffer;
 }
@@ -38,7 +36,6 @@ void platform_key_event_reset(platform_key_event_buffer_t* event_buffer) {
         return;
     }
     event_buffer->event_buffer_pos = 0;
-    platform_virtual_press_reset(event_buffer->virtual_press_buffer);
     platform_key_press_reset(event_buffer->key_press_buffer);
 }
 

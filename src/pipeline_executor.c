@@ -52,9 +52,9 @@ static void update_layer_for_physical_events(uint8_t layer, uint8_t pos) {
  * - Used for multi-key sequences, tap dance timing, etc.
  */
 static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, platform_key_event_buffer_t* key_events, platform_key_event_t* press_buffer_selected, capture_pipeline_t* return_data) {
-    pipeline_callback_params_t callback_params;
+    pipeline_physical_callback_params_t callback_params;
     if (callback_time == 0) {
-        callback_params.key_events = key_events;
+        callback_params.key_event = &key_events->event_buffer[key_events->event_buffer_pos - 1];
         callback_params.callback_type = PIPELINE_CALLBACK_KEY_EVENT;
         DEBUG_EXECUTOR("Executing pipeline %hhu with key event", pipeline_index);
     } else {
@@ -63,7 +63,7 @@ static void execute_pipeline(uint16_t callback_time, uint8_t pipeline_index, pla
         DEBUG_EXECUTOR("Executing pipeline %hhu with callback time %hu", pipeline_index, callback_time);
     }
 
-    pipeline_executor_config->pipelines[pipeline_index]->callback(&callback_params, &actions, pipeline_executor_config->pipelines[pipeline_index]->data);
+    pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
 }
 
 static void reset_return_data(capture_pipeline_t* return_data) {
@@ -130,7 +130,7 @@ static bool process_key_pool(void) {
     }
     if (last_execution.capture_key_events == false)
     {
-        for (size_t i = pipeline_index; i < pipeline_executor_config->length; i++) {
+        for (size_t i = pipeline_index; i < pipeline_executor_config->physical_pipelines_length; i++) {
             pipeline_executor_state.pipeline_index = i;
             execute_middleware(&pipeline_executor_state, i, press_buffer_selected);
             last_execution = pipeline_executor_state.return_data;
@@ -190,8 +190,8 @@ void pipeline_executor_reset_state(void) {
     pipeline_executor_state.return_data.key_buffer_changed = false;
     pipeline_executor_state.pipeline_index = 0; // Reset the pipeline index
     pipeline_executor_state.deferred_exec_callback_token = 0; // Reset the deferred execution callback token
-    for (uint8_t i = 0; i < pipeline_executor_config->length; i++) {
-        pipeline_t* pipeline = pipeline_executor_config->pipelines[i];
+    for (uint8_t i = 0; i < pipeline_executor_config->physical_pipelines_length; i++) {
+        physical_pipeline_t* pipeline = pipeline_executor_config->physical_pipelines[i];
         if (pipeline) {
             pipeline->callback_reset(pipeline->data);
         }
@@ -201,10 +201,13 @@ void pipeline_executor_reset_state(void) {
     }
 }
 
-void pipeline_executor_create_config(uint8_t pipeline_count) {
+void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count) {
     pipeline_executor_create_state();
-    pipeline_executor_config = (pipeline_executor_config_t*)malloc(sizeof(pipeline_executor_config_t) + sizeof(pipeline_t*) * pipeline_count);
-    pipeline_executor_config->length = pipeline_count; // Initialize the length of the pipeline config
+    pipeline_executor_config = malloc(sizeof(pipeline_executor_config_t));
+    pipeline_executor_config->physical_pipelines_length = physical_pipeline_count;
+    pipeline_executor_config->virtual_pipelines_length = virtual_pipeline_count;
+    pipeline_executor_config->physical_pipelines = malloc(sizeof(physical_pipeline_t*) * physical_pipeline_count);
+    pipeline_executor_config->virtual_pipelines = malloc(sizeof(virtual_pipeline_t*) * virtual_pipeline_count);
 
     actions.register_key_fn = &register_key;
     actions.unregister_key_fn = &unregister_key;
@@ -213,18 +216,18 @@ void pipeline_executor_create_config(uint8_t pipeline_count) {
     actions.update_layer_for_physical_events_fn = &update_layer_for_physical_events;
 }
 
-void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_callback callback, pipeline_callback_reset callback_reset, void* user_data) {
-    if (pipeline_position >= pipeline_executor_config->length) {
+void pipeline_executor_add_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data) {
+    if (pipeline_position >= pipeline_executor_config->physical_pipelines_length) {
         // Handle error: pipeline position out of bounds
         return;
     }
-    pipeline_t* pipeline;
-    pipeline = malloc(sizeof(pipeline_t));
+    physical_pipeline_t* pipeline;
+    pipeline = malloc(sizeof(physical_pipeline_t));
     pipeline->callback = callback;
     pipeline->callback_reset = callback_reset;
     pipeline->data = user_data;
 
-    pipeline_executor_config->pipelines[pipeline_position] = pipeline;
+    pipeline_executor_config->physical_pipelines[pipeline_position] = pipeline;
 }
 
 #if defined(DEBUG)

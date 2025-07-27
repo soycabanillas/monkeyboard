@@ -86,7 +86,7 @@ protected:
             malloc(sizeof(*tap_dance_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
         tap_dance_config->length = 0; // Will be set as we add configurations
 
-        pipeline_executor_create_config(1);
+        pipeline_executor_create_config(1, 0);
         pipeline_executor_add_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, tap_dance_config);
     }
 

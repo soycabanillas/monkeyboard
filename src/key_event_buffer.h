@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "key_press_buffer.h"
-#include "key_virtual_buffer.h"
 #include "platform_types.h"
 
 #ifdef __cplusplus
@@ -26,7 +25,6 @@ typedef struct {
 typedef struct {
     platform_key_event_t event_buffer[PLATFORM_KEY_EVENT_MAX_ELEMENTS];
     uint8_t event_buffer_pos;
-    platform_virtual_press_buffer_t* virtual_press_buffer; // Buffer for virtual key presses
     platform_key_press_buffer_t* key_press_buffer; // Buffer for physical key presses
 } platform_key_event_buffer_t;
 
