@@ -26,6 +26,16 @@ struct deferred_call_t {
     void* data;
 };
 
+// Key action tracking (0 = press, 1 = release)
+struct key_action_t {
+    platform_keycode_t keycode;
+    uint8_t action; // 0 = press, 1 = release
+
+    bool operator==(const key_action_t& other) const {
+        return keycode == other.keycode && action == other.action;
+    }
+};
+
 // MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
@@ -39,6 +49,8 @@ struct MockPlatformState {
     std::vector<platform_keycode_t> unregister_key_calls;
     std::vector<uint8_t> layer_select_calls;
     std::vector<deferred_call_t> deferred_calls;
+    std::vector<key_action_t> key_actions; // Combined press/release history
+    std::vector<uint8_t> layer_history;    // Layer change history
 
     platform_keycode_t last_sent_key;
     platform_keycode_t last_registered_key;
@@ -60,7 +72,18 @@ struct MockPlatformState {
     void reset();
     void print_state() const;
     void record_key_event(platform_keycode_t keycode, bool pressed);
+
+    // New comparison methods
+    bool key_actions_match(const std::vector<key_action_t>& expected) const;
+    bool layer_history_matches(const std::vector<uint8_t>& expected) const;
+    std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
+    std::vector<uint8_t> get_layer_history_since(size_t start_index) const;
 };
 
 // External declaration of the global mock state
 extern MockPlatformState g_mock_state;
+
+// Helper functions for creating expected sequences
+key_action_t press(platform_keycode_t keycode);
+key_action_t release(platform_keycode_t keycode);
+std::vector<key_action_t> tap_sequence(platform_keycode_t keycode);

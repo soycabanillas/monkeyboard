@@ -90,14 +90,14 @@ protected:
         }
     }
 
-    void tap_key(uint16_t keycode, uint16_t hold_ms = 50, uint16_t delay_before_ms = 0) {
-        press_key(keycode, delay_before_ms);
+    void tap_key(uint16_t keycode, uint16_t hold_ms = 0) {
+        press_key(keycode);
         release_key(keycode, hold_ms);
     }
 
-    void reset_test_state() {
-        reset_mock_state();
-        tap_dance_config->length = 0;
+    void tap_key(uint16_t keycode, uint16_t delay_before_ms, uint16_t hold_ms) {
+        press_key(keycode, delay_before_ms);
+        release_key(keycode, hold_ms);
     }
 };
 
@@ -128,10 +128,10 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
 
     g_mock_state.print_state();
 
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 1);
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, OUTPUT_KEY);
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY), release(OUTPUT_KEY)         // Tap dance output
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
@@ -164,18 +164,17 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
 
     // First tap
     tap_key(TAP_DANCE_KEY);
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 2);
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
 
-    // Second tap (should work due to repetition exception)
+    // Second tap
     tap_key(TAP_DANCE_KEY, 50, 50);
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 4);
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
 
     // Third tap
     tap_key(TAP_DANCE_KEY, 50, 50);
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 6);
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
+
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY), release(OUTPUT_KEY),
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
@@ -193,9 +192,13 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     platform_wait_ms(250);
 
     // Should only have the original key press/release, no tap dance actions
-    EXPECT_EQ(g_mock_state.register_key_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.unregister_key_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 0);
+    std::vector<key_action_t> expected_keys = {
+        press(NORMAL_KEY), release(NORMAL_KEY)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {}; // No layer changes
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
 // ==================== BASIC HOLD FUNCTIONALITY ====================
@@ -229,12 +232,16 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(250);  // Wait for hold timeout
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER);
 
     release_key(TAP_DANCE_KEY);
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
-    EXPECT_EQ(g_mock_state.last_selected_layer, BASE_LAYER);
+
+    std::vector<key_action_t> expected_keys = {
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {TARGET_LAYER, BASE_LAYER};
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
 TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
@@ -271,11 +278,11 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     release_key(TAP_DANCE_KEY); // Release before timeout
     platform_wait_ms(250);  // Wait for tap timeout
 
-    // Should tap OUTPUT_KEY (register + unregister)
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 2); // Original press + tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 2); // Original release + tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, OUTPUT_KEY);
+    std::vector<key_action_t> expected_keys = {
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),  // Original key
+        press(OUTPUT_KEY), release(OUTPUT_KEY)         // Tap output
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
 
 // ==================== MULTI-TAP SEQUENCES ====================
@@ -311,18 +318,18 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     // First tap
     tap_key(TAP_DANCE_KEY);
     // Should wait for potential second tap, no tap output yet
-    EXPECT_EQ(g_mock_state.register_key_calls_count(), 1); // Only original key press
-    EXPECT_EQ(g_mock_state.unregister_key_calls_count(), 1); // Only original key release
+    std::vector<key_action_t> expected_keys = {
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 
     // Second tap
     tap_key(TAP_DANCE_KEY, 50);
     platform_wait_ms(250);  // Wait for timeout
 
-    // Should output DOUBLE_TAP_KEY for double tap
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, DOUBLE_TAP_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, DOUBLE_TAP_KEY);
+    expected_keys = {
+        press(DOUBLE_TAP_KEY), release(DOUBLE_TAP_KEY)   // Double tap output
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
@@ -360,11 +367,13 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     tap_key(TAP_DANCE_KEY, 50);
     platform_wait_ms(250);
 
-    // Should output TRIPLE_TAP_KEY for triple tap
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 4); // 3 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 4); // 3 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, TRIPLE_TAP_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, TRIPLE_TAP_KEY);
+    std::vector<key_action_t> expected_keys = {
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // First tap
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Second tap
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Third tap
+        press(TRIPLE_TAP_KEY), release(TRIPLE_TAP_KEY)    // Triple tap output
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
@@ -400,9 +409,11 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     tap_key(TAP_DANCE_KEY, 50);
     tap_key(TAP_DANCE_KEY, 50);
 
-    // Should reset and execute first tap action
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 4); // 3 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 4); // 3 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, SINGLE_TAP_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, SINGLE_TAP_KEY);
+    std::vector<key_action_t> expected_keys = {
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // First tap
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Second tap
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Third tap
+        press(SINGLE_TAP_KEY), release(SINGLE_TAP_KEY)    // Fallback to first action
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }

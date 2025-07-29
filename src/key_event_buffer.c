@@ -65,13 +65,12 @@ uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event
     uint8_t layer = platform_layout_get_current_layer();
     platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, layer, press_id);
     if (key_press == NULL) {
-        DEBUG_PRINT_ERROR("Key press buffer is NULL");
         return 0; // Failed to add press to key press buffer
     }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
     bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, true);
     if (!press_added) {
-        DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d", keypos.row, keypos.col);
+        DEBUG_PRINT_ERROR("Failed to add press event for keypos: %d, %d", keypos.row, keypos.col);
         platform_key_press_remove_press(event_buffer->key_press_buffer, keypos); // Clean up if event could not be added
         return 0; // Failed to add press to event buffer
     }
@@ -101,9 +100,11 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(key_press->layer, key_press->keypos);
     bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, true);
     if (!press_added) {
-        DEBUG_PRINT_ERROR("Failed to add physical release for keypos: %d, %d", keypos.row, keypos.col);
+        DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d, %d", keypos.row, keypos.col);
         platform_key_press_remove_press(event_buffer->key_press_buffer, key_press->keypos);
         return false;
+    } else {
+        platform_key_press_remove_press(event_buffer->key_press_buffer, key_press->keypos);
     }
     return true;
 }

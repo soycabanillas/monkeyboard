@@ -141,6 +141,7 @@ void generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_c
     DEBUG_TAP_DANCE("Generic Key Release Handler (Not Holding): %d", last_key_event->keycode);
     if (has_subsequent_actions(config, status->tap_count)) {
         status->state = TAP_DANCE_WAITING_FOR_TAP;
+        actions->remove_physical_press_and_release_fn(last_key_event->keypos);
         pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_tap_timeout);
     } else {
         if (status->state == TAP_DANCE_WAITING_FOR_HOLD) {

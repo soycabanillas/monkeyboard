@@ -48,6 +48,8 @@ void MockPlatformState::reset() {
     register_key_calls.clear();
     unregister_key_calls.clear();
     layer_select_calls.clear();
+    key_actions.clear();
+    layer_history.clear();
 
     last_sent_key = 0;
     last_registered_key = 0;
@@ -96,6 +98,37 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     return pressed_keys.find(keycode) != pressed_keys.end();
 }
 
+// New comparison methods
+bool MockPlatformState::key_actions_match(const std::vector<key_action_t>& expected) const {
+    if (key_actions.size() != expected.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < expected.size(); i++) {
+        if (!(key_actions[i] == expected[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MockPlatformState::layer_history_matches(const std::vector<uint8_t>& expected) const {
+    return layer_history == expected;
+}
+
+std::vector<key_action_t> MockPlatformState::get_key_actions_since(size_t start_index) const {
+    if (start_index >= key_actions.size()) {
+        return {};
+    }
+    return std::vector<key_action_t>(key_actions.begin() + start_index, key_actions.end());
+}
+
+std::vector<uint8_t> MockPlatformState::get_layer_history_since(size_t start_index) const {
+    if (start_index >= layer_history.size()) {
+        return {};
+    }
+    return std::vector<uint8_t>(layer_history.begin() + start_index, layer_history.end());
+}
+
 // Global mock state
 MockPlatformState g_mock_state;
 
@@ -117,6 +150,7 @@ void platform_register_keycode(platform_keycode_t keycode) {
     g_mock_state.register_key_calls.push_back(keycode);
     g_mock_state.last_registered_key = keycode;
     g_mock_state.record_key_event(keycode, true);
+    g_mock_state.key_actions.push_back({keycode, 0}); // 0 = press
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
@@ -124,6 +158,7 @@ void platform_unregister_keycode(platform_keycode_t keycode) {
     g_mock_state.unregister_key_calls.push_back(keycode);
     g_mock_state.last_unregistered_key = keycode;
     g_mock_state.record_key_event(keycode, false);
+    g_mock_state.key_actions.push_back({keycode, 1}); // 1 = release
 }
 
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
@@ -156,6 +191,7 @@ void platform_layout_set_layer(uint8_t layer) {
     g_mock_state.layer_select_calls.push_back(layer);
     g_mock_state.current_layer = layer;
     g_mock_state.last_selected_layer = layer;
+    g_mock_state.layer_history.push_back(layer);
 
     platform_layout_set_layer_impl(layer);
 }
@@ -187,8 +223,9 @@ platform_time_t platform_timer_elapsed(platform_time_t last) {
 
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
-    printf("MOCK: Defer exec for %u ms\n", delay_ms);
-    g_mock_state.deferred_calls.push_back({g_mock_state.next_token++, g_mock_state.timer + delay_ms, callback, data});
+    g_mock_state.next_token++;
+    printf("MOCK: Defer exec token %u for %u ms\n", g_mock_state.next_token, delay_ms);
+    g_mock_state.deferred_calls.push_back({g_mock_state.next_token, g_mock_state.timer + delay_ms, callback, data});
     return g_mock_state.next_token;
 }
 
@@ -231,4 +268,17 @@ void mock_print_state(void) {
 
 void reset_mock_state(void) {
     g_mock_state.reset();
+}
+
+// Helper functions for creating expected sequences
+key_action_t press(platform_keycode_t keycode) {
+    return {keycode, 0};
+}
+
+key_action_t release(platform_keycode_t keycode) {
+    return {keycode, 1};
+}
+
+std::vector<key_action_t> tap_sequence(platform_keycode_t keycode) {
+    return {press(keycode), release(keycode)};
 }

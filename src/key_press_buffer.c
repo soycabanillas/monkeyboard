@@ -34,6 +34,7 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
 
     for (size_t pos = 0; pos < key_buffer->press_buffer_pos; pos++) {
         if (platform_compare_keyposition(only_press_buffer[pos].keypos, keypos)) {
+            DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d, already exists", keypos.row, keypos.col);
             return NULL;
         }
     }
@@ -46,6 +47,7 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
         ++key_buffer->press_buffer_pos;
         return &only_press_buffer[key_buffer->press_buffer_pos - 1]; // Return the newly added press
     }
+    DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d, key press buffer is full", keypos.row, keypos.col);
     return NULL;
 }
 
