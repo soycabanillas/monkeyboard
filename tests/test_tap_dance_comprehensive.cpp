@@ -1,3 +1,4 @@
+#include <sys/wait.h>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -173,6 +174,8 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
 
     std::vector<key_action_t> expected_keys = {
         press(OUTPUT_KEY), release(OUTPUT_KEY),
+        press(OUTPUT_KEY), release(OUTPUT_KEY),
+        press(OUTPUT_KEY), release(OUTPUT_KEY)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
@@ -236,7 +239,6 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
     release_key(TAP_DANCE_KEY);
 
     std::vector<key_action_t> expected_keys = {
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 
@@ -253,7 +255,7 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     // Begin keymap setup
     static const platform_keycode_t keymaps[2][2][2] = {
         { // BASE_LAYER
-            { TAP_DANCE_KEY, OUTPUT_KEY },
+            { TAP_DANCE_KEY, 6010 },
             { 6011, 6012 }
         },
         { // TARGET_LAYER
@@ -279,7 +281,6 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     platform_wait_ms(250);  // Wait for tap timeout
 
     std::vector<key_action_t> expected_keys = {
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),  // Original key
         press(OUTPUT_KEY), release(OUTPUT_KEY)         // Tap output
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
@@ -368,10 +369,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     platform_wait_ms(250);
 
     std::vector<key_action_t> expected_keys = {
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // First tap
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Second tap
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Third tap
-        press(TRIPLE_TAP_KEY), release(TRIPLE_TAP_KEY)    // Triple tap output
+        press(TRIPLE_TAP_KEY), release(TRIPLE_TAP_KEY)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
@@ -409,11 +407,11 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     tap_key(TAP_DANCE_KEY, 50);
     tap_key(TAP_DANCE_KEY, 50);
 
+    platform_wait_ms(250);
+
     std::vector<key_action_t> expected_keys = {
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // First tap
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Second tap
-        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY),     // Third tap
-        press(SINGLE_TAP_KEY), release(SINGLE_TAP_KEY)    // Fallback to first action
+        press(DOUBLE_TAP_KEY), release(DOUBLE_TAP_KEY),
+        press(TAP_DANCE_KEY), release(TAP_DANCE_KEY)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }

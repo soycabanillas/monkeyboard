@@ -10,6 +10,15 @@
 #include "platform_interface.h"
 #include "platform_types.h"
 
+#if defined(DEBUG)
+    #define DEBUG_BUFFERS(caption) \
+        DEBUG_PRINT_RAW("%s\n", caption); \
+        print_key_press_buffer(pipeline_executor_state.key_event_buffer->key_press_buffer); \
+        print_key_event_buffer(pipeline_executor_state.key_event_buffer);
+#else
+    #define DEBUG_BUFFERS(caption) ((void)0)
+#endif
+
 pipeline_executor_state_t pipeline_executor_state;
 pipeline_executor_config_t *pipeline_executor_config;
 pipeline_physical_actions_t physical_actions;
@@ -78,7 +87,8 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
 
     pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &physical_actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
 
-    DEBUG_PRINT("=============");
+    DEBUG_BUFFERS("Key event buffer after time out:");
+    DEBUG_PRINT("=================");
     DEBUG_PRINT_NL();
 }
 
@@ -164,7 +174,7 @@ static bool process_key_pool(void) {
                 platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, event->keycode);
             }
         }
-        platform_key_event_reset(pipeline_executor_state.key_event_buffer);
+        platform_key_event_remove_event_keys(pipeline_executor_state.key_event_buffer);
     }
 
     if (pipeline_executor_state.return_data.callback_time > 0) {
@@ -175,10 +185,13 @@ static bool process_key_pool(void) {
     // Process the virtual pipelines
     for (size_t i = pipeline_index; i < pipeline_executor_config->virtual_pipelines_length; i++) {
         virtual_event_triggered(&pipeline_executor_state, i, pipeline_executor_state.virtual_event_buffer);
+        if (last_execution.key_buffer_changed == true) {
+            key_digested = true;
+        }
     }
 
-    // Flush the virtual event buffer if no key events are captured
-    if (last_execution.capture_key_events == false) {
+    // Flush the virtual event buffer if no key events are captured and the buffer has changed
+    if (last_execution.capture_key_events == false && key_digested == true) {
         flush_virtual_event_buffer();
     }
 
@@ -277,41 +290,34 @@ void pipeline_executor_add_virtual_pipeline(uint8_t pipeline_position, pipeline_
     pipeline_executor_config->virtual_pipelines[pipeline_position] = pipeline;
 }
 
-#if defined(DEBUG)
-    #define DEBUG_BUFFERS(caption) \
-        DEBUG_PRINT_RAW("%s\n", caption); \
-        print_key_press_buffer(pipeline_executor_state.key_event_buffer->key_press_buffer); \
-        print_key_event_buffer(pipeline_executor_state.key_event_buffer);
-#else
-    #define DEBUG_BUFFERS(caption) ((void)0)
-#endif
-
 bool pipeline_process_key(abskeyevent_t abskeyevent) {
     DEBUG_PRINT("=== ITERATION ===");
 
     bool further_process_required = false;
 
+    bool buffer_full = false;
     bool event_added = false;
     if (abskeyevent.pressed) {
-        uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos);
+        uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos, &buffer_full);
         if (press_id > 0) {
             event_added = true;
         }
-        DEBUG_BUFFERS("Key event buffer after adding press key:");
+        DEBUG_BUFFERS(event_added ? "Key event buffer after adding press key:" : "Key event buffer not modified after trying to add press key:");
     } else {
-        if (platform_key_event_add_physical_release(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos)) {
+        if (platform_key_event_add_physical_release(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos, &buffer_full)) {
             event_added = true;
         }
-        DEBUG_BUFFERS("Key event buffer after adding release key:");
+        DEBUG_BUFFERS(event_added ? "Key event buffer after adding release key:" : "Key event buffer not modified after trying to add release key:");
     }
 
-    if (event_added) {
+    if (buffer_full == false && event_added) {
         further_process_required = process_key_pool();
-    } else {
+    } else if (buffer_full) {
         DEBUG_EXECUTOR("Error: Key event buffer is full, cannot add event");
         // Reset the global state
         pipeline_executor_reset_state();
         further_process_required = false;
+        return further_process_required;
     }
     DEBUG_BUFFERS(event_added ? "Key event buffer after processing:" : "Key event buffer not modified:");
     DEBUG_PRINT("=================");

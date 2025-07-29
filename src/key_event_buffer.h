@@ -38,10 +38,11 @@ typedef enum {
 platform_key_event_buffer_t* platform_key_event_create(void);
 void platform_key_event_reset(platform_key_event_buffer_t* event_buffer);
 
-uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
-bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode);
-bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos);
-bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode);
+void platform_key_event_remove_event_keys(platform_key_event_buffer_t* event_buffer);
+uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full);
+bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full);
+bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full);
+bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full);
 platform_key_event_remove_type_t platform_key_event_remove_physical_press_and_release(platform_key_event_buffer_t *event_buffer, platform_keypos_t keypos);
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);
 

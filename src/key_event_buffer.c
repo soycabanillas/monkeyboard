@@ -39,8 +39,16 @@ void platform_key_event_reset(platform_key_event_buffer_t* event_buffer) {
     platform_key_press_reset(event_buffer->key_press_buffer);
 }
 
-static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *event_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, platform_keycode_t keycode, bool is_press, uint8_t press_id, bool is_physical) {
+void platform_key_event_remove_event_keys(platform_key_event_buffer_t* event_buffer) {
+    if (event_buffer == NULL) {
+        return;
+    }
+    event_buffer->event_buffer_pos = 0;
+}
+
+static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *event_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, platform_keycode_t keycode, bool is_press, uint8_t press_id, bool is_physical, bool* buffer_full) {
     if (event_buffer->event_buffer_pos >= PLATFORM_KEY_EVENT_MAX_ELEMENTS) {
+        *buffer_full = true;
         return false; // Buffer is full
     }
     // Add the key event to the buffer
@@ -60,7 +68,7 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
     return true;
 }
 
-uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos) {
+uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
     uint8_t press_id = get_keypress_id();
     uint8_t layer = platform_layout_get_current_layer();
     platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, layer, press_id);
@@ -68,7 +76,7 @@ uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event
         return 0; // Failed to add press to key press buffer
     }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
-    bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, true);
+    bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, true, buffer_full);
     if (!press_added) {
         DEBUG_PRINT_ERROR("Failed to add press event for keypos: %d, %d", keypos.row, keypos.col);
         platform_key_press_remove_press(event_buffer->key_press_buffer, keypos); // Clean up if event could not be added
@@ -77,12 +85,12 @@ uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event
     return (press_added ? press_id : 0);
 }
 
-bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode) {
-    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, true, 0, false);
+bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full) {
+    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, true, 0, false, buffer_full);
     return press_added;
 }
 
-bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos) {
+bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
     platform_key_press_buffer_t *key_press_buffer = event_buffer->key_press_buffer;
     if (key_press_buffer == NULL) {
         DEBUG_PRINT_ERROR("Key press buffer is NULL");
@@ -98,7 +106,7 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
         return false; // Ignore the release event
     }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(key_press->layer, key_press->keypos);
-    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, true);
+    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, true, buffer_full);
     if (!press_added) {
         DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d, %d", keypos.row, keypos.col);
         platform_key_press_remove_press(event_buffer->key_press_buffer, key_press->keypos);
@@ -109,8 +117,8 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
     return true;
 }
 
-bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode) {
-    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, false, 0, false);
+bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full) {
+    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, false, 0, false, buffer_full);
     return press_added;
 }
 

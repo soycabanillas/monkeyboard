@@ -57,13 +57,6 @@ typedef struct {
     uint8_t tap_count;               // Current tap count (1st tap, 2nd tap, etc.)
     uint8_t original_layer;          // Layer when sequence started
     uint8_t selected_layer;          // Layer selected by hold action
-    platform_keycode_t selected_keycode; // Keycode selected by tap action
-    platform_time_t key_press_time;      // When the trigger key was first pressed
-    platform_time_t last_release_time;   // When the trigger key was last released
-    bool hold_action_discarded;         // Flag for positive interrupt config when hold is discarded
-    size_t behaviour_index;             // Index in global config for layer stack tracking
-    bool is_nested_active;              // Whether this sequence is currently active (not idle)
-    // pipeline_tap_dance_key_event_buffer_t *key_buffer; // Key buffer for this tap dance sequence
 } pipeline_tap_dance_behaviour_status_t;
 
 typedef struct {
