@@ -13,26 +13,23 @@ pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create
     return behaviour_status;
 }
 
-pipeline_tap_dance_action_config_t* createbehaviouraction(uint8_t tap_count, td_customlayer_action_t action, platform_keycode_t keycode, uint8_t layer) {
+pipeline_tap_dance_action_config_t* createbehaviouraction_tap(uint8_t tap_count, platform_keycode_t keycode) {
     pipeline_tap_dance_action_config_t behaviouraction = {
         .tap_count = tap_count,
-        .action = action,
-        .keycode = keycode,
-        .layer = layer,
-        .interrupt_config = 0  // Default interrupt config (activate on any key press)
+        .action = TDCL_TAP_KEY_SENDKEY,
+        .keycode = keycode
     };
     pipeline_tap_dance_action_config_t* allocation = (pipeline_tap_dance_action_config_t*)malloc(sizeof behaviouraction);
     memcpy(allocation, &behaviouraction, sizeof behaviouraction);
     return allocation;
 }
 
-pipeline_tap_dance_action_config_t* createbehaviouraction_with_interrupt(uint8_t tap_count, td_customlayer_action_t action, platform_keycode_t keycode, uint8_t layer, int16_t interrupt_config) {
+pipeline_tap_dance_action_config_t* createbehaviouraction_hold(uint8_t tap_count, uint8_t layer, tap_dance_hold_strategy_t hold_strategy) {
     pipeline_tap_dance_action_config_t behaviouraction = {
         .tap_count = tap_count,
-        .action = action,
-        .keycode = keycode,
+        .action = TDCL_HOLD_KEY_CHANGELAYERTEMPO,
         .layer = layer,
-        .interrupt_config = interrupt_config
+        .hold_strategy = hold_strategy
     };
     pipeline_tap_dance_action_config_t* allocation = (pipeline_tap_dance_action_config_t*)malloc(sizeof behaviouraction);
     memcpy(allocation, &behaviouraction, sizeof behaviouraction);

@@ -35,16 +35,21 @@ typedef enum {
     TAP_DANCE_WAITING_FOR_HOLD,      // Key pressed, waiting for hold timeout
     TAP_DANCE_WAITING_FOR_RELEASE,   // Key pressed, no hold action, waiting for release
     TAP_DANCE_WAITING_FOR_TAP,       // Key released, waiting for tap timeout or next press
-    TAP_DANCE_INTERRUPT_CONFIG_ACTIVE, // Interrupt config timeout expired, waiting for hold timeout
     TAP_DANCE_HOLDING,               // Hold action activated, key still pressed
 } tap_dance_state_t;
+
+typedef enum {
+    TAP_DANCE_HOLD_PREFERRED,  // Prefer hold action over tap
+    TAP_DANCE_TAP_PREFERRED,   // Prefer tap action over hold
+    TAP_DANCE_BALANCED
+} tap_dance_hold_strategy_t;
 
 typedef struct {
     uint8_t tap_count;
     td_customlayer_action_t action;
     platform_keycode_t keycode;
     uint8_t layer;
-    int16_t interrupt_config; // -1, 0, or positive milliseconds for interrupt behavior
+    tap_dance_hold_strategy_t hold_strategy;
 } pipeline_tap_dance_action_config_t;
 
 typedef struct {

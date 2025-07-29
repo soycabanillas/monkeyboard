@@ -73,35 +73,6 @@ bool should_ignore_same_keycode_nesting(pipeline_tap_dance_global_config_t* glob
     return false;
 }
 
-bool should_activate_hold_action_on_interrupt(pipeline_tap_dance_action_config_t* hold_action,
-                                             pipeline_tap_dance_behaviour_status_t* status,
-                                             platform_time_t interrupt_time,
-                                             bool is_key_release) {
-    if (!hold_action) return false;
-
-    platform_time_t time_since_press = interrupt_time - status->key_press_time;
-
-    switch (hold_action->interrupt_config) {
-        case -1:
-            // Activate only on press+release or multiple keys
-            return is_key_release;
-
-        case 0:
-            // Activate on any key press
-            return true;
-
-        default:
-            // Positive value: activate only if interrupt occurs at or after the specified time
-            if (time_since_press >= (platform_time_t)hold_action->interrupt_config) {
-                return true;
-            } else {
-                // Before timeout - discard hold action completely
-                status->hold_action_discarded = true;
-                return false;
-            }
-    }
-}
-
 void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
                              pipeline_tap_dance_behaviour_status_t *status,
                              pipeline_physical_actions_t* actions,
@@ -110,32 +81,27 @@ void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
     DEBUG_TAP_DANCE("-- Interrupting Key Event: %d, state: %d", last_key_event->keycode, status->state);
 
     // Only handle interruptions during hold waiting states
-    if (status->state != TAP_DANCE_WAITING_FOR_HOLD &&
-        status->state != TAP_DANCE_INTERRUPT_CONFIG_ACTIVE) {
+    if (status->state != TAP_DANCE_WAITING_FOR_HOLD) {
         return;
     }
 
     pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
     if (!hold_action) return;
 
-    bool is_key_release = (last_key_event->is_press == false);
-
-    // Check if this interrupt should activate the hold action
-    if (should_activate_hold_action_on_interrupt(hold_action, status, last_key_event->time, is_key_release)) {
-        status->state = TAP_DANCE_HOLDING;
-        platform_layout_set_layer(status->selected_layer);
-
-        // platform_keycode_t keycode = platform_layout_get_keycode_from_layer(status->selected_layer, first_key_event->keypos);
-        // platform_key_event_add_event(status->key_buffer, first_key_event->time, status->selected_layer, first_key_event->keypos, keycode, true);
-
-    }
-
-    // For positive interrupt config, check if hold action should be discarded
-    if (hold_action->interrupt_config > 0 && status->hold_action_discarded) {
-        // Send the original trigger key press and the interrupting key
-        actions->tap_key_fn(config->keycodemodifier);
-        actions->tap_key_fn(last_key_event->keycode);
-        reset_behaviour_state(status);
+    if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
+        if (last_key_event->is_press) {
+            status->state = TAP_DANCE_HOLDING;
+            actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+            platform_layout_set_layer(hold_action->layer);
+        }
+    } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
+        if (last_key_event->is_press) {
+        } else {
+            status->state = TAP_DANCE_HOLDING;
+            actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+            platform_layout_set_layer(hold_action->layer);
+        }
+    } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
     }
 }
 
@@ -152,11 +118,7 @@ void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
     if (hold_action != NULL) {
         status->state = TAP_DANCE_WAITING_FOR_HOLD;
         status->selected_layer = hold_action->layer;
-        if (hold_action->interrupt_config > 0) {
-            pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(hold_action->interrupt_config);
-        } else {
-            pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
-        }
+        pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
     } else {
         if (has_subsequent_actions(config, status->tap_count)) {
             status->state = TAP_DANCE_WAITING_FOR_RELEASE;
@@ -235,9 +197,6 @@ void handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
             DEBUG_TAP_DANCE("-- Main Key press: WAITING_FOR_TAP");
             generic_key_press_handler(config, status, actions, last_key_event);
             break;
-        case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
-            DEBUG_TAP_DANCE("-- Main Key press: INTERRUPT_CONFIG_ACTIVE");
-            break;
         case TAP_DANCE_HOLDING:
             DEBUG_TAP_DANCE("-- Main Key press: HOLDING");
             break;
@@ -268,9 +227,6 @@ void handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_TAP");
             break;
-        case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
-            DEBUG_TAP_DANCE("-- Main Key release: INTERRUPT_CONFIG_ACTIVE");
-            break;
         case TAP_DANCE_HOLDING:
             DEBUG_TAP_DANCE("-- Main Key release: HOLDING");
             generic_key_release_when_holding_handler(config, status, actions, last_key_event);
@@ -291,19 +247,20 @@ void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
         case TAP_DANCE_WAITING_FOR_HOLD:
             {
                 pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
-                if (hold_action && hold_action->interrupt_config > 0) {
-                    // This was the interrupt config timeout, now wait for hold timeout
-                    status->state = TAP_DANCE_INTERRUPT_CONFIG_ACTIVE;
-                    platform_time_t remaining_time = g_hold_timeout - hold_action->interrupt_config;
-                    if (remaining_time > 0) {
-                        pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(remaining_time);
-                    } else {
-                        // Hold timeout already reached
+                if (hold_action) {
+                    if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
+                        actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                        platform_layout_set_layer(hold_action->layer);
+                    } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
+                        status->state = TAP_DANCE_HOLDING;
+                        actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                        platform_layout_set_layer(hold_action->layer);
+                    } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
+                        status->state = TAP_DANCE_HOLDING;
+                        actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                        platform_layout_set_layer(hold_action->layer);
                     }
-                } else {
-                    // Regular hold timeout reached - activate hold action
-                    status->state = TAP_DANCE_HOLDING;
                 }
             }
             break;
@@ -313,26 +270,8 @@ void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Timer callback: WAITING_FOR_TAP");
             {
-                // Tap timeout reached - execute tap action
-                pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
-                if (tap_action != NULL) {
-                    // params->key_events->event_buffer_pos ++;
-                    // params->key_events->event_buffer[0].keypos = status->key_buffer->event_buffer[0].keypos;
-                    // params->key_events->event_buffer[0].keycode = tap_action->keycode;
-                    // params->key_events->event_buffer[0].layer = status->selected_layer;
-                    // params->key_events->event_buffer[0].is_press = true;
-                    // params->key_events->event_buffer[0].time = params->key_events->event_buffer[0].time;
-
-                    // pipeline_executor_end_with_buffer_swap();
-                }
-
                 reset_behaviour_state(status);
             }
-            break;
-        case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE:
-            DEBUG_TAP_DANCE("-- Timer callback: INTERRUPT_CONFIG_ACTIVE");
-            // Hold timeout reached - activate hold action
-            status->state = TAP_DANCE_HOLDING;
             break;
 
         case TAP_DANCE_HOLDING:
@@ -392,7 +331,6 @@ static const char* tap_dance_state_to_string(tap_dance_state_t state) {
         case TAP_DANCE_WAITING_FOR_HOLD: return "WAITING_FOR_HOLD";
         case TAP_DANCE_WAITING_FOR_RELEASE: return "WAITING_FOR_RELEASE";
         case TAP_DANCE_WAITING_FOR_TAP: return "WAITING_FOR_TAP";
-        case TAP_DANCE_INTERRUPT_CONFIG_ACTIVE: return "INTERRUPT_CONFIG_ACTIVE";
         case TAP_DANCE_HOLDING: return "HOLDING";
         default: return "UNKNOWN";
     }

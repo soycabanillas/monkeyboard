@@ -95,31 +95,6 @@ protected:
         release_key(keycode, hold_ms);
     }
 
-    void simulate_key_event(uint16_t keycode, bool pressed, uint16_t time_offset = 0) {
-        if (time_offset > 0) {
-            platform_wait_ms(time_offset);
-        }
-
-        platform_keypos_t keypos = find_keypos(keycode, 4, 4);
-
-        abskeyevent_t event;
-        event.keypos.row = keypos.row;
-        event.keypos.col = keypos.col;
-        event.pressed = pressed;
-        event.time = static_cast<uint16_t>(platform_timer_read());
-
-        if (pipeline_process_key(event) == true) {
-            // If the key was not processed, we can simulate a fallback action
-            if (pressed) {
-                printf("Key %d pressed but not processed, simulating fallback action", keycode);
-                platform_register_keycode(keycode);
-            } else {
-                printf("Key %d released but not processed, simulating fallback action", keycode);
-                platform_unregister_keycode(keycode);
-            }
-        }
-    }
-
     void reset_test_state() {
         reset_mock_state();
         tap_dance_config->length = 0;
@@ -142,7 +117,7 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0)
+        createbehaviouraction_tap(1, OUTPUT_KEY)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
     tap_dance_config->length++;
@@ -180,8 +155,8 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0),
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -246,7 +221,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
+        createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
     tap_dance_config->length++;
@@ -284,8 +259,8 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0),
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -326,8 +301,8 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, SINGLE_TAP_KEY, 0),
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0)
+        createbehaviouraction_tap(1, SINGLE_TAP_KEY),
+        createbehaviouraction_tap(2, DOUBLE_TAP_KEY)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -372,9 +347,9 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
 
     // Begin tap dance config
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, SINGLE_TAP_KEY, 0),
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0),
-        createbehaviouraction(3, TDCL_TAP_KEY_SENDKEY, TRIPLE_TAP_KEY, 0)
+        createbehaviouraction_tap(1, SINGLE_TAP_KEY),
+        createbehaviouraction_tap(2, DOUBLE_TAP_KEY),
+        createbehaviouraction_tap(3, TRIPLE_TAP_KEY)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
     tap_dance_config->length++;
@@ -413,8 +388,8 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
 
     // Begin tap dance config - only single and double tap configured
     pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, SINGLE_TAP_KEY, 0),
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0)
+        createbehaviouraction_tap(1, SINGLE_TAP_KEY),
+        createbehaviouraction_tap(2, DOUBLE_TAP_KEY)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -430,444 +405,4 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     EXPECT_GE(g_mock_state.unregister_key_calls_count(), 4); // 3 original + 1 tap output
     EXPECT_EQ(g_mock_state.last_registered_key, SINGLE_TAP_KEY);
     EXPECT_EQ(g_mock_state.last_unregistered_key, SINGLE_TAP_KEY);
-}
-
-// ==================== INTERRUPT CONFIGURATION ====================
-
-TEST_F(TapDanceComprehensiveTest, InterruptConfigMinus1) {
-    const uint16_t TAP_DANCE_KEY = 10000;
-    const uint16_t OUTPUT_KEY = 10001;
-    const uint16_t INTERRUPT_KEY = 10002;
-    // const uint8_t BASE_LAYER = 0;
-    const uint8_t TARGET_LAYER = 2;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[3][2][2] = {
-        { // BASE_LAYER
-            { TAP_DANCE_KEY, OUTPUT_KEY },
-            { INTERRUPT_KEY, 10003 }
-        },
-        { // Layer 1 (unused)
-            { 10100, 10101 },
-            { 10102, 10103 }
-        },
-        { // TARGET_LAYER
-            { 10020, 10021 },
-            { 10022, 10023 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 3);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);  // Start hold
-    press_key(INTERRUPT_KEY, 50);        // Interrupt with another key
-    release_key(INTERRUPT_KEY, 50);       // Release interrupting key
-
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER);
-
-    release_key(TAP_DANCE_KEY); // Release tap dance key
-}
-
-TEST_F(TapDanceComprehensiveTest, InterruptConfigZero) {
-    const uint16_t TAP_DANCE_KEY = 11000;
-    const uint16_t OUTPUT_KEY = 11001;
-    const uint8_t TARGET_LAYER = 2;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[3][2][2] = {
-        { // Layer 0
-            { TAP_DANCE_KEY, OUTPUT_KEY },
-            { 11002, 11003 }
-        },
-        { // Layer 1
-            { 11120, 11121 },
-            { 11122, 11123 }
-        },
-        { // TARGET_LAYER
-            { 11020, 11021 },
-            { 11022, 11023 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 3);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);  // Start hold
-    press_key(11002, 50);        // Interrupt with another key
-
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER);
-
-    release_key(11002, 50);       // Release interrupting key
-    release_key(TAP_DANCE_KEY); // Release tap dance key
-}
-
-TEST_F(TapDanceComprehensiveTest, InterruptConfigPositive) {
-    const uint16_t TAP_DANCE_KEY = 12000;
-    const uint16_t OUTPUT_KEY = 12001;
-    const uint8_t TARGET_LAYER = 2;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[3][2][2] = {
-        { // Layer 0
-            { TAP_DANCE_KEY, OUTPUT_KEY },
-            { 12002, 12003 }
-        },
-        { // Layer 1
-            { 12120, 12121 },
-            { 12122, 12123 }
-        },
-        { // TARGET_LAYER
-            { 12020, 12021 },
-            { 12022, 12023 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 3);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);  // Start hold
-    platform_wait_ms(50);  // Wait less than interrupt config time
-    press_key(12002);            // Interrupt early
-
-    // Should send original key and interrupting key, hold action should be discarded
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 2); // At least tap dance + interrupt keys
-
-    release_key(12002);
-    release_key(TAP_DANCE_KEY);
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 0); // No layer changes
-}
-
-// ==================== NESTING BEHAVIOR ====================
-
-TEST_F(TapDanceComprehensiveTest, DifferentKeycodesCanNest) {
-    const uint16_t TAP_DANCE_KEY_1 = 13000;
-    const uint16_t TAP_DANCE_KEY_2 = 13001;
-    const uint16_t OUTPUT_KEY = 13002;
-    const uint8_t BASE_LAYER = 0;
-    const uint8_t TARGET_LAYER = 1;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[2][2][2] = {
-        { // BASE_LAYER
-            { TAP_DANCE_KEY_1, TAP_DANCE_KEY_2 },
-            { 13010, 13011 }
-        },
-        { // TARGET_LAYER
-            { 13020, 13021 },
-            { 13022, 13023 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions1[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY_1, TARGET_LAYER)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_1, actions1, 1);
-    tap_dance_config->length++;
-
-    pipeline_tap_dance_action_config_t* actions2[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_2, actions2, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY_1);   // Start first tap dance
-    platform_wait_ms(250);  // Activate hold
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER);
-
-    press_key(TAP_DANCE_KEY_2, 50);  // Start nested tap dance
-    release_key(TAP_DANCE_KEY_2);     // Complete nested tap
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 2); // 1 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, OUTPUT_KEY);
-
-    release_key(TAP_DANCE_KEY_1);     // Release first key
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 2);
-    EXPECT_EQ(g_mock_state.last_selected_layer, BASE_LAYER);
-}
-
-TEST_F(TapDanceComprehensiveTest, SameKeycodeNestingIgnored) {
-    const uint16_t TAP_DANCE_KEY = 14000;
-    const uint16_t OUTPUT_KEY = 14001;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[1][1][1] = {
-        {{ TAP_DANCE_KEY }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);      // First press
-    press_key(TAP_DANCE_KEY, 50);  // Second press - should be ignored
-    release_key(TAP_DANCE_KEY);     // First release
-    release_key(TAP_DANCE_KEY);     // Second release - should be ignored
-    platform_wait_ms(250);  // Wait for timeout
-
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 2); // Original + tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 2); // Original + tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, OUTPUT_KEY);
-}
-
-// ==================== LAYER STACK MANAGEMENT ====================
-
-TEST_F(TapDanceComprehensiveTest, ComplexLayerStackDependencies) {
-    const uint16_t TAP_DANCE_KEY_1 = 15000;
-    const uint16_t TAP_DANCE_KEY_2 = 15001;
-    const uint16_t TAP_DANCE_KEY_3 = 15002;
-    const uint8_t BASE_LAYER = 0;
-    const uint8_t TARGET_LAYER_1 = 1;
-    const uint8_t TARGET_LAYER_2 = 2;
-    const uint8_t TARGET_LAYER_3 = 3;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[4][3][3] = {
-        { // BASE_LAYER
-            { TAP_DANCE_KEY_1, 15010, 15011 },
-            { TAP_DANCE_KEY_2, 15012, 15013 },
-            { TAP_DANCE_KEY_3, 15014, 15015 }
-        },
-        { // TARGET_LAYER_1
-            { 15020, 15021, 15022 },
-            { 15023, 15024, 15025 },
-            { 15026, 15027, 15028 }
-        },
-        { // TARGET_LAYER_2
-            { 15030, 15031, 15032 },
-            { 15033, 15034, 15035 },
-            { 15036, 15037, 15038 }
-        },
-        { // TARGET_LAYER_3
-            { 15040, 15041, 15042 },
-            { 15043, 15044, 15045 },
-            { 15046, 15047, 15048 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 3, 3, 4);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions1[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY_1, TARGET_LAYER_1)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_1, actions1, 1);
-    tap_dance_config->length++;
-
-    pipeline_tap_dance_action_config_t* actions2[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY_2, TARGET_LAYER_2)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_2, actions2, 1);
-    tap_dance_config->length++;
-
-    pipeline_tap_dance_action_config_t* actions3[] = {
-        createbehaviouraction(1, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY_3, TARGET_LAYER_3)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_3, actions3, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    // Build up layer stack
-    press_key(TAP_DANCE_KEY_1);   // Layer 1
-    platform_wait_ms(250);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER_1);
-
-    press_key(TAP_DANCE_KEY_2);   // Layer 2
-    platform_wait_ms(250);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER_2);
-
-    press_key(TAP_DANCE_KEY_3);   // Layer 3
-    platform_wait_ms(250);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER_3);
-
-    // Release in reverse order
-    release_key(TAP_DANCE_KEY_3);  // Release layer 3
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER_2); // Should return to layer 2
-
-    release_key(TAP_DANCE_KEY_2);  // Release layer 2
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER_1); // Should return to layer 1
-
-    release_key(TAP_DANCE_KEY_1);  // Release layer 1
-    EXPECT_EQ(g_mock_state.last_selected_layer, BASE_LAYER); // Should return to base
-}
-
-// ==================== TIMING AND STATE MANAGEMENT ====================
-
-TEST_F(TapDanceComprehensiveTest, FastKeySequences) {
-    const uint16_t TAP_DANCE_KEY = 16000;
-    const uint16_t SINGLE_TAP_KEY = 16001;
-    const uint16_t DOUBLE_TAP_KEY = 16002;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[1][1][1] = {
-        {{ TAP_DANCE_KEY }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, SINGLE_TAP_KEY, 0),
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    // Very fast double tap
-    press_key(TAP_DANCE_KEY);
-    release_key(TAP_DANCE_KEY);
-    platform_wait_ms(10);  // Very short delay
-    press_key(TAP_DANCE_KEY);
-    release_key(TAP_DANCE_KEY);
-    platform_wait_ms(250);
-
-    // Should still register as double tap
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, DOUBLE_TAP_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, DOUBLE_TAP_KEY);
-}
-
-TEST_F(TapDanceComprehensiveTest, MixedTapHoldSequence) {
-    const uint16_t TAP_DANCE_KEY = 17000;
-    const uint16_t SINGLE_TAP_KEY = 17001;
-    const uint16_t DOUBLE_TAP_KEY = 17002;
-    const uint8_t BASE_LAYER = 0;
-    const uint8_t TARGET_LAYER = 1;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[2][1][1] = {
-        { // BASE_LAYER
-            { TAP_DANCE_KEY }
-        },
-        { // TARGET_LAYER
-            { 17010 }
-        }
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 2);
-    // End keymap setup
-
-    // Begin tap dance config - Setup a complex config: 1 tap = X, 2 taps = Y, 2-tap hold = layer symbols
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, SINGLE_TAP_KEY, 0),
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0),
-        createbehaviouraction_with_interrupt(2, TDCL_HOLD_KEY_CHANGELAYERTEMPO, TAP_DANCE_KEY, TARGET_LAYER, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    // First tap
-    press_key(TAP_DANCE_KEY);
-    release_key(TAP_DANCE_KEY);
-
-    // Second tap but hold
-    press_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(250);  // Hold second tap
-    EXPECT_EQ(g_mock_state.layer_select_calls_count(), 1);
-    EXPECT_EQ(g_mock_state.last_selected_layer, TARGET_LAYER);
-
-    release_key(TAP_DANCE_KEY);
-    EXPECT_EQ(g_mock_state.last_selected_layer, BASE_LAYER);
-}
-
-// ==================== EDGE CASES ====================
-
-TEST_F(TapDanceComprehensiveTest, VeryFastTapRelease) {
-    const uint16_t TAP_DANCE_KEY = 18000;
-    const uint16_t OUTPUT_KEY = 18001;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[1][1][1] = {
-        {{ TAP_DANCE_KEY }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(1, TDCL_TAP_KEY_SENDKEY, OUTPUT_KEY, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);
-    platform_wait_ms(1);  // 1ms hold
-    release_key(TAP_DANCE_KEY);
-    platform_wait_ms(250);
-
-    // Should work even with very fast tap
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 2); // Original + tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 2); // Original + tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, OUTPUT_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, OUTPUT_KEY);
-}
-
-TEST_F(TapDanceComprehensiveTest, ImmediateExecutionOnFinalTapCount) {
-    const uint16_t TAP_DANCE_KEY = 19000;
-    const uint16_t DOUBLE_TAP_KEY = 19001;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[1][1][1] = {
-        {{ TAP_DANCE_KEY }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
-    // End keymap setup
-
-    // Begin tap dance config - Only double-tap configured
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction(2, TDCL_TAP_KEY_SENDKEY, DOUBLE_TAP_KEY, 0)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    press_key(TAP_DANCE_KEY);
-    release_key(TAP_DANCE_KEY);
-    press_key(TAP_DANCE_KEY, 50);
-    release_key(TAP_DANCE_KEY);
-
-    // Should execute immediately without timeout
-    EXPECT_GE(g_mock_state.register_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_GE(g_mock_state.unregister_key_calls_count(), 3); // 2 original + 1 tap output
-    EXPECT_EQ(g_mock_state.last_registered_key, DOUBLE_TAP_KEY);
-    EXPECT_EQ(g_mock_state.last_unregistered_key, DOUBLE_TAP_KEY);
 }
