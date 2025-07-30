@@ -32,7 +32,7 @@ bool platform_key_press_remove_press(platform_key_press_buffer_t *press_buffer, 
 
 platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id);
-bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
+bool platform_key_press_ignore_release_by_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id);
 
 #ifdef DEBUG
 void print_key_press_buffer(platform_key_press_buffer_t *event_buffer);

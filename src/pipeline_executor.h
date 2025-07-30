@@ -34,14 +34,18 @@ typedef struct {
 typedef void (*key_buffer_tap)(platform_keycode_t keycode);
 typedef void (*key_buffer_untap)(platform_keycode_t keycode);
 typedef void (*key_buffer_key)(platform_keycode_t keycode);
-typedef void (*key_buffer_remove_physical_press_and_release)(platform_keypos_t keypos);
+typedef void (*key_buffer_remove_physical_press)(uint8_t press_id);
+typedef void (*key_buffer_remove_physical_release)(uint8_t press_id);
+typedef void (*key_buffer_remove_physical_tap)(uint8_t press_id);
 typedef void (*key_buffer_update_layer_for_physical_events)(uint8_t layer, uint8_t pos);
 
 typedef struct {
     key_buffer_tap register_key_fn;
     key_buffer_untap unregister_key_fn;
     key_buffer_key tap_key_fn;
-    key_buffer_remove_physical_press_and_release remove_physical_press_and_release_fn;
+    key_buffer_remove_physical_press remove_physical_press_fn;
+    key_buffer_remove_physical_release remove_physical_release_fn;
+    key_buffer_remove_physical_tap remove_physical_tap_fn;
     key_buffer_update_layer_for_physical_events update_layer_for_physical_events_fn;
 } pipeline_physical_actions_t;
 

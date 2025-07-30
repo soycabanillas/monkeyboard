@@ -34,7 +34,11 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
 
     for (size_t pos = 0; pos < key_buffer->press_buffer_pos; pos++) {
         if (platform_compare_keyposition(only_press_buffer[pos].keypos, keypos)) {
-            DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d, already exists", keypos.row, keypos.col);
+            #if defined(AGNOSTIC_USE_1D_ARRAY)
+                DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, already exists", keypos);
+            #elif defined(AGNOSTIC_USE_2D_ARRAY)
+                DEBUG_PRINT_ERROR("Key Failed to add physical press for keypos: %d, %d, already exists", keypos.row, keypos.col);
+            #endif
             return NULL;
         }
     }
@@ -47,7 +51,11 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
         ++key_buffer->press_buffer_pos;
         return &only_press_buffer[key_buffer->press_buffer_pos - 1]; // Return the newly added press
     }
-    DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d, key press buffer is full", keypos.row, keypos.col);
+    #if defined(AGNOSTIC_USE_1D_ARRAY)
+        DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, key press buffer is full", keypos);
+    #elif defined(AGNOSTIC_USE_2D_ARRAY)
+        DEBUG_PRINT_ERROR("Failed to add physical press for keypos: %d, %d, key press buffer is full", keypos.row, keypos.col);
+    #endif
     return NULL;
 }
 
@@ -96,7 +104,11 @@ platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platfor
             return &only_press_buffer[i];
         }
     }
-    DEBUG_PRINT_ERROR("Key press not found for keypos: %d, %d", keypos.row, keypos.col);
+    #if defined(AGNOSTIC_USE_1D_ARRAY)
+        DEBUG_PRINT_ERROR("Key press not found for keypos: %d", keypos);
+    #elif defined(AGNOSTIC_USE_2D_ARRAY)
+        DEBUG_PRINT_ERROR("Key press not found for keypos: %d, %d", keypos.row, keypos.col);
+    #endif
     return NULL; // Key position not found
 }
 
@@ -115,7 +127,7 @@ platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platf
     return NULL; // Press ID not found
 }
 
-bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos) {
+bool platform_key_press_ignore_release_by_press_id(platform_key_press_buffer_t *press_buffer, uint8_t press_id) {
     if (press_buffer == NULL) {
         return false;
     }
@@ -123,7 +135,7 @@ bool platform_key_press_ignore_release(platform_key_press_buffer_t *press_buffer
     uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
 
     for (size_t i = 0; i < only_press_buffer_pos; i++) {
-        if (platform_compare_keyposition(only_press_buffer[i].keypos, keypos)) {
+        if (only_press_buffer[i].press_id == press_id) {
             only_press_buffer[i].ignore_release = true;
             return true;
         }

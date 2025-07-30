@@ -57,6 +57,8 @@ typedef struct {
     uint8_t tap_count;               // Current tap count (1st tap, 2nd tap, etc.)
     uint8_t original_layer;          // Layer when sequence started
     uint8_t selected_layer;          // Layer selected by hold action
+    platform_keypos_t trigger_keypos; // Key position that triggered the tap dance
+    uint8_t trigger_press_id;        // Press ID of the key that triggered the tap dance
 } pipeline_tap_dance_behaviour_status_t;
 
 typedef struct {
@@ -73,15 +75,13 @@ typedef struct {
 
 typedef struct {
     size_t last_behaviour; // The last behaviour that was processed
+    bool is_capturing_keys; // Whether the behaviour is currently capturing keys
 } pipeline_tap_dance_global_status_t;
 
 typedef struct {
     size_t length; // Number of tap dance behaviour configurations
     pipeline_tap_dance_behaviour_t *behaviours[]; // Array of tap dance behaviour configurations
 } pipeline_tap_dance_global_config_t;
-
-// Helper functions
-bool should_ignore_same_keycode_nesting(pipeline_tap_dance_global_config_t* global_config, platform_keycode_t keycode);
 
 void pipeline_tap_dance_global_state_create(void);
 void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_status);

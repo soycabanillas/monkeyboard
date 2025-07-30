@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../src/platform_interface.h"
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 #include <set>
+#include "platform_types.h"
 
 
 void reset_mock_state(void);

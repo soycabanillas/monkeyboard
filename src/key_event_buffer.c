@@ -46,7 +46,7 @@ void platform_key_event_remove_event_keys(platform_key_event_buffer_t* event_buf
     event_buffer->event_buffer_pos = 0;
 }
 
-static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *event_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, platform_keycode_t keycode, bool is_press, uint8_t press_id, bool is_physical, bool* buffer_full) {
+static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *event_buffer, platform_time_t time, uint8_t layer, platform_keypos_t keypos, platform_keycode_t keycode, bool is_press, uint8_t press_id, bool* buffer_full) {
     if (event_buffer->event_buffer_pos >= PLATFORM_KEY_EVENT_MAX_ELEMENTS) {
         *buffer_full = true;
         return false; // Buffer is full
@@ -55,7 +55,6 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     uint8_t press_buffer_pos = event_buffer->event_buffer_pos;
 
-    press_buffer[press_buffer_pos].is_physical = is_physical;
     press_buffer[press_buffer_pos].keypos = keypos;
     press_buffer[press_buffer_pos].keycode = keycode;
     press_buffer[press_buffer_pos].layer = layer;
@@ -76,18 +75,17 @@ uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event
         return 0; // Failed to add press to key press buffer
     }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
-    bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, true, buffer_full);
+    bool press_added = platform_key_event_add_event_internal(event_buffer, time, layer, keypos, keycode, true, press_id, buffer_full);
     if (!press_added) {
-        DEBUG_PRINT_ERROR("Failed to add press event for keypos: %d, %d", keypos.row, keypos.col);
+        #if defined(AGNOSTIC_USE_1D_ARRAY)
+            DEBUG_PRINT_ERROR("Failed to add press event for keypos: %d", keypos);
+        #elif defined(AGNOSTIC_USE_2D_ARRAY)
+            DEBUG_PRINT_ERROR("Failed to add press event for keypos: %d, %d", keypos.row, keypos.col);
+        #endif
         platform_key_press_remove_press(event_buffer->key_press_buffer, keypos); // Clean up if event could not be added
         return 0; // Failed to add press to event buffer
     }
     return (press_added ? press_id : 0);
-}
-
-bool platform_key_event_add_virtual_press(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full) {
-    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, true, 0, false, buffer_full);
-    return press_added;
 }
 
 bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
@@ -98,7 +96,11 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
     }
     platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_keypos(key_press_buffer, keypos);
     if (key_press == NULL) {
-        DEBUG_PRINT_ERROR("Key press not found for keypos: %d, %d", keypos.row, keypos.col);
+        #if defined(AGNOSTIC_USE_1D_ARRAY)
+            DEBUG_PRINT_ERROR("Key press not found for keypos: %d", keypos);
+        #elif defined(AGNOSTIC_USE_2D_ARRAY)
+            DEBUG_PRINT_ERROR("Key press not found for keypos: %d, %d", keypos.row, keypos.col);
+        #endif
         return false; // Press ID not found
     }
     if (key_press->ignore_release) {
@@ -106,9 +108,13 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
         return false; // Ignore the release event
     }
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(key_press->layer, key_press->keypos);
-    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, true, buffer_full);
+    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->layer, key_press->keypos, keycode, false, key_press->press_id, buffer_full);
     if (!press_added) {
-        DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d, %d", keypos.row, keypos.col);
+        #if defined(AGNOSTIC_USE_1D_ARRAY)
+            DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d", keypos);
+        #elif defined(AGNOSTIC_USE_2D_ARRAY)
+            DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d, %d", keypos.row, keypos.col);
+        #endif
         platform_key_press_remove_press(event_buffer->key_press_buffer, key_press->keypos);
         return false;
     } else {
@@ -117,46 +123,53 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
     return true;
 }
 
-bool platform_key_event_add_virtual_release(platform_key_event_buffer_t *event_buffer, platform_keycode_t keycode, bool* buffer_full) {
-    bool press_added = platform_key_event_add_event_internal(event_buffer, 0, 0, dummy_keypos, keycode, false, 0, false, buffer_full);
-    return press_added;
-}
-
-platform_key_event_remove_type_t platform_key_event_remove_physical_press_and_release(platform_key_event_buffer_t *event_buffer, platform_keypos_t keypos) {
+static bool try_get_position_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id, bool is_press, uint8_t* position) {
     uint8_t event_buffer_pos = event_buffer->event_buffer_pos;
     uint8_t i;
-    bool found_press = false;
     for (i = 0; i < event_buffer_pos; i++) {
-        if (event_buffer->event_buffer[i].is_physical && platform_compare_keyposition(event_buffer->event_buffer[i].keypos, keypos)) {
-            if (i < event_buffer_pos - 1) {
-                memcpy(&event_buffer->event_buffer[i], &event_buffer->event_buffer[i + 1], sizeof(platform_key_event_t) * (event_buffer_pos - 1 - i));
-            }
-            event_buffer_pos--;
-            event_buffer->event_buffer_pos = event_buffer_pos;
-            found_press = true;
-            break;
+        uint8_t index = event_buffer_pos - 1 - i;
+        if (event_buffer->event_buffer[index].press_id == press_id && event_buffer->event_buffer[index].is_press == is_press) {
+            *position = index;
+            return true;
         }
     }
-    if (found_press == false) {
-        return PLATFORM_KEY_EVENT_TYPE_PHYSICAL_NONE_REMOVED; // No press found
+    return false;
+}
+
+static bool try_get_press_position_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id, uint8_t* position) {
+    return try_get_position_by_press_id(event_buffer, press_id, true, position);
+}
+
+static bool try_get_release_position_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id, uint8_t* position) {
+    return try_get_position_by_press_id(event_buffer, press_id, false, position);
+}
+
+static void remove_event(platform_key_event_buffer_t *event_buffer, uint8_t position) {
+    if (position < event_buffer->event_buffer_pos - 1) {
+        memcpy(&event_buffer->event_buffer[position], &event_buffer->event_buffer[position + 1], sizeof(platform_key_event_t) * (event_buffer->event_buffer_pos - 1 - position));
     }
-    bool found_release = false;
-    for (uint8_t j = i; j < event_buffer_pos; j++) {
-        if (event_buffer->event_buffer[j].is_physical && platform_compare_keyposition(event_buffer->event_buffer[j].keypos, keypos)) {
-            if (j < event_buffer_pos - 1) {
-                memcpy(&event_buffer->event_buffer[j], &event_buffer->event_buffer[j + 1], sizeof(platform_key_event_t) * (event_buffer_pos - 1 - j));
-            }
-            event_buffer_pos--;
-            event_buffer->event_buffer_pos = event_buffer_pos;
-            found_release = true;
-            break;
-        }
+    event_buffer->event_buffer_pos--;
+}
+
+void platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
+    uint8_t position;
+    if (try_get_press_position_by_press_id(event_buffer, press_id, &position)) {
+        remove_event(event_buffer, position);
     }
-    if (found_release == false) {
-        platform_key_press_ignore_release(event_buffer->key_press_buffer, keypos);
-        return PLATFORM_KEY_EVENT_TYPE_PHYSICAL_PRESS_REMOVED; // No release found
+}
+
+void platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
+    uint8_t position;
+    if (try_get_release_position_by_press_id(event_buffer, press_id, &position)) {
+        remove_event(event_buffer, position);
+    } else {
+        platform_key_press_ignore_release_by_press_id(event_buffer->key_press_buffer, press_id);
     }
-    return PLATFORM_KEY_EVENT_TYPE_PHYSICAL_PRESS_AND_RELEASE_REMOVED; // Both press and release found and removed
+}
+
+void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
+    platform_key_event_remove_physical_press_by_press_id(event_buffer, press_id);
+    platform_key_event_remove_physical_release_by_press_id(event_buffer, press_id);
 }
 
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos) {
@@ -164,16 +177,15 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
         return;
     }
     for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
-        bool is_physical = event_buffer->event_buffer[i].is_physical;
         bool is_press = event_buffer->event_buffer[i].is_press;
-        if (is_physical && is_press) {
+        if (is_press) {
             uint8_t press_id = event_buffer->event_buffer[i].press_id;
             // Update the layer for the press event
             event_buffer->event_buffer[i].layer = layer;
             event_buffer->event_buffer[i].keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
             // Update the layer for the release event
             for (uint8_t j = i + 1; j < event_buffer->event_buffer_pos; j++) {
-                if (event_buffer->event_buffer[j].press_id == press_id && event_buffer->event_buffer[j].is_physical) {
+                if (event_buffer->event_buffer[j].press_id == press_id) {
                     if (event_buffer->event_buffer[j].is_press) {
                         break;
                     } else {
@@ -196,9 +208,16 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
     DEBUG_PRINT_RAW("| %03hhu", event_buffer->event_buffer_pos);
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     for (size_t i = 0; i < event_buffer->event_buffer_pos; i++) {
-        DEBUG_PRINT_RAW(" | %zu R:%u, C:%u, K:%02u, L:%u, P:%d, Id:%u, T:%04u",
+
+        #if defined(AGNOSTIC_USE_1D_ARRAY)
+            DEBUG_PRINT_RAW(" | %zu KP, K:%02u, L:%u, P:%d, Id:%u, T:%04u",
+               i, press_buffer[i].keypos,
+               press_buffer[i].keycode, press_buffer[i].layer, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
+        #elif defined(AGNOSTIC_USE_2D_ARRAY)
+            DEBUG_PRINT_RAW(" | %zu R:%u, C:%u, K:%02u, L:%u, P:%d, Id:%u, T:%04u",
                i, press_buffer[i].keypos.row, press_buffer[i].keypos.col,
                press_buffer[i].keycode, press_buffer[i].layer, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
+        #endif
     }
     DEBUG_PRINT_NL();
 }
