@@ -29,8 +29,8 @@ extern "C" {
 // } pipeline_tap_dance_key_event_buffer_t;
 
 typedef enum {
-    TDCL_TAP_KEY_SENDKEY,
-    TDCL_HOLD_KEY_CHANGELAYERTEMPO,
+    TDCL_TAP_KEY_SENDKEY,           // Tap Action
+    TDCL_HOLD_KEY_CHANGELAYERTEMPO, // Hold layer while key pressed
 } td_customlayer_action_t;
 
 // New state machine as per specification
