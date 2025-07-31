@@ -101,13 +101,75 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
 // New comparison methods
 bool MockPlatformState::key_actions_match(const std::vector<key_action_t>& expected) const {
     if (key_actions.size() != expected.size()) {
+        printf("DEBUG: key_actions_match FAILED - Size mismatch: actual=%zu, expected=%zu\n",
+               key_actions.size(), expected.size());
         return false;
     }
     for (size_t i = 0; i < expected.size(); i++) {
         if (!(key_actions[i] == expected[i])) {
+            printf("DEBUG: key_actions_match FAILED at position %zu - actual: keycode=%u action=%u, expected: keycode=%u action=%u\n",
+                   i, key_actions[i].keycode, key_actions[i].action, expected[i].keycode, expected[i].action);
             return false;
         }
     }
+    return true;
+}
+
+bool MockPlatformState::key_actions_match_with_time(const std::vector<key_action_t>& expected) const {
+    if (key_actions.size() != expected.size()) {
+        printf("DEBUG: key_actions_match_with_time FAILED - Size mismatch: actual=%zu, expected=%zu\n",
+               key_actions.size(), expected.size());
+        return false;
+    }
+    for (size_t i = 0; i < expected.size(); i++) {
+        if (!key_actions[i].operator_with_time(expected[i])) {
+            printf("DEBUG: key_actions_match_with_time FAILED at position %zu - actual: keycode=%u action=%u time=%u, expected: keycode=%u action=%u time=%u\n",
+                   i, key_actions[i].keycode, key_actions[i].action, key_actions[i].time,
+                   expected[i].keycode, expected[i].action, expected[i].time);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time) const {
+    if (key_actions.size() != expected.size()) {
+        printf("DEBUG: key_actions_match_with_time_gaps FAILED - Size mismatch: actual=%zu, expected=%zu\n",
+               key_actions.size(), expected.size());
+        return false;
+    }
+
+    if (expected.empty()) {
+        return true;
+    }
+
+    platform_time_t expected_cumulative_time = 0;
+
+    printf("DEBUG: key_actions_match_with_time_gaps - Start time: %u\n", actual_start_time);
+
+    for (size_t i = 0; i < expected.size(); i++) {
+        // Check keycode and action match
+        if (key_actions[i].keycode != expected[i].keycode ||
+            key_actions[i].action != expected[i].action) {
+            printf("DEBUG: key_actions_match_with_time_gaps FAILED at position %zu - Keycode/action mismatch: actual: keycode=%u action=%u, expected: keycode=%u action=%u\n",
+                   i, key_actions[i].keycode, key_actions[i].action, expected[i].keycode, expected[i].action);
+            return false;
+        }
+
+        // Add the time gap to get expected absolute time
+        expected_cumulative_time += expected[i].time;
+        platform_time_t expected_absolute_time = actual_start_time + expected_cumulative_time;
+
+        printf("DEBUG: key_actions_match_with_time_gaps position %zu - Gap: %u, Cumulative: %u, Expected absolute: %u, Actual: %u\n",
+               i, expected[i].time, expected_cumulative_time, expected_absolute_time, key_actions[i].time);
+
+        if (key_actions[i].time != expected_absolute_time) {
+            printf("DEBUG: key_actions_match_with_time_gaps FAILED at position %zu - Time mismatch: actual=%u, expected_absolute=%u (gap=%u, cumulative=%u)\n",
+                   i, key_actions[i].time, expected_absolute_time, expected[i].time, expected_cumulative_time);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -150,7 +212,7 @@ void platform_register_keycode(platform_keycode_t keycode) {
     g_mock_state.register_key_calls.push_back(keycode);
     g_mock_state.last_registered_key = keycode;
     g_mock_state.record_key_event(keycode, true);
-    g_mock_state.key_actions.push_back({keycode, 0}); // 0 = press
+    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
@@ -158,7 +220,7 @@ void platform_unregister_keycode(platform_keycode_t keycode) {
     g_mock_state.unregister_key_calls.push_back(keycode);
     g_mock_state.last_unregistered_key = keycode;
     g_mock_state.record_key_event(keycode, false);
-    g_mock_state.key_actions.push_back({keycode, 1}); // 1 = release
+    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
 }
 
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
@@ -271,12 +333,12 @@ void reset_mock_state(void) {
 }
 
 // Helper functions for creating expected sequences
-key_action_t press(platform_keycode_t keycode) {
-    return {keycode, 0};
+key_action_t press(platform_keycode_t keycode, platform_time_t time) {
+    return {keycode, 0, time};
 }
 
-key_action_t release(platform_keycode_t keycode) {
-    return {keycode, 1};
+key_action_t release(platform_keycode_t keycode, platform_time_t time) {
+    return {keycode, 1, time};
 }
 
 std::vector<key_action_t> tap_sequence(platform_keycode_t keycode) {

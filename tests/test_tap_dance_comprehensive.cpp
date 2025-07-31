@@ -415,3 +415,39 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     };
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
 }
+
+// ==================== TIME-AWARE TESTING ====================
+
+TEST_F(TapDanceComprehensiveTest, TimeAwareKeySequence) {
+    const uint16_t TAP_DANCE_KEY = 10000;
+    const uint16_t OUTPUT_KEY = 10001;
+
+    // Begin keymap setup
+    static const platform_keycode_t keymaps[1][1][1] = {
+        {{ TAP_DANCE_KEY }}
+    };
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    // End keymap setup
+
+    // Begin tap dance config
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, OUTPUT_KEY)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_config->length++;
+    // End tap dance config
+
+    tap_key(TAP_DANCE_KEY, 50, 70);
+
+    // Test without time consideration (existing functionality)
+    std::vector<key_action_t> expected_keys_no_time = {
+        press(OUTPUT_KEY), release(OUTPUT_KEY)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys_no_time));
+
+    // Test with time gaps - press at 50ms from start, release 70ms after press
+    std::vector<key_action_t> expected_keys_with_time = {
+        press(OUTPUT_KEY, 50), release(OUTPUT_KEY, 70)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys_with_time));
+}

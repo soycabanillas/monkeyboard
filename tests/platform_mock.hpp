@@ -32,9 +32,14 @@ struct deferred_call_t {
 struct key_action_t {
     platform_keycode_t keycode;
     uint8_t action; // 0 = press, 1 = release
+    platform_time_t time; // Timestamp when action occurred (0 = ignore time in comparison)
 
     bool operator==(const key_action_t& other) const {
         return keycode == other.keycode && action == other.action;
+    }
+
+    bool operator_with_time(const key_action_t& other) const {
+        return keycode == other.keycode && action == other.action && time == other.time;
     }
 };
 
@@ -77,6 +82,8 @@ struct MockPlatformState {
 
     // New comparison methods
     bool key_actions_match(const std::vector<key_action_t>& expected) const;
+    bool key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
+    bool key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time = 0) const;
     bool layer_history_matches(const std::vector<uint8_t>& expected) const;
     std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
     std::vector<uint8_t> get_layer_history_since(size_t start_index) const;
@@ -86,6 +93,6 @@ struct MockPlatformState {
 extern MockPlatformState g_mock_state;
 
 // Helper functions for creating expected sequences
-key_action_t press(platform_keycode_t keycode);
-key_action_t release(platform_keycode_t keycode);
+key_action_t press(platform_keycode_t keycode, platform_time_t time = 0);
+key_action_t release(platform_keycode_t keycode, platform_time_t time = 0);
 std::vector<key_action_t> tap_sequence(platform_keycode_t keycode);
