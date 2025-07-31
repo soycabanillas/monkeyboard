@@ -15,7 +15,6 @@ extern "C" {
 typedef struct {
     platform_keypos_t keypos;
     platform_keycode_t keycode;
-    uint8_t layer;
     bool is_press;
     platform_time_t time;
     uint8_t press_id; // Unique ID for the key event, used to track presses/releases
