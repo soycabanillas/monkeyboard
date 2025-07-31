@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <set>
+#include "gtest/gtest.h"
 #include "platform_types.h"
 
 
@@ -80,10 +81,10 @@ struct MockPlatformState {
     void print_state() const;
     void record_key_event(platform_keycode_t keycode, bool pressed);
 
-    // New comparison methods
-    bool key_actions_match(const std::vector<key_action_t>& expected) const;
-    bool key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
-    bool key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time = 0) const;
+    // New comparison methods with Google Test integration
+    ::testing::AssertionResult key_actions_match(const std::vector<key_action_t>& expected) const;
+    ::testing::AssertionResult key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
+    ::testing::AssertionResult key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time = 0) const;
     bool layer_history_matches(const std::vector<uint8_t>& expected) const;
     std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
     std::vector<uint8_t> get_layer_history_since(size_t start_index) const;

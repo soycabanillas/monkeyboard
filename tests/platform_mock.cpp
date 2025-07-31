@@ -1,10 +1,12 @@
 #include "../src/platform_interface.h"
 #include "../src/platform_layout.h"
+#include "gtest/gtest.h"
 #include "platform_types.h"
 #include "platform_mock.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdint>
+#include <sstream>
 
 // Mock implementation of platform interface for testing
 
@@ -98,79 +100,99 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     return pressed_keys.find(keycode) != pressed_keys.end();
 }
 
-// New comparison methods
-bool MockPlatformState::key_actions_match(const std::vector<key_action_t>& expected) const {
+// New comparison methods with Google Test integration
+::testing::AssertionResult MockPlatformState::key_actions_match(const std::vector<key_action_t>& expected) const {
     if (key_actions.size() != expected.size()) {
-        printf("DEBUG: key_actions_match FAILED - Size mismatch: actual=%zu, expected=%zu\n",
-               key_actions.size(), expected.size());
-        return false;
+        return ::testing::AssertionFailure()
+            << "Size mismatch: actual=" << key_actions.size()
+            << ", expected=" << expected.size();
     }
+
     for (size_t i = 0; i < expected.size(); i++) {
         if (!(key_actions[i] == expected[i])) {
-            printf("DEBUG: key_actions_match FAILED at position %zu - actual: keycode=%u action=%u, expected: keycode=%u action=%u\n",
-                   i, key_actions[i].keycode, key_actions[i].action, expected[i].keycode, expected[i].action);
-            return false;
+            return ::testing::AssertionFailure()
+                << "Mismatch at position " << i
+                << " - actual: keycode=" << key_actions[i].keycode
+                << " action=" << static_cast<int>(key_actions[i].action)
+                << ", expected: keycode=" << expected[i].keycode
+                << " action=" << static_cast<int>(expected[i].action);
         }
     }
-    return true;
+
+    return ::testing::AssertionSuccess();
 }
 
-bool MockPlatformState::key_actions_match_with_time(const std::vector<key_action_t>& expected) const {
+::testing::AssertionResult MockPlatformState::key_actions_match_with_time(const std::vector<key_action_t>& expected) const {
     if (key_actions.size() != expected.size()) {
-        printf("DEBUG: key_actions_match_with_time FAILED - Size mismatch: actual=%zu, expected=%zu\n",
-               key_actions.size(), expected.size());
-        return false;
+        return ::testing::AssertionFailure()
+            << "Size mismatch: actual=" << key_actions.size()
+            << ", expected=" << expected.size();
     }
+
     for (size_t i = 0; i < expected.size(); i++) {
         if (!key_actions[i].operator_with_time(expected[i])) {
-            printf("DEBUG: key_actions_match_with_time FAILED at position %zu - actual: keycode=%u action=%u time=%u, expected: keycode=%u action=%u time=%u\n",
-                   i, key_actions[i].keycode, key_actions[i].action, key_actions[i].time,
-                   expected[i].keycode, expected[i].action, expected[i].time);
-            return false;
+            return ::testing::AssertionFailure()
+                << "Mismatch at position " << i
+                << " - actual: keycode=" << key_actions[i].keycode
+                << " action=" << static_cast<int>(key_actions[i].action)
+                << " time=" << key_actions[i].time
+                << ", expected: keycode=" << expected[i].keycode
+                << " action=" << static_cast<int>(expected[i].action)
+                << " time=" << expected[i].time;
         }
     }
-    return true;
+
+    return ::testing::AssertionSuccess();
 }
 
-bool MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time) const {
+::testing::AssertionResult MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time) const {
     if (key_actions.size() != expected.size()) {
-        printf("DEBUG: key_actions_match_with_time_gaps FAILED - Size mismatch: actual=%zu, expected=%zu\n",
-               key_actions.size(), expected.size());
-        return false;
+        return ::testing::AssertionFailure()
+            << "Size mismatch: actual=" << key_actions.size()
+            << ", expected=" << expected.size();
     }
 
     if (expected.empty()) {
-        return true;
+        return ::testing::AssertionSuccess();
     }
 
     platform_time_t expected_cumulative_time = 0;
-
-    printf("DEBUG: key_actions_match_with_time_gaps - Start time: %u\n", actual_start_time);
+    std::stringstream debug_info;
+    debug_info << "Time gap analysis (start time: " << actual_start_time << "):\n";
 
     for (size_t i = 0; i < expected.size(); i++) {
         // Check keycode and action match
         if (key_actions[i].keycode != expected[i].keycode ||
             key_actions[i].action != expected[i].action) {
-            printf("DEBUG: key_actions_match_with_time_gaps FAILED at position %zu - Keycode/action mismatch: actual: keycode=%u action=%u, expected: keycode=%u action=%u\n",
-                   i, key_actions[i].keycode, key_actions[i].action, expected[i].keycode, expected[i].action);
-            return false;
+            return ::testing::AssertionFailure()
+                << "Keycode/action mismatch at position " << i
+                << " - actual: keycode=" << key_actions[i].keycode
+                << " action=" << static_cast<int>(key_actions[i].action)
+                << ", expected: keycode=" << expected[i].keycode
+                << " action=" << static_cast<int>(expected[i].action);
         }
 
         // Add the time gap to get expected absolute time
         expected_cumulative_time += expected[i].time;
         platform_time_t expected_absolute_time = actual_start_time + expected_cumulative_time;
 
-        printf("DEBUG: key_actions_match_with_time_gaps position %zu - Gap: %u, Cumulative: %u, Expected absolute: %u, Actual: %u\n",
-               i, expected[i].time, expected_cumulative_time, expected_absolute_time, key_actions[i].time);
+        debug_info << "  Position " << i << ": gap=" << expected[i].time
+                   << ", cumulative=" << expected_cumulative_time
+                   << ", expected_absolute=" << expected_absolute_time
+                   << ", actual=" << key_actions[i].time << "\n";
 
         if (key_actions[i].time != expected_absolute_time) {
-            printf("DEBUG: key_actions_match_with_time_gaps FAILED at position %zu - Time mismatch: actual=%u, expected_absolute=%u (gap=%u, cumulative=%u)\n",
-                   i, key_actions[i].time, expected_absolute_time, expected[i].time, expected_cumulative_time);
-            return false;
+            return ::testing::AssertionFailure()
+                << "Time mismatch at position " << i
+                << " - actual=" << key_actions[i].time
+                << ", expected_absolute=" << expected_absolute_time
+                << " (gap=" << expected[i].time
+                << ", cumulative=" << expected_cumulative_time << ")\n"
+                << debug_info.str();
         }
     }
 
-    return true;
+    return ::testing::AssertionSuccess();
 }
 
 bool MockPlatformState::layer_history_matches(const std::vector<uint8_t>& expected) const {
