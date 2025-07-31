@@ -27,16 +27,19 @@ void MockPlatformState::record_key_event(platform_keycode_t keycode, bool presse
 }
 
 void MockPlatformState::advance_timer(platform_time_t ms) {
-    timer += ms;
+    platform_time_t previous_time = timer;
+    platform_time_t future_time = previous_time + ms;
     for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
-        if (it->execution_time <= timer) {
+        if (it->execution_time <= future_time) {
             // Execute the deferred callback
+            timer = it->execution_time; // Set timer to the execution time of the deferred call
             it->callback(it->data);
             // Remove the executed deferred call
             it = g_mock_state.deferred_calls.erase(it);
             if (it == g_mock_state.deferred_calls.end()) break; // Avoid invalid iterator
         }
     }
+    timer = previous_time + ms;
 }
 
 void MockPlatformState::reset() {
