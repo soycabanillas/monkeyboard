@@ -48,6 +48,17 @@ static void tap_key(platform_keycode_t keycode) {
     pipeline_executor_state.return_data.key_buffer_changed = true;
 }
 
+static uint8_t get_physical_key_event_count(void) {
+    return pipeline_executor_state.key_event_buffer->event_buffer_pos;
+}
+
+static platform_key_event_t* get_physical_key_event(uint8_t index) {
+    if (index < pipeline_executor_state.key_event_buffer->event_buffer_pos) {
+        return &pipeline_executor_state.key_event_buffer->event_buffer[index];
+    }
+    return NULL; // Out of bounds
+}
+
 static void remove_physical_press(uint8_t press_id) {
     platform_key_event_remove_physical_press_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
     pipeline_executor_state.return_data.key_buffer_changed = true;
@@ -324,6 +335,8 @@ void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t vi
     physical_actions.register_key_fn = &register_key;
     physical_actions.unregister_key_fn = &unregister_key;
     physical_actions.tap_key_fn = &tap_key;
+    physical_actions.get_physical_key_event_count_fn = &get_physical_key_event_count;
+    physical_actions.get_physical_key_event_fn = &get_physical_key_event;
     physical_actions.remove_physical_press_fn = &remove_physical_press;
     physical_actions.remove_physical_release_fn = &remove_physical_release;
     physical_actions.remove_physical_tap_fn = &remove_physical_tap;

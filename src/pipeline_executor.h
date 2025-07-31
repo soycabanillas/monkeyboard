@@ -34,6 +34,8 @@ typedef struct {
 typedef void (*key_buffer_tap)(platform_keycode_t keycode);
 typedef void (*key_buffer_untap)(platform_keycode_t keycode);
 typedef void (*key_buffer_key)(platform_keycode_t keycode);
+typedef uint8_t (*key_buffer_get_physical_key_event_count)(void);
+typedef platform_key_event_t* (*key_buffer_get_physical_key_event)(uint8_t index);
 typedef void (*key_buffer_remove_physical_press)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_release)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_tap)(uint8_t press_id);
@@ -43,6 +45,8 @@ typedef struct {
     key_buffer_tap register_key_fn;
     key_buffer_untap unregister_key_fn;
     key_buffer_key tap_key_fn;
+    key_buffer_get_physical_key_event_count get_physical_key_event_count_fn;
+    key_buffer_get_physical_key_event get_physical_key_event_fn;
     key_buffer_remove_physical_press remove_physical_press_fn;
     key_buffer_remove_physical_release remove_physical_release_fn;
     key_buffer_remove_physical_tap remove_physical_tap_fn;

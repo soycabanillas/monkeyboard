@@ -148,10 +148,11 @@ tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_c
         } else {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
+                actions->remove_physical_press_fn(last_key_event->press_id);
                 actions->register_key_fn(tap_action->keycode);
                 status->state = TAP_DANCE_WAITING_FOR_RELEASE;
             }
-            return end_with_capture_next_keys();
+            return end_with_no_capture();
         }
     }
     return end_with_no_capture();
@@ -170,15 +171,15 @@ tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_ta
         if (status->state == TAP_DANCE_WAITING_FOR_HOLD) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->tap_key_fn(tap_action->keycode);
                 actions->remove_physical_tap_fn(last_key_event->press_id);
+                actions->tap_key_fn(tap_action->keycode);
             }
             reset_behaviour_state(status);
             return end_with_no_capture();
         } else if (status->state == TAP_DANCE_WAITING_FOR_RELEASE) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->remove_physical_tap_fn(last_key_event->press_id);
+                actions->remove_physical_release_fn(last_key_event->press_id);
                 actions->unregister_key_fn(tap_action->keycode);
             }
             reset_behaviour_state(status);
@@ -197,6 +198,7 @@ tap_dance_return_data_t generic_key_release_when_holding_handler(pipeline_tap_da
     platform_layout_set_layer(status->original_layer);
     actions->remove_physical_release_fn(last_key_event->press_id);
     reset_behaviour_state(status);
+    return end_with_no_capture();
 }
 
 tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
@@ -212,7 +214,6 @@ tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *
             // First press of a new sequence
             status->original_layer = platform_layout_get_current_layer(); // Use current layer from stack
             status->trigger_keypos = last_key_event->keypos; // Store the key position that triggered the tap dance
-            status->trigger_press_id = last_key_event->is_press; // Store the press ID of the triggering key
             return generic_key_press_handler(config, status, actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_HOLD:
@@ -279,19 +280,22 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
                         //actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-                        actions->remove_physical_press_fn(status->trigger_press_id);
+                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        actions->remove_physical_press_fn(press_id);
                         platform_layout_set_layer(hold_action->layer);
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
                         actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-                        actions->remove_physical_release_fn(status->trigger_press_id);
+                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        actions->remove_physical_release_fn(press_id);
                         platform_layout_set_layer(hold_action->layer);
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
                         status->state = TAP_DANCE_HOLDING;
                         actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-                        actions->remove_physical_release_fn(status->trigger_press_id);
+                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        actions->remove_physical_release_fn(press_id);
                         platform_layout_set_layer(hold_action->layer);
                         return end_with_no_capture();
                     }
@@ -304,6 +308,10 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Timer callback: WAITING_FOR_TAP");
             {
+                pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
+                if (tap_action != NULL) {
+                    actions->tap_key_fn(tap_action->keycode);
+                }
                 reset_behaviour_state(status);
                 return end_with_no_capture();
             }
@@ -354,15 +362,15 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
         #if defined(AGNOSTIC_USE_1D_ARRAY)
-                    DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, KP %d, Press ID %d",
+                    DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, KP %d",
                     i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
                     behaviour->status->tap_count, behaviour->status->selected_layer,
-                    behaviour->status->trigger_keypos, behaviour->status->trigger_press_id);
+                    behaviour->status->trigger_keypos);
         #elif defined(AGNOSTIC_USE_2D_ARRAY)
-            DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, Col %d, Row %d, Press ID %d",
+            DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, Col %d, Row %d",
                         i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
                         behaviour->status->tap_count, behaviour->status->selected_layer,
-                        behaviour->status->trigger_keypos.row, behaviour->status->trigger_keypos.col, behaviour->status->trigger_press_id);
+                        behaviour->status->trigger_keypos.row, behaviour->status->trigger_keypos.col);
         #endif
     }
     DEBUG_PRINT_NL();

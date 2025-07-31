@@ -58,7 +58,6 @@ typedef struct {
     uint8_t original_layer;          // Layer when sequence started
     uint8_t selected_layer;          // Layer selected by hold action
     platform_keypos_t trigger_keypos; // Key position that triggered the tap dance
-    uint8_t trigger_press_id;        // Press ID of the key that triggered the tap dance
 } pipeline_tap_dance_behaviour_status_t;
 
 typedef struct {
