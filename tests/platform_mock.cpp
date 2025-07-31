@@ -145,7 +145,7 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t actual_start_time) const {
+::testing::AssertionResult MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t start_time) const {
     if (key_actions.size() != expected.size()) {
         return ::testing::AssertionFailure()
             << "Size mismatch: actual=" << key_actions.size()
@@ -157,8 +157,9 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     }
 
     platform_time_t expected_cumulative_time = 0;
+    platform_time_t previous_actual_time = 0;
     std::stringstream debug_info;
-    debug_info << "Time gap analysis (start time: " << actual_start_time << "):\n";
+    debug_info << "Time gap analysis (start time: " << start_time << "):\n";
 
     for (size_t i = 0; i < expected.size(); i++) {
         // Check keycode and action match
@@ -167,29 +168,35 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
             return ::testing::AssertionFailure()
                 << "Keycode/action mismatch at position " << i
                 << " - actual: keycode=" << key_actions[i].keycode
-                << " action=" << static_cast<int>(key_actions[i].action)
+                << " action=" << (key_actions[i].action == 0 ? "press" : "release")
                 << ", expected: keycode=" << expected[i].keycode
-                << " action=" << static_cast<int>(expected[i].action);
+                << " action=" << (expected[i].action == 0 ? "press" : "release");
         }
 
         // Add the time gap to get expected absolute time
         expected_cumulative_time += expected[i].time;
-        platform_time_t expected_absolute_time = actual_start_time + expected_cumulative_time;
+        platform_time_t expected_absolute_time = start_time + expected_cumulative_time;
 
-        debug_info << "  Position " << i << ": gap=" << expected[i].time
-                   << ", cumulative=" << expected_cumulative_time
+        debug_info << "  Position " << i
+                   << ": expected_gap=" << expected[i].time
+                   << ", actual_gap=" << key_actions[i].time - previous_actual_time
                    << ", expected_absolute=" << expected_absolute_time
-                   << ", actual=" << key_actions[i].time << "\n";
+                   << ", actual_absolute=" << key_actions[i].time
+                   << "\n";
 
         if (key_actions[i].time != expected_absolute_time) {
             return ::testing::AssertionFailure()
-                << "Time mismatch at position " << i
-                << " - actual=" << key_actions[i].time
+                << "\n" << "Time mismatch at position " << i
+                << " - "
+                << ": expected_gap=" << expected[i].time
+                << ", actual_gap=" << key_actions[i].time - previous_actual_time
                 << ", expected_absolute=" << expected_absolute_time
-                << " (gap=" << expected[i].time
-                << ", cumulative=" << expected_cumulative_time << ")\n"
+                << ", actual_absolute=" << key_actions[i].time
+                << "\n"
                 << debug_info.str();
         }
+
+        previous_actual_time = key_actions[i].time;
     }
 
     return ::testing::AssertionSuccess();

@@ -10,6 +10,10 @@
 extern "C" {
 #endif
 
+// Global timing configuration
+#define g_hold_timeout 200  // Hold timeout in milliseconds
+#define g_tap_timeout 200   // Tap timeout in milliseconds
+
 // typedef struct {
 //     platform_keypos_t keypos;
 //     uint8_t press_id; // Unique ID for the key press, used to track presses/releases

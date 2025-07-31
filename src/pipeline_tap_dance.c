@@ -10,10 +10,6 @@
 #include "platform_interface.h"
 #include "platform_types.h"
 
-// Global timing configuration
-#define g_hold_timeout 200  // Hold timeout in milliseconds
-#define g_tap_timeout 200   // Tap timeout in milliseconds
-
 pipeline_tap_dance_global_status_t* global_status;
 
 typedef enum {

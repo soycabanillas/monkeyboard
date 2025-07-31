@@ -125,14 +125,11 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
     // End tap dance config
 
     tap_key(TAP_DANCE_KEY);
-    platform_wait_ms(250);  // Wait for timeout
-
-    g_mock_state.print_state();
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY), release(OUTPUT_KEY)         // Tap dance output
+        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 0)         // Tap dance output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
@@ -173,11 +170,11 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
     tap_key(TAP_DANCE_KEY, 50, 50);
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY), release(OUTPUT_KEY),
-        press(OUTPUT_KEY), release(OUTPUT_KEY),
-        press(OUTPUT_KEY), release(OUTPUT_KEY)
+        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 0),
+        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0),
+        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
@@ -196,9 +193,9 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
 
     // Should only have the original key press/release, no tap dance actions
     std::vector<key_action_t> expected_keys = {
-        press(NORMAL_KEY), release(NORMAL_KEY)
+        press(NORMAL_KEY, 0), release(NORMAL_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 
     std::vector<uint8_t> expected_layers = {}; // No layer changes
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -240,7 +237,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
 
     std::vector<key_action_t> expected_keys = {
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, BASE_LAYER};
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -281,9 +278,9 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     platform_wait_ms(250);  // Wait for tap timeout
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY), release(OUTPUT_KEY)         // Tap output
+        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)         // Tap output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
 // ==================== MULTI-TAP SEQUENCES ====================
@@ -321,16 +318,16 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     // Should wait for potential second tap, no tap output yet
     std::vector<key_action_t> expected_keys = {
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 
     // Second tap
     tap_key(TAP_DANCE_KEY, 50);
     platform_wait_ms(250);  // Wait for timeout
 
     expected_keys = {
-        press(DOUBLE_TAP_KEY), release(DOUBLE_TAP_KEY)   // Double tap output
+        press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50)   // Double tap output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
@@ -369,9 +366,9 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     platform_wait_ms(250);
 
     std::vector<key_action_t> expected_keys = {
-        press(TRIPLE_TAP_KEY), release(TRIPLE_TAP_KEY)
+        press(TRIPLE_TAP_KEY, 50), release(TRIPLE_TAP_KEY, 50)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
@@ -410,44 +407,9 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     platform_wait_ms(250);
 
     std::vector<key_action_t> expected_keys = {
-        press(DOUBLE_TAP_KEY), release(DOUBLE_TAP_KEY),
-        press(SINGLE_TAP_KEY), release(SINGLE_TAP_KEY)
+        press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50),
+        press(SINGLE_TAP_KEY, 50 + g_tap_timeout), release(SINGLE_TAP_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
-// ==================== TIME-AWARE TESTING ====================
-
-TEST_F(TapDanceComprehensiveTest, TimeAwareKeySequence) {
-    const uint16_t TAP_DANCE_KEY = 10000;
-    const uint16_t OUTPUT_KEY = 10001;
-
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[1][1][1] = {
-        {{ TAP_DANCE_KEY }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
-    // End keymap setup
-
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_config->length++;
-    // End tap dance config
-
-    tap_key(TAP_DANCE_KEY, 50, 70);
-
-    // Test without time consideration (existing functionality)
-    std::vector<key_action_t> expected_keys_no_time = {
-        press(OUTPUT_KEY), release(OUTPUT_KEY)
-    };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys_no_time));
-
-    // Test with time gaps - press at 50ms from start, release 70ms after press
-    std::vector<key_action_t> expected_keys_with_time = {
-        press(OUTPUT_KEY, 50), release(OUTPUT_KEY, 70)
-    };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys_with_time));
-}
