@@ -300,3 +300,230 @@ TEST_F(ImmediateDelayedExecutionTest, ImmediateExecutionDecisionTableVerificatio
         EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
     }
 }
+
+// Test 5.9: Delayed Execution Timing Precision
+// Objective: Verify delayed execution happens exactly at timeout boundaries
+// Configuration: Same as Test 5.2
+TEST_F(ImmediateDelayedExecutionTest, DelayedExecutionTimingPrecision) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    platform_wait_ms(100);          // t=100ms (establish baseline)
+    press_key(TAP_DANCE_KEY);        // t=100ms
+    release_key(TAP_DANCE_KEY, 50);  // t=150ms (before hold timeout)
+    platform_wait_ms(200);          // t=350ms (tap timeout from release)
+
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 350), release(3001, 350)  // Exactly at tap timeout (150ms + 200ms)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 5.10: Mixed Execution Modes - Strategy Integration
+// Objective: Verify execution mode determination with different hold strategies
+TEST_F(ImmediateDelayedExecutionTest, MixedExecutionModesStrategyIntegration) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t INTERRUPTING_KEY = 3010;
+
+    static const platform_keycode_t keymaps[1][2][1] = {
+        {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
+    };
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)  // Hold only for 1st tap
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);          // t=0ms (1st tap - hold available)
+    release_key(TAP_DANCE_KEY, 50);    // t=50ms
+    press_key(TAP_DANCE_KEY, 50);      // t=100ms (2nd tap - no hold available)
+    press_key(INTERRUPTING_KEY, 50);   // t=150ms (interrupt - would trigger hold if available)
+    release_key(INTERRUPTING_KEY, 50); // t=200ms
+    release_key(TAP_DANCE_KEY, 50);    // t=250ms
+    platform_wait_ms(200);            // t=450ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(INTERRUPTING_KEY, 150),
+        release(INTERRUPTING_KEY, 200),
+        press(3002, 450), release(3002, 450)  // Delayed execution (sequence level decision)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 5.11: Execution Mode Decision Table Verification
+// Objective: Systematically verify all execution mode decision conditions
+TEST_F(ImmediateDelayedExecutionTest, ExecutionModeDecisionTableVerification) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    // Test immediate: No hold, within config
+    pipeline_tap_dance_action_config_t* actions_immediate[] = {
+        createbehaviouraction_tap(1, 3001)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_immediate, 1);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 50);
+    std::vector<key_action_t> expected_immediate = {
+        press(3001, 0), release(3001, 50)  // Immediate execution
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_immediate));
+
+    reset_mock_state();
+    tap_dance_config->length = 0;
+
+    // Test delayed: Hold available, within config
+    pipeline_tap_dance_action_config_t* actions_delayed[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_delayed, 2);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 50);
+    platform_wait_ms(200);
+    std::vector<key_action_t> expected_delayed = {
+        press(3001, 250), release(3001, 250)  // Delayed execution
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_delayed));
+}
+
+// Test 5.12: State Machine Bypass Verification
+// Objective: Verify internal state machine is actually bypassed in immediate execution
+TEST_F(ImmediateDelayedExecutionTest, StateMachineBypassVerification) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_config->length++;
+
+    // Rapid sequence that would normally require state machine
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 10);  // t=10ms
+    press_key(TAP_DANCE_KEY, 10);    // t=20ms (rapid second press)
+    release_key(TAP_DANCE_KEY, 10);  // t=30ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 0), release(3001, 10),    // First immediate execution
+        press(3001, 20), release(3001, 30)    // Second immediate execution (bypassed)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 5.13: Execution Responsiveness Comparison
+// Objective: Compare response timing between immediate and delayed execution
+TEST_F(ImmediateDelayedExecutionTest, ExecutionResponsivenessComparison) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    // Immediate Execution Test
+    pipeline_tap_dance_action_config_t* actions_immediate[] = {
+        createbehaviouraction_tap(1, 3001)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_immediate, 1);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    // Expected output at t=0ms (immediate)
+    std::vector<key_action_t> expected_immediate = {
+        press(3001, 0)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_immediate));
+
+    reset_mock_state();
+    tap_dance_config->length = 0;
+
+    // Delayed Execution Test
+    pipeline_tap_dance_action_config_t* actions_delayed[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_delayed, 2);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 100); // t=100ms
+    platform_wait_ms(200);          // t=300ms
+    // Expected output at t=300ms (after tap timeout)
+    std::vector<key_action_t> expected_delayed = {
+        press(3001, 300), release(3001, 300)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_delayed));
+}
+
+// Test 5.14: Execution Mode with Zero-Duration Actions
+// Objective: Verify execution mode handling with instantaneous press/release
+TEST_F(ImmediateDelayedExecutionTest, ExecutionModeWithZeroDurationActions) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 0);       // t=0ms (instant press+release)
+
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 0), release(3001, 0)  // Immediate execution on press and release
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 5.15: Complex Execution Mode Scenario
+// Objective: Verify execution mode determination in complex multi-tap with mixed availability
+// Configuration: Tap actions: [1-4: SENDKEY], Hold actions: [2,4: CHANGELAYER]
+TEST_F(ImmediateDelayedExecutionTest, ComplexExecutionModeScenario) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_tap(3, 3003),
+        createbehaviouraction_tap(4, 3004),
+        createbehaviouraction_hold(2, 2, TAP_DANCE_HOLD_PREFERRED),
+        createbehaviouraction_hold(4, 4, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 6);
+    tap_dance_config->length++;
+
+    // Test 5th tap (overflow, hold exists at 4th) - Delayed expected
+    for (int i = 0; i < 5; i++) {
+        tap_key(TAP_DANCE_KEY, 20);
+        platform_wait_ms(30);
+    }
+    platform_wait_ms(200);
+
+    std::vector<key_action_t> expected_keys = {
+        press(3004, 350), release(3004, 350)  // Delayed execution (hold exists at lower count)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}

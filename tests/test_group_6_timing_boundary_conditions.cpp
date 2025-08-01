@@ -260,14 +260,6 @@ TEST_F(TimingBoundaryConditionsTest, RaceConditionStrategyVsTimeout) {
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
-// **Expected Output**:
-// ```cpp
-// {INTERRUPTING_KEY, PRESS, 199},
-// {LAYER_1, ACTIVATE, 200},          // Hold timeout wins the race
-// {INTERRUPTING_KEY, RELEASE, 201},
-// {LAYER_1, DEACTIVATE, 250}
-// ```
-
 // Test 6.8: Rapid Sequence Timing - Sub-Timeout Windows
 // Objective: Verify system handles rapid sequences well within timeout windows
 // Configuration: Same as Test 6.4
@@ -339,4 +331,168 @@ TEST_F(TimingBoundaryConditionsTest, TimingPrecisionMillisecondAccuracy) {
 TEST_F(TimingBoundaryConditionsTest, TimingBoundaryDocumentation) {
     // This test is for documentation purposes, no executable code
     // See test description for timing rules and critical boundaries
+}
+
+// Test 6.11: Multiple Timeout Windows - Sequence Chain
+// Objective: Verify correct timeout calculation across multiple tap timeout windows
+// Configuration: Same as Test 6.4
+TEST_F(TimingBoundaryConditionsTest, MultipleTimeoutWindowsSequenceChain) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 50);  // t=50ms
+    // Wait near tap timeout, then continue
+    press_key(TAP_DANCE_KEY, 195);   // t=245ms (within first tap timeout)
+    release_key(TAP_DANCE_KEY, 50);  // t=295ms
+    // Wait near second tap timeout, then continue
+    press_key(TAP_DANCE_KEY, 195);   // t=490ms (within second tap timeout)
+    release_key(TAP_DANCE_KEY, 50);  // t=540ms
+    platform_wait_ms(200);          // t=740ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(3002, 740), release(3002, 740)  // Third tap uses second action (overflow)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 6.12: Timeout Accumulation - Long Sequence
+// Objective: Verify timeout calculations don't accumulate errors over long sequences
+TEST_F(TimingBoundaryConditionsTest, TimeoutAccumulationLongSequence) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    tap_dance_config->length++;
+
+    // 5 taps, each at 180ms intervals (within tap timeout)
+    for (int i = 0; i < 5; i++) {
+        press_key(TAP_DANCE_KEY);        // t=i*180ms
+        release_key(TAP_DANCE_KEY, 50);  // t=i*180+50ms
+        platform_wait_ms(130);          // t=i*180+180ms
+    }
+    platform_wait_ms(200);              // Final timeout
+
+    std::vector<key_action_t> expected_keys = {
+        press(3002, 1100), release(3002, 1100)  // Uses second action (overflow from 5 taps)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 6.13: Zero-Duration Edge Cases
+// Objective: Verify timing behavior with zero-duration key presses
+TEST_F(TimingBoundaryConditionsTest, ZeroDurationEdgeCases) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 0);   // t=0ms (zero duration)
+    press_key(TAP_DANCE_KEY, 0);     // t=0ms (immediate second press)
+    release_key(TAP_DANCE_KEY, 100); // t=100ms
+    platform_wait_ms(200);          // t=300ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(3002, 300), release(3002, 300)  // Second tap action (two zero-duration taps)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 6.14: Timeout Boundary with Strategy Integration
+// Objective: Verify timing boundaries work correctly with different hold strategies
+TEST_F(TimingBoundaryConditionsTest, TimeoutBoundaryWithStrategyIntegration) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t INTERRUPTING_KEY = 3010;
+
+    static const platform_keycode_t keymaps[1][2][1] = {
+        {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
+    };
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);          // t=0ms
+    // Interrupt exactly at hold timeout
+    press_key(INTERRUPTING_KEY, 200);  // t=200ms (exactly at timeout)
+    release_key(INTERRUPTING_KEY, 1);  // t=201ms
+    release_key(TAP_DANCE_KEY, 49);    // t=250ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(INTERRUPTING_KEY, 200),
+        release(INTERRUPTING_KEY, 201)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {1, 0};  // Timeout and strategy both trigger hold
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+}
+
+// Test 6.15: Complex Timing Scenario - Mixed Boundaries
+// Objective: Verify system handles complex timing with multiple near-boundary conditions
+TEST_F(TimingBoundaryConditionsTest, ComplexTimingScenarioMixedBoundaries) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t INTERRUPTING_KEY = 3010;
+
+    static const platform_keycode_t keymaps[1][2][1] = {
+        {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
+    };
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_tap(2, 3002),
+        createbehaviouraction_tap(3, 3003),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED),
+        createbehaviouraction_hold(2, 2, TAP_DANCE_BALANCED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 5);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);          // t=0ms (1st tap)
+    release_key(TAP_DANCE_KEY, 199);   // t=199ms (1ms before hold timeout)
+
+    press_key(TAP_DANCE_KEY, 1);       // t=200ms (2nd tap, exactly at first timeout)
+    press_key(INTERRUPTING_KEY, 199);  // t=399ms (1ms before second hold timeout)
+    release_key(INTERRUPTING_KEY, 2);  // t=401ms (complete cycle after timeout)
+    release_key(TAP_DANCE_KEY, 49);    // t=450ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(INTERRUPTING_KEY, 399),
+        release(INTERRUPTING_KEY, 401)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {2, 0};  // Hold timeout for 2nd tap wins
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }

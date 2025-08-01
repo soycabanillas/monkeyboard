@@ -269,3 +269,126 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, 0};
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
+
+// Test 1.12: State Persistence - Multiple Sequences
+// Objective: Verify state machine properly resets between independent sequences
+// Configuration: Same as Test 1.1
+TEST_F(BasicStateMachineTest, StatePersistenceMultipleSequences) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t OUTPUT_KEY = 3001;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    // First sequence - tap
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 100); // t=100ms
+    platform_wait_ms(200);          // t=300ms - first sequence completes
+
+    // Second sequence - hold
+    press_key(TAP_DANCE_KEY, 100);   // t=400ms
+    platform_wait_ms(250);          // t=650ms
+    release_key(TAP_DANCE_KEY);      // t=650ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY, 300), release(OUTPUT_KEY, 300)  // First sequence tap
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {1, 0}; // Second sequence hold
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+}
+
+// Test 1.13: Very Short Tap - Minimum Duration
+// Objective: Verify system handles very short tap durations
+// Configuration: Same as Test 1.1
+TEST_F(BasicStateMachineTest, VeryShortTapMinimumDuration) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t OUTPUT_KEY = 3001;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 1);   // t=1ms (very short tap)
+    platform_wait_ms(200);          // Wait for tap timeout
+
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY, 201), release(OUTPUT_KEY, 201)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 1.14: State Machine Reset Verification
+// Objective: Verify internal state properly resets after each sequence
+// Configuration: Same as Test 1.1
+TEST_F(BasicStateMachineTest, StateMachineResetVerification) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t OUTPUT_KEY = 3001;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    // First sequence - incomplete (should reset)
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 50);  // t=50ms
+    platform_wait_ms(200);          // t=250ms - sequence completes
+
+    // Immediate second sequence - should start fresh
+    press_key(TAP_DANCE_KEY);        // t=250ms
+    release_key(TAP_DANCE_KEY, 50);  // t=300ms
+    platform_wait_ms(200);          // t=500ms - second sequence completes
+
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY, 250), release(OUTPUT_KEY, 250),  // First sequence
+        press(OUTPUT_KEY, 500), release(OUTPUT_KEY, 500)   // Second sequence (fresh start)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 1.15: Zero-Length Actions
+// Objective: Verify system handles simultaneous press/release actions
+// Configuration: Same as Test 1.1
+TEST_F(BasicStateMachineTest, ZeroLengthActions) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+    const uint16_t OUTPUT_KEY = 3001;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, OUTPUT_KEY),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 0);       // t=0ms, immediate press+release
+    platform_wait_ms(200);          // Wait for tap timeout
+
+    std::vector<key_action_t> expected_keys = {
+        press(OUTPUT_KEY, 200), release(OUTPUT_KEY, 200)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}

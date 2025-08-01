@@ -529,3 +529,166 @@ TEST_F(ConfigurationCombinationsTest, ZeroBasedVsOneBasedConfiguration) {
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys_3));
 }
 
+// Test 9.11: Configuration with Large Timeout Values
+// Objective: Verify system handles large timeout values correctly
+// Configuration: Hold timeout: 1000ms, Tap timeout: 2000ms
+TEST_F(ConfigurationCombinationsTest, ConfigurationWithLargeTimeoutValues) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    platform_wait_ms(1100);         // t=1100ms (exceed 1000ms timeout)
+    release_key(TAP_DANCE_KEY);      // t=1100ms
+
+    std::vector<uint8_t> expected_layers = {1, 0};  // Hold activation/deactivation
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+}
+
+// Test 9.12: Configuration Edge Cases
+// Objective: Verify handling of edge case configurations
+TEST_F(ConfigurationCombinationsTest, ConfigurationEdgeCases) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    // Test with identical timeout values
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    // Press, release at 100ms, wait 200ms total
+    // Clear precedence rules (tap timeout from release, hold from press)
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    release_key(TAP_DANCE_KEY, 100); // t=100ms
+    platform_wait_ms(200);          // t=300ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 300), release(3001, 300)  // Tap timeout from release
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+}
+
+// Test 9.13: Configuration Consistency Verification
+// Objective: Verify consistent behavior across different configurations
+TEST_F(ConfigurationCombinationsTest, ConfigurationConsistencyVerification) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    // Base Test Pattern: Single tap with 50ms hold
+    
+    // Tap-Only Config
+    pipeline_tap_dance_action_config_t* actions_tap_only[] = {
+        createbehaviouraction_tap(1, 3001)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_tap_only, 1);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 50);
+    std::vector<key_action_t> expected_immediate = {
+        press(3001, 0), release(3001, 50)  // Immediate execution
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_immediate));
+
+    reset_mock_state();
+    tap_dance_config->length = 0;
+
+    // Hold-Only Config
+    pipeline_tap_dance_action_config_t* actions_hold_only[] = {
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_hold_only, 1);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 50);
+    platform_wait_ms(200);
+    std::vector<key_action_t> expected_no_action = {};  // No action (no tap configured)
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_no_action));
+
+    reset_mock_state();
+    tap_dance_config->length = 0;
+
+    // Mixed Config
+    pipeline_tap_dance_action_config_t* actions_mixed[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions_mixed, 2);
+    tap_dance_config->length++;
+
+    tap_key(TAP_DANCE_KEY, 50);
+    platform_wait_ms(200);
+    std::vector<key_action_t> expected_delayed = {
+        press(3001, 250), release(3001, 250)  // Delayed tap execution
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_delayed));
+}
+
+// Test 9.14: Multi-Key Configuration Comparison
+// Objective: Verify independent behavior of multiple configured keys
+TEST_F(ConfigurationCombinationsTest, MultiKeyConfigurationComparison) {
+    const uint16_t TAP_DANCE_KEY_1 = 3000;  // Tap-only configuration
+    const uint16_t TAP_DANCE_KEY_2 = 3100;  // Hold-only configuration
+    const uint16_t TAP_DANCE_KEY_3 = 3200;  // Mixed configuration
+
+    static const platform_keycode_t keymaps[1][3][1] = {
+        {{ TAP_DANCE_KEY_1 }, { TAP_DANCE_KEY_2 }, { TAP_DANCE_KEY_3 }}
+    };
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+
+    // Configure three different keys with different behaviors
+    pipeline_tap_dance_action_config_t* actions_key1[] = {
+        createbehaviouraction_tap(1, 3001)  // Tap-only
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_1, actions_key1, 1);
+    tap_dance_config->length++;
+
+    pipeline_tap_dance_action_config_t* actions_key2[] = {
+        createbehaviouraction_hold(1, 2, TAP_DANCE_HOLD_PREFERRED)  // Hold-only
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_2, actions_key2, 1);
+    tap_dance_config->length++;
+
+    pipeline_tap_dance_action_config_t* actions_key3[] = {
+        createbehaviouraction_tap(1, 3003),
+        createbehaviouraction_hold(1, 3, TAP_DANCE_HOLD_PREFERRED)  // Mixed
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY_3, actions_key3, 2);
+    tap_dance_config->length++;
+
+    // Simultaneous activation of all three keys
+    press_key(TAP_DANCE_KEY_1);      // t=0ms
+    press_key(TAP_DANCE_KEY_2, 10);  // t=10ms
+    press_key(TAP_DANCE_KEY_3, 10);  // t=20ms
+    platform_wait_ms(250);          // t=270ms
+    release_key(TAP_DANCE_KEY_1);    // t=270ms
+    release_key(TAP_DANCE_KEY_2);    // t=270ms
+    release_key(TAP_DANCE_KEY_3);    // t=270ms
+
+    // Expected Output:
+    // Key 1 (tap-only) - immediate
+    // Key 2 (hold-only) - layer activation at timeout
+    // Key 3 (mixed) - layer activation at timeout
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 0), release(3001, 270)  // Key 1 immediate execution
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    
+    std::vector<uint8_t> expected_layers = {2, 3, 3, 0, 2, 0};  // Key 2 and Key 3 layer changes
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+}
+

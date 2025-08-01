@@ -170,4 +170,39 @@ TEST_F(ActionExecutionVerificationTest, ActionExecutionPerformanceRapidSequences
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
 
+// Test 8.16: Action State Cleanup Verification
+// Objective: Verify proper cleanup of action states between sequences
+// Configuration: Tap actions: [1: SENDKEY(3001)], Hold actions: [1: CHANGELAYER(1)]
+TEST_F(ActionExecutionVerificationTest, ActionStateCleanupVerification) {
+    const uint16_t TAP_DANCE_KEY = 3000;
+
+    static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_tap(1, 3001),
+        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+    };
+    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_config->length++;
+
+    // First sequence - hold with early termination
+    press_key(TAP_DANCE_KEY);        // t=0ms
+    platform_wait_ms(250);          // t=250ms (layer activated)
+    release_key(TAP_DANCE_KEY);      // t=250ms (layer deactivated)
+
+    // Immediate second sequence - should start clean
+    press_key(TAP_DANCE_KEY);        // t=250ms
+    release_key(TAP_DANCE_KEY, 50);  // t=300ms (tap, not hold)
+    platform_wait_ms(200);          // t=500ms
+
+    std::vector<key_action_t> expected_keys = {
+        press(3001, 0), release(3001, 50)
+    };
+    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+
+    std::vector<uint8_t> expected_layers = {1, 0};  // First sequence hold, second sequence tap
+    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+}
+
 
