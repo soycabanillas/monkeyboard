@@ -76,7 +76,17 @@ if(BUILD_TESTS)
     add_compile_definitions(UNIT_TESTING)
 
     # Create platform mock library
-    add_library(platform_mock tests/platform_mock.cpp)
+    # Testing
+    set(TEST_SOURCES
+        tests/common_functions.cpp
+        tests/platform_mock.cpp
+    )
+
+    # Create core headers list
+    set(TEST_HEADERS
+        tests/common_functions.hpp
+    )
+    add_library(platform_mock ${TEST_SOURCES} ${TEST_HEADERS})
     target_include_directories(platform_mock
         PUBLIC
             ${CMAKE_CURRENT_SOURCE_DIR}/src

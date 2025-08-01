@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "key_event_buffer.h"
 #include "pipeline_tap_dance.h"
 #include "platform_types.h"
 
