@@ -23,6 +23,7 @@ void platform_layout_init_1d_keymap_impl(platform_keycode_t **layers, uint8_t nu
 void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols);
 #endif
 
+bool platform_layout_is_valid_layer_impl(uint8_t layer);
 void platform_layout_set_layer_impl(uint8_t layer);
 uint8_t platform_layout_get_current_layer_impl(void);
 platform_keycode_t platform_layout_get_keycode_impl(platform_keypos_t position);

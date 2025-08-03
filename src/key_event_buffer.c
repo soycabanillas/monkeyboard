@@ -175,6 +175,9 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
     if (event_buffer == NULL) {
         return;
     }
+    if (pos >= event_buffer->event_buffer_pos) {
+        return; // Position out of bounds
+    }
     for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
         bool is_press = event_buffer->event_buffer[i].is_press;
         if (is_press) {

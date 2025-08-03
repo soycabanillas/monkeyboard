@@ -4,5 +4,6 @@
         "--compile-commands-dir=build",
         "--clang-tidy",
         "--header-insertion=iwyu"
-    ]
+    ],
+    "cmake.ctest.testSuiteDelimiter": "\\."
 }

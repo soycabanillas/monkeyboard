@@ -280,6 +280,10 @@ void platform_layout_init_2d_keymap(const uint16_t* layers, uint8_t num_layers, 
 }
 #endif
 
+bool platform_layout_is_valid_layer(uint8_t layer) {
+    return platform_layout_is_valid_layer_impl(layer);
+}
+
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
     g_mock_state.layer_select_calls.push_back(layer);

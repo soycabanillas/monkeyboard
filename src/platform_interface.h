@@ -23,6 +23,7 @@ void platform_layout_init_qmk_keymap(const uint16_t keymap[][MATRIX_ROWS][MATRIX
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
 void platform_layout_init_2d_keymap(const uint16_t* keymap_array, uint8_t num_layers, uint8_t rows, uint8_t cols);
 #endif
+bool platform_layout_is_valid_layer(uint8_t layer);
 void platform_layout_set_layer(uint8_t layer);
 uint8_t platform_layout_get_current_layer(void);
 platform_keycode_t platform_layout_get_keycode(platform_keypos_t position);

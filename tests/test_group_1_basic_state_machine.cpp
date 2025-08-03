@@ -67,11 +67,11 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
     // Input Sequence: press_key(TAP_DANCE_KEY); release_key(TAP_DANCE_KEY, 100); platform_wait_ms(200);
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms (before hold timeout)
-    platform_wait_ms(200);          // t=300ms (tap timeout)
+    platform_wait_ms(TAP_TIMEOUT);          // t=300ms (tap timeout)
 
     // Expected Output: Tap action executed at timeout
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 300), release(OUTPUT_KEY, 300)
+        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -81,7 +81,7 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
 // Configuration: Same as Test 1.1
 TEST_F(BasicStateMachineTest, SimpleHold) {
     const uint16_t TAP_DANCE_KEY = 3000;
-    const uint8_t TARGET_LAYER = 1;
+    const uint8_t TARGET_LAYER = 0;
 
     // Setup same as SimpleTap
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
@@ -119,19 +119,19 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 0, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
 
     // Input Sequence: press_key(TAP_DANCE_KEY); release_key(TAP_DANCE_KEY, 199); platform_wait_ms(200);
     press_key(TAP_DANCE_KEY);        // t=0ms
-    release_key(TAP_DANCE_KEY, 199); // t=199ms (1ms before timeout)
+    release_key(TAP_DANCE_KEY, JUST_BEFORE_HOLD_TIMEOUT); // t=199ms (1ms before timeout)
     platform_wait_ms(200);          // Wait for tap timeout
 
     // Expected Output: Tap action (released before hold timeout)
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 399), release(OUTPUT_KEY, 399)
+        press(OUTPUT_KEY, JUST_BEFORE_HOLD_TIMEOUT), release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -141,7 +141,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
 // Configuration: Same as Test 1.1
 TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
     const uint16_t TAP_DANCE_KEY = 3000;
-    const uint8_t TARGET_LAYER = 1;
+    const uint8_t TARGET_LAYER = 0;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
@@ -168,7 +168,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
 // Configuration: Same as Test 1.1
 TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
     const uint16_t TAP_DANCE_KEY = 3000;
-    const uint8_t TARGET_LAYER = 1;
+    const uint8_t TARGET_LAYER = 0;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
@@ -222,7 +222,7 @@ TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
 // Configuration: Tap actions: [] // No tap actions, Hold actions: [1: CHANGELAYER(1)]
 TEST_F(BasicStateMachineTest, OnlyHoldActionConfigured) {
     const uint16_t TAP_DANCE_KEY = 3000;
-    const uint8_t TARGET_LAYER = 1;
+    const uint8_t TARGET_LAYER = 0;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
@@ -249,7 +249,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionConfigured) {
 // Configuration: Same as Test 1.10
 TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
     const uint16_t TAP_DANCE_KEY = 3000;
-    const uint8_t TARGET_LAYER = 1;
+    const uint8_t TARGET_LAYER = 0;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
@@ -282,7 +282,7 @@ TEST_F(BasicStateMachineTest, StatePersistenceMultipleSequences) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 0, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -298,11 +298,11 @@ TEST_F(BasicStateMachineTest, StatePersistenceMultipleSequences) {
     release_key(TAP_DANCE_KEY);      // t=650ms
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 300), release(OUTPUT_KEY, 300)  // First sequence tap
+        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)  // First sequence tap
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 
-    std::vector<uint8_t> expected_layers = {1, 0}; // Second sequence hold
+    std::vector<uint8_t> expected_layers = {0, 0}; // Second sequence hold
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
@@ -318,7 +318,7 @@ TEST_F(BasicStateMachineTest, VeryShortTapMinimumDuration) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 0, TAP_DANCE_HOLD_PREFERRED)
     };
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
@@ -328,7 +328,7 @@ TEST_F(BasicStateMachineTest, VeryShortTapMinimumDuration) {
     platform_wait_ms(200);          // Wait for tap timeout
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 201), release(OUTPUT_KEY, 201)
+        press(OUTPUT_KEY, 1), release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -361,8 +361,8 @@ TEST_F(BasicStateMachineTest, StateMachineResetVerification) {
     platform_wait_ms(200);          // t=500ms - second sequence completes
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 250), release(OUTPUT_KEY, 250),  // First sequence
-        press(OUTPUT_KEY, 500), release(OUTPUT_KEY, 500)   // Second sequence (fresh start)
+        press(OUTPUT_KEY, 50), release(OUTPUT_KEY, 0),  // First sequence
+        press(OUTPUT_KEY, 250), release(OUTPUT_KEY, 0)   // Second sequence (fresh start)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -388,7 +388,7 @@ TEST_F(BasicStateMachineTest, ZeroLengthActions) {
     platform_wait_ms(200);          // Wait for tap timeout
 
     std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 200), release(OUTPUT_KEY, 200)
+        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }

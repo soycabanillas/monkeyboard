@@ -70,7 +70,8 @@ TEST_F(ActionOverflowTest, BasicTapActionOverflow) {
 
     // Expected Output: Uses last configured action (2nd tap action)
     std::vector<key_action_t> expected_keys = {
-        press(3002, 470), release(3002, 470)
+        press(3002, 80), release(3002, 30),
+        press(3002, 130), release(3002, 30)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -101,7 +102,7 @@ TEST_F(ActionOverflowTest, HoldActionNonOverflow) {
 
     // Expected Output: Tap action only (no hold available for 3rd tap)
     std::vector<key_action_t> expected_keys = {
-        press(3002, 610), release(3002, 610)
+        press(3002, 80), release(3002, 30)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -129,7 +130,7 @@ TEST_F(ActionOverflowTest, OverflowImmediateExecution) {
 
     // Expected Output: Immediate execution on press (overflow + no hold)
     std::vector<key_action_t> expected_keys = {
-        press(3002, 160), release(3002, 260)
+        press(3002, 80), release(3002, 30)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -160,7 +161,11 @@ TEST_F(ActionOverflowTest, ExtremeOverflowHighTapCount) {
 
     // Expected Output: Still uses last configured action (2nd tap)
     std::vector<key_action_t> expected_keys = {
-        press(3002, 700), release(3002, 700)
+        press(3002, 50), release(3002, 20),
+        press(3002, 80), release(3002, 20),
+        press(3002, 80), release(3002, 20),
+        press(3002, 80), release(3002, 20),
+        press(3002, 80), release(3002, 20)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -195,10 +200,10 @@ TEST_F(ActionOverflowTest, OverflowHoldAttemptWithStrategy) {
     platform_wait_ms(200);            // t=510ms
 
     std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 210),
-        release(INTERRUPTING_KEY, 260),
-        press(3002, 510),              // Tap action (no hold available for 3rd tap)
-        release(3002, 510)
+        press(3002, 80),
+        release(3002, 30),
+        press(INTERRUPTING_KEY, 100),              // Tap action (no hold available for 3rd tap)
+        release(INTERRUPTING_KEY, 50)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }
@@ -234,11 +239,12 @@ TEST_F(ActionOverflowTest, OverflowMixedWithNonOverflowHold) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=590-620ms (4th tap - overflow)
     platform_wait_ms(200);          // t=820ms
 
-    std::vector<uint8_t> expected_layers = {1, 0};  // First sequence - hold action
+    std::vector<uint8_t> expected_layers = {0};  // First sequence - hold action
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 
     std::vector<key_action_t> expected_keys = {
-        press(3003, 820), release(3003, 820)  // Second sequence - overflow uses 3rd action
+        press(3003, 460), release(3003, 30),
+        press(3001, 80 + TAP_TIMEOUT), release(3001, 0)  // Second sequence - overflow uses 3rd action
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }

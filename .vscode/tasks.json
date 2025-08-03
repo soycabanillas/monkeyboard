@@ -49,7 +49,7 @@
         {
             "label": "Test CMake",
             "type": "shell",
-            "command": "cd build && ctest --verbose",
+            "command": "cd build && ctest --verbose --tests-regex '${input:testFilter}'",
             "group": "test",
             "presentation": {
                 "echo": true,
@@ -61,19 +61,6 @@
         },
         {
             "label": "Test Google Test",
-            "type": "shell",
-            "command": "./build/tests",
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "dependsOn": "Build"
-        },
-        {
-            "label": "Test Single",
             "type": "shell",
             "command": "./build/tests",
             "args": ["--gtest_filter=${input:testFilter}"],
@@ -90,7 +77,7 @@
     "inputs": [
         {
             "id": "testFilter",
-            "description": "Test filter pattern (e.g., TapDanceComprehensiveTest.BasicSingleTap)",
+            "description": "Test filter pattern (e.g.,  * or BasicStateMachineTest.*)",
             "type": "promptString",
             "default": "*"
         }

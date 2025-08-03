@@ -184,7 +184,17 @@ void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_lay
 
 #endif
 
+bool platform_layout_is_valid_layer_impl(uint8_t layer) {
+    if (!manager) {
+        return false; // No layout initialized
+    }
+    return (layer < manager->num_layers);
+}
+
 void platform_layout_set_layer_impl(uint8_t layer) {
+    if (!manager || layer >= manager->num_layers) {
+        return; // Invalid layer, do nothing
+    }
     manager->current_layer = layer; // Update the manager's current layer
 }
 

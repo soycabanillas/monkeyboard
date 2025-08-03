@@ -103,8 +103,12 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
         if (last_key_event->is_press) {
             status->state = TAP_DANCE_HOLDING;
-            actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-            platform_layout_set_layer(hold_action->layer);
+            platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
+            actions->remove_physical_tap_fn(first_key_event->press_id);
+            if (platform_layout_is_valid_layer(hold_action->layer)) {
+                actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                platform_layout_set_layer(hold_action->layer);
+            }
             return end_with_no_capture();
         } else {
             return end_with_no_capture();
@@ -114,8 +118,12 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
             return end_with_no_capture();
         } else {
             status->state = TAP_DANCE_HOLDING;
-            actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-            platform_layout_set_layer(hold_action->layer);
+            platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
+            actions->remove_physical_tap_fn(first_key_event->press_id);
+            if (platform_layout_is_valid_layer(hold_action->layer)) {
+                actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                platform_layout_set_layer(hold_action->layer);
+            }
             return end_with_no_capture();
         }
     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
@@ -169,6 +177,8 @@ tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_ta
             if (tap_action != NULL) {
                 actions->remove_physical_tap_fn(last_key_event->press_id);
                 actions->tap_key_fn(tap_action->keycode);
+            } else {
+                actions->remove_physical_tap_fn(last_key_event->press_id);
             }
             reset_behaviour_state(status);
             return end_with_no_capture();
@@ -278,21 +288,27 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                         //actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
                         actions->remove_physical_press_fn(press_id);
-                        platform_layout_set_layer(hold_action->layer);
+                        if (platform_layout_is_valid_layer(hold_action->layer)) {
+                            platform_layout_set_layer(hold_action->layer);
+                        }
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
                         actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
                         actions->remove_physical_release_fn(press_id);
-                        platform_layout_set_layer(hold_action->layer);
+                        if (platform_layout_is_valid_layer(hold_action->layer)) {
+                            platform_layout_set_layer(hold_action->layer);
+                        }
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
                         status->state = TAP_DANCE_HOLDING;
                         actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
                         actions->remove_physical_release_fn(press_id);
-                        platform_layout_set_layer(hold_action->layer);
+                        if (platform_layout_is_valid_layer(hold_action->layer)) {
+                            platform_layout_set_layer(hold_action->layer);
+                        }
                         return end_with_no_capture();
                     }
                 }
