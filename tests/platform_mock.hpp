@@ -11,8 +11,6 @@
 void reset_mock_state(void);
 void mock_advance_timer(platform_time_t ms);
 void mock_reset_timer(void);
-void mock_set_layer(uint8_t layer);
-void mock_print_state(void);
 
 // Key event tracking
 struct key_event_t {
@@ -75,39 +73,18 @@ struct tap_dance_event_t {
 // MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
-    uint8_t current_layer;
     platform_deferred_token next_token;
-    platform_time_t last_key_event_time;
 
-    std::vector<key_event_t> key_events;
-    std::set<platform_keycode_t> pressed_keys;
-    std::vector<platform_keycode_t> register_key_calls;
-    std::vector<platform_keycode_t> unregister_key_calls;
-    std::vector<uint8_t> layer_select_calls;
     std::vector<deferred_call_t> deferred_calls;
     std::vector<key_action_t> key_actions; // Combined press/release history
     std::vector<uint8_t> layer_history;    // Layer change history
-
-    platform_keycode_t last_sent_key;
-    platform_keycode_t last_registered_key;
-    platform_keycode_t last_unregistered_key;
-    uint8_t last_selected_layer;
+    std::vector<tap_dance_event_t> tap_dance_events;
 
     // Constructor and method declarations
     MockPlatformState();
 
-    int send_key_calls_count() const;
-    int register_key_calls_count() const;
-    int unregister_key_calls_count() const;
-    int layer_select_calls_count() const;
-    int key_events_count() const;
-    size_t pressed_keys_count() const;
-    bool is_key_pressed(platform_keycode_t keycode) const;
-
     void advance_timer(platform_time_t ms);
     void reset();
-    void print_state() const;
-    void record_key_event(platform_keycode_t keycode, bool pressed);
 
     // New comparison methods with Google Test integration
     ::testing::AssertionResult key_actions_match(const std::vector<key_action_t>& expected) const;

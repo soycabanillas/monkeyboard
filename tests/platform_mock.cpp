@@ -7,24 +7,29 @@
 #include <stdio.h>
 #include <cstdint>
 #include <sstream>
+#include <vector>
+
+
+static void tap_dance_add_layer_event(uint8_t layer) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+    event.layer = layer;
+    event.time = g_mock_state.timer; // Use current timer for the event
+    g_mock_state.tap_dance_events.push_back(event);
+}
+
+static void tap_dance_add_key_event(platform_keycode_t keycode, bool pressed) {
+    tap_dance_event_t event;
+    event.type = pressed ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
+    event.keycode = keycode;
+    event.time = g_mock_state.timer; // Use current timer for the event
+    g_mock_state.tap_dance_events.push_back(event);
+}
 
 // Mock implementation of platform interface for testing
 
 // MockPlatformState method implementations
-MockPlatformState::MockPlatformState() : timer(0), current_layer(0), next_token(1),
-                     last_key_event_time(0), last_sent_key(0),
-                     last_registered_key(0), last_unregistered_key(0),
-                     last_selected_layer(0) {}
-
-void MockPlatformState::record_key_event(platform_keycode_t keycode, bool pressed) {
-    key_events.push_back({keycode, pressed, timer});
-    last_key_event_time = timer;
-    if (pressed) {
-        pressed_keys.insert(keycode);
-    } else {
-        pressed_keys.erase(keycode);
-    }
-}
+MockPlatformState::MockPlatformState() : timer(0), next_token(1) {}
 
 void MockPlatformState::advance_timer(platform_time_t ms) {
     platform_time_t previous_time = timer;
@@ -44,63 +49,11 @@ void MockPlatformState::advance_timer(platform_time_t ms) {
 
 void MockPlatformState::reset() {
     timer = 0;
-    current_layer = 0;
     next_token = 1;
-    last_key_event_time = 0;
 
-    key_events.clear();
-    pressed_keys.clear();
-    register_key_calls.clear();
-    unregister_key_calls.clear();
-    layer_select_calls.clear();
     key_actions.clear();
     layer_history.clear();
-
-    last_sent_key = 0;
-    last_registered_key = 0;
-    last_unregistered_key = 0;
-    last_selected_layer = 0;
-}
-
-void MockPlatformState::print_state() const {
-    printf("\n");
-    printf("=== MOCK STATE ===\n");
-    printf("Current time: %u ms\n", timer);
-    printf("Current layer: %u\n", current_layer);
-    printf("Time since last key event: %u ms\n", timer - last_key_event_time);
-
-    printf("Currently pressed keys (%zu): ", pressed_keys.size());
-    for (auto keycode : pressed_keys) {
-        printf("%u ", keycode);
-    }
-    printf("\n");
-
-    printf("Key event history (%zu events):\n", key_events.size());
-    for (size_t i = 0; i < key_events.size(); i++) {
-        const auto& event = key_events[i];
-        if (i == 0) {
-            printf("  %u ms: Key %u %s (first event)\n",
-                   event.timestamp, event.keycode,
-                   event.pressed ? "PRESS" : "RELEASE");
-        } else {
-            platform_time_t time_diff = event.timestamp - key_events[i-1].timestamp;
-            printf("  %u ms: Key %u %s (+%u ms)\n",
-                   event.timestamp, event.keycode,
-                   event.pressed ? "PRESS" : "RELEASE", time_diff);
-        }
-    }
-    printf("==================\n");
-    printf("\n");
-}
-
-int MockPlatformState::register_key_calls_count() const { return register_key_calls.size(); }
-int MockPlatformState::unregister_key_calls_count() const { return unregister_key_calls.size(); }
-int MockPlatformState::layer_select_calls_count() const { return layer_select_calls.size(); }
-int MockPlatformState::key_events_count() const { return key_events.size(); }
-size_t MockPlatformState::pressed_keys_count() const { return pressed_keys.size(); }
-
-bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
-    return pressed_keys.find(keycode) != pressed_keys.end();
+    tap_dance_events.clear();
 }
 
 // New comparison methods with Google Test integration
@@ -216,36 +169,9 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
         return ::testing::AssertionSuccess();
     }
 
-    // Merge key actions and layer history into a unified timeline
-    std::vector<std::pair<tap_dance_event_t, platform_time_t>> actual_events;
-
-    // Add key actions
-    for (const auto& action : key_actions) {
-        tap_dance_event_t event;
-        event.type = (action.action == 0) ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
-        event.keycode = action.keycode;
-        event.time = 0; // Will be calculated later
-        actual_events.push_back({event, action.time});
-    }
-
-    // Add layer changes (assuming they happen at timer intervals matching layer_select_calls)
-    // Note: This is a simplification - in real scenarios, layer change timing would be tracked
-    for (size_t i = 0; i < layer_history.size(); i++) {
-        tap_dance_event_t event;
-        event.type = tap_dance_event_type_t::LAYER_CHANGE;
-        event.layer = layer_history[i];
-        event.time = 0; // Will be calculated later
-        // For simplicity, assume layer changes happen at current timer
-        actual_events.push_back({event, timer});
-    }
-
-    // Sort by timestamp
-    std::sort(actual_events.begin(), actual_events.end(),
-              [](const auto& a, const auto& b) { return a.second < b.second; });
-
-    if (actual_events.size() != expected.size()) {
+    if (tap_dance_events.size() != expected.size()) {
         return ::testing::AssertionFailure()
-            << "Event count mismatch: actual=" << actual_events.size()
+            << "Event count mismatch: actual=" << tap_dance_events.size()
             << ", expected=" << expected.size();
     }
 
@@ -255,8 +181,7 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     debug_info << "Tap dance event analysis (start time: " << start_time << "):\n";
 
     for (size_t i = 0; i < expected.size(); i++) {
-        const auto& actual_event = actual_events[i].first;
-        const auto& actual_time = actual_events[i].second;
+        const auto& actual_event = tap_dance_events[i];
         const auto& expected_event = expected[i];
 
         // Check event type and data match
@@ -297,23 +222,23 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
 
         debug_info << "  Position " << i
                    << ": expected_gap=" << expected_event.time
-                   << ", actual_gap=" << actual_time - previous_actual_time
+                   << ", actual_gap=" << actual_event.time - previous_actual_time
                    << ", expected_absolute=" << expected_absolute_time
-                   << ", actual_absolute=" << actual_time
+                   << ", actual_absolute=" << actual_event.time
                    << "\n";
 
-        if (expected_event.time > 0 && actual_time != expected_absolute_time) {
+        if (expected_event.time > 0 && actual_event.time != expected_absolute_time) {
             return ::testing::AssertionFailure()
                 << "\n" << "Time mismatch at position " << i
                 << " - expected_gap=" << expected_event.time
-                << ", actual_gap=" << actual_time - previous_actual_time
+                << ", actual_gap=" << actual_event.time - previous_actual_time
                 << ", expected_absolute=" << expected_absolute_time
-                << ", actual_absolute=" << actual_time
+                << ", actual_absolute=" << actual_event.time
                 << "\n"
                 << debug_info.str();
         }
 
-        previous_actual_time = actual_time;
+        previous_actual_time = actual_event.time;
     }
 
     return ::testing::AssertionSuccess();
@@ -344,29 +269,20 @@ MockPlatformState g_mock_state;
 void platform_tap_keycode(platform_keycode_t keycode) {
     printf("MOCK: Tap key %u (register + unregister)\n", keycode);
     // Tap is implemented as register followed by unregister
-    g_mock_state.register_key_calls.push_back(keycode);
-    g_mock_state.unregister_key_calls.push_back(keycode);
-    g_mock_state.last_registered_key = keycode;
-    g_mock_state.last_unregistered_key = keycode;
-    // Record as press then release
-    g_mock_state.record_key_event(keycode, true);
-    g_mock_state.record_key_event(keycode, false);
+    platform_register_keycode(keycode);
+    platform_unregister_keycode(keycode);
 }
 
 void platform_register_keycode(platform_keycode_t keycode) {
     printf("MOCK: Register key %u\n", keycode);
-    g_mock_state.register_key_calls.push_back(keycode);
-    g_mock_state.last_registered_key = keycode;
-    g_mock_state.record_key_event(keycode, true);
     g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
+    tap_dance_add_key_event(keycode, true);
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
     printf("MOCK: Unregister key %u\n", keycode);
-    g_mock_state.unregister_key_calls.push_back(keycode);
-    g_mock_state.last_unregistered_key = keycode;
-    g_mock_state.record_key_event(keycode, false);
     g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
+    tap_dance_add_key_event(keycode, false);
 }
 
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
@@ -400,10 +316,8 @@ bool platform_layout_is_valid_layer(uint8_t layer) {
 
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
-    g_mock_state.layer_select_calls.push_back(layer);
-    g_mock_state.current_layer = layer;
-    g_mock_state.last_selected_layer = layer;
     g_mock_state.layer_history.push_back(layer);
+    tap_dance_add_layer_event(layer);
 
     platform_layout_set_layer_impl(layer);
 }
@@ -468,14 +382,6 @@ void mock_advance_timer(platform_time_t ms) {
 
 void mock_reset_timer(void) {
     g_mock_state.timer = 0;
-}
-
-void mock_set_layer(uint8_t layer) {
-    g_mock_state.current_layer = layer;
-}
-
-void mock_print_state(void) {
-    g_mock_state.print_state();
 }
 
 void reset_mock_state(void) {
