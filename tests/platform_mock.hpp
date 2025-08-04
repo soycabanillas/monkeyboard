@@ -44,6 +44,34 @@ struct key_action_t {
     }
 };
 
+// Tap dance event type for mixed key and layer events
+enum class tap_dance_event_type_t : uint8_t {
+    KEY_PRESS = 0,
+    KEY_RELEASE = 1,
+    LAYER_CHANGE = 2
+};
+
+struct tap_dance_event_t {
+    tap_dance_event_type_t type;
+    union {
+        platform_keycode_t keycode;  // For key events
+        uint8_t layer;               // For layer events
+    };
+    platform_time_t time; // Time gap from previous event (0 = ignore time in comparison)
+
+    bool operator==(const tap_dance_event_t& other) const {
+        if (type != other.type) return false;
+        switch (type) {
+            case tap_dance_event_type_t::KEY_PRESS:
+            case tap_dance_event_type_t::KEY_RELEASE:
+                return keycode == other.keycode;
+            case tap_dance_event_type_t::LAYER_CHANGE:
+                return layer == other.layer;
+        }
+        return false;
+    }
+};
+
 // MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
@@ -85,6 +113,7 @@ struct MockPlatformState {
     ::testing::AssertionResult key_actions_match(const std::vector<key_action_t>& expected) const;
     ::testing::AssertionResult key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
     ::testing::AssertionResult key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t start_time = 0) const;
+    ::testing::AssertionResult tap_dance_event_actions_match(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
     bool layer_history_matches(const std::vector<uint8_t>& expected) const;
     std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
     std::vector<uint8_t> get_layer_history_since(size_t start_index) const;
@@ -97,3 +126,8 @@ extern MockPlatformState g_mock_state;
 key_action_t press(platform_keycode_t keycode, platform_time_t time = 0);
 key_action_t release(platform_keycode_t keycode, platform_time_t time = 0);
 std::vector<key_action_t> tap_sequence(platform_keycode_t keycode);
+
+// Helper functions for creating tap dance event sequences
+tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time = 0);
+tap_dance_event_t td_release(platform_keycode_t keycode, platform_time_t time = 0);
+tap_dance_event_t td_layer(uint8_t layer, platform_time_t time = 0);

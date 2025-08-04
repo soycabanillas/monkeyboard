@@ -155,6 +155,8 @@ tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_c
                 actions->remove_physical_press_fn(last_key_event->press_id);
                 actions->register_key_fn(tap_action->keycode);
                 status->state = TAP_DANCE_WAITING_FOR_RELEASE;
+            } else {
+                actions->remove_physical_tap_fn(last_key_event->press_id);
             }
             return end_with_no_capture();
         }
@@ -213,6 +215,12 @@ tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *
                      platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key press: %d, state: %d", last_key_event->keycode, status->state);
+
+    if (config->actionslength == 0) {
+        // No actions configured, just return no capture
+        actions->remove_physical_tap_fn(last_key_event->press_id);
+        return end_with_no_capture();
+    }
 
     switch (status->state) {
         case TAP_DANCE_IDLE:
@@ -282,7 +290,7 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
         case TAP_DANCE_WAITING_FOR_HOLD:
             {
                 pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
-                if (hold_action) {
+                if (hold_action != NULL) {
                     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
                         //actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
@@ -323,9 +331,9 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                 pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
                 if (tap_action != NULL) {
                     actions->tap_key_fn(tap_action->keycode);
+                    reset_behaviour_state(status);
+                    return end_with_no_capture();
                 }
-                reset_behaviour_state(status);
-                return end_with_no_capture();
             }
             break;
 
@@ -430,19 +438,17 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
                 pipeline_tap_dance_behaviour_config_t *config = behaviour->config;
                 pipeline_tap_dance_behaviour_status_t *status = behaviour->status;
 
-                if (config->actionslength > 0) {
-                    if (last_key_event->keycode == config->keycodemodifier) {
-                        if (platform_compare_keyposition(last_key_event->keypos, status->trigger_keypos) == false) {
-                            DEBUG_TAP_DANCE("Skipping behaviour %zu for key %d, not matching trigger keypos", i, last_key_event->keycode);
-                            actions->remove_physical_tap_fn(last_key_event->press_id);
+                if (last_key_event->keycode == config->keycodemodifier) {
+                    if (platform_compare_keyposition(last_key_event->keypos, status->trigger_keypos) == false) {
+                        DEBUG_TAP_DANCE("Skipping behaviour %zu for key %d, not matching trigger keypos", i, last_key_event->keycode);
+                        actions->remove_physical_tap_fn(last_key_event->press_id);
+                    } else {
+                        if (last_key_event->is_press) {
+                            tap_dance_return_data = handle_key_press(config, status, actions, last_key_event);
                         } else {
-                            if (last_key_event->is_press) {
-                                tap_dance_return_data = handle_key_press(config, status, actions, last_key_event);
-                            } else {
-                                tap_dance_return_data = handle_key_release(config, status, actions, last_key_event);
-                            }
-                            global_status->last_behaviour = i;
+                            tap_dance_return_data = handle_key_release(config, status, actions, last_key_event);
                         }
+                        global_status->last_behaviour = i;
                     }
                 }
             }

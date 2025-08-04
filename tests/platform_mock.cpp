@@ -205,6 +205,120 @@ bool MockPlatformState::is_key_pressed(platform_keycode_t keycode) const {
     return ::testing::AssertionSuccess();
 }
 
+::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
+    if (expected.empty()) {
+        if (!key_actions.empty() || !layer_history.empty()) {
+            return ::testing::AssertionFailure()
+                << "Expected empty event sequence but found "
+                << key_actions.size() << " key actions and "
+                << layer_history.size() << " layer changes";
+        }
+        return ::testing::AssertionSuccess();
+    }
+
+    // Merge key actions and layer history into a unified timeline
+    std::vector<std::pair<tap_dance_event_t, platform_time_t>> actual_events;
+
+    // Add key actions
+    for (const auto& action : key_actions) {
+        tap_dance_event_t event;
+        event.type = (action.action == 0) ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
+        event.keycode = action.keycode;
+        event.time = 0; // Will be calculated later
+        actual_events.push_back({event, action.time});
+    }
+
+    // Add layer changes (assuming they happen at timer intervals matching layer_select_calls)
+    // Note: This is a simplification - in real scenarios, layer change timing would be tracked
+    for (size_t i = 0; i < layer_history.size(); i++) {
+        tap_dance_event_t event;
+        event.type = tap_dance_event_type_t::LAYER_CHANGE;
+        event.layer = layer_history[i];
+        event.time = 0; // Will be calculated later
+        // For simplicity, assume layer changes happen at current timer
+        actual_events.push_back({event, timer});
+    }
+
+    // Sort by timestamp
+    std::sort(actual_events.begin(), actual_events.end(),
+              [](const auto& a, const auto& b) { return a.second < b.second; });
+
+    if (actual_events.size() != expected.size()) {
+        return ::testing::AssertionFailure()
+            << "Event count mismatch: actual=" << actual_events.size()
+            << ", expected=" << expected.size();
+    }
+
+    platform_time_t expected_cumulative_time = 0;
+    platform_time_t previous_actual_time = start_time;
+    std::stringstream debug_info;
+    debug_info << "Tap dance event analysis (start time: " << start_time << "):\n";
+
+    for (size_t i = 0; i < expected.size(); i++) {
+        const auto& actual_event = actual_events[i].first;
+        const auto& actual_time = actual_events[i].second;
+        const auto& expected_event = expected[i];
+
+        // Check event type and data match
+        if (!(actual_event == expected_event)) {
+            std::string actual_desc, expected_desc;
+            switch (actual_event.type) {
+                case tap_dance_event_type_t::KEY_PRESS:
+                    actual_desc = "KEY_PRESS(" + std::to_string(actual_event.keycode) + ")";
+                    break;
+                case tap_dance_event_type_t::KEY_RELEASE:
+                    actual_desc = "KEY_RELEASE(" + std::to_string(actual_event.keycode) + ")";
+                    break;
+                case tap_dance_event_type_t::LAYER_CHANGE:
+                    actual_desc = "LAYER_CHANGE(" + std::to_string(actual_event.layer) + ")";
+                    break;
+            }
+            switch (expected_event.type) {
+                case tap_dance_event_type_t::KEY_PRESS:
+                    expected_desc = "KEY_PRESS(" + std::to_string(expected_event.keycode) + ")";
+                    break;
+                case tap_dance_event_type_t::KEY_RELEASE:
+                    expected_desc = "KEY_RELEASE(" + std::to_string(expected_event.keycode) + ")";
+                    break;
+                case tap_dance_event_type_t::LAYER_CHANGE:
+                    expected_desc = "LAYER_CHANGE(" + std::to_string(expected_event.layer) + ")";
+                    break;
+            }
+
+            return ::testing::AssertionFailure()
+                << "Event mismatch at position " << i
+                << " - actual: " << actual_desc
+                << ", expected: " << expected_desc;
+        }
+
+        // Add the time gap to get expected absolute time
+        expected_cumulative_time += expected_event.time;
+        platform_time_t expected_absolute_time = start_time + expected_cumulative_time;
+
+        debug_info << "  Position " << i
+                   << ": expected_gap=" << expected_event.time
+                   << ", actual_gap=" << actual_time - previous_actual_time
+                   << ", expected_absolute=" << expected_absolute_time
+                   << ", actual_absolute=" << actual_time
+                   << "\n";
+
+        if (expected_event.time > 0 && actual_time != expected_absolute_time) {
+            return ::testing::AssertionFailure()
+                << "\n" << "Time mismatch at position " << i
+                << " - expected_gap=" << expected_event.time
+                << ", actual_gap=" << actual_time - previous_actual_time
+                << ", expected_absolute=" << expected_absolute_time
+                << ", actual_absolute=" << actual_time
+                << "\n"
+                << debug_info.str();
+        }
+
+        previous_actual_time = actual_time;
+    }
+
+    return ::testing::AssertionSuccess();
+}
+
 bool MockPlatformState::layer_history_matches(const std::vector<uint8_t>& expected) const {
     return layer_history == expected;
 }
@@ -379,4 +493,29 @@ key_action_t release(platform_keycode_t keycode, platform_time_t time) {
 
 std::vector<key_action_t> tap_sequence(platform_keycode_t keycode) {
     return {press(keycode), release(keycode)};
+}
+
+// Helper functions for creating tap dance event sequences
+tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::KEY_PRESS;
+    event.keycode = keycode;
+    event.time = time;
+    return event;
+}
+
+tap_dance_event_t td_release(platform_keycode_t keycode, platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::KEY_RELEASE;
+    event.keycode = keycode;
+    event.time = time;
+    return event;
+}
+
+tap_dance_event_t td_layer(uint8_t layer, platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+    event.layer = layer;
+    event.time = time;
+    return event;
 }
