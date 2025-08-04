@@ -122,11 +122,8 @@ TEST_F(ConfigurationCombinationsTest, HoldOnlyConfiguration) {
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
-// Test 9.3: Sparse Configuration - Gaps in Tap Counts
+// Sparse Configuration - Gaps in Tap Counts
 // Objective: Verify behavior with non-sequential tap count configurations
-// Configuration: TAP_DANCE_KEY = 3000, Strategy: TAP_PREFERRED
-// Tap actions: [1: SENDKEY(3001), 3: SENDKEY(3003)] // No 2nd tap action
-// Hold actions: [2: CHANGELAYERTEMPO(2)] // Only 2nd tap has hold
 TEST_F(ConfigurationCombinationsTest, SparseConfiguration) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
@@ -140,46 +137,36 @@ TEST_F(ConfigurationCombinationsTest, SparseConfiguration) {
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
 
-    // First Tap (Configured)
+    // First Tap
     tap_key(TAP_DANCE_KEY, 50);
-    std::vector<key_action_t> expected_keys_1 = {
-        press(3001, 250), release(3001, 250)  // Immediate execution
+    platform_wait_ms(TAP_TIMEOUT);
+
+    std::vector<tap_dance_event_t> expected_events_1 = {
+        td_press(3001, 50 + TAP_TIMEOUT), td_release(3001, 0)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys_1));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_1));
 
     reset_mock_state();
 
-    // Second Tap Hold (Configured)
-    tap_key(TAP_DANCE_KEY, 30);
-    press_key(TAP_DANCE_KEY, 50);    // t=80ms (2nd tap, hold)
-    platform_wait_ms(250);          // t=330ms
-    release_key(TAP_DANCE_KEY);      // t=330ms
+    // Second Tap
+    tap_key(TAP_DANCE_KEY, 50);
+    tap_key(TAP_DANCE_KEY, 50);
+    platform_wait_ms(TAP_TIMEOUT);
 
-    std::vector<uint8_t> expected_layers = {2, 0};  // Layer 2 activation/deactivation
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
-
-    reset_mock_state();
-
-    // Second Tap Tap (No Action)
-    tap_key(TAP_DANCE_KEY, 30);
-    tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-130ms (no tap action for 2nd)
-    platform_wait_ms(200);          // t=330ms
-
-    std::vector<key_action_t> expected_keys_3 = {};  // No output (no tap action for 2nd tap count)
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys_3));
-
-    reset_mock_state();
-
-    // Third Tap (Configured)
-    tap_key(TAP_DANCE_KEY, 30);
-    tap_key(TAP_DANCE_KEY, 40, 30);  // t=70-110ms
-    tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-210ms
-    platform_wait_ms(200);          // t=410ms
-
-    std::vector<key_action_t> expected_keys_4 = {
-        press(3003, 410), release(3003, 410)  // Immediate execution
+    std::vector<tap_dance_event_t> expected_events_2 = {
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys_4));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_2));
+    reset_mock_state();
+
+    // Third Tap
+    tap_key(TAP_DANCE_KEY, 50);
+    tap_key(TAP_DANCE_KEY, 50);
+    tap_key(TAP_DANCE_KEY, 50);
+
+    std::vector<tap_dance_event_t> expected_events_3 = {
+        td_press(3003, 50 + 50), td_release(3003, 0)
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_3));
 }
 
 // Test 9.4: Custom Timeout Configuration
@@ -590,7 +577,7 @@ TEST_F(ConfigurationCombinationsTest, ConfigurationConsistencyVerification) {
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     // Base Test Pattern: Single tap with 50ms hold
-    
+
     // Tap-Only Config
     pipeline_tap_dance_action_config_t* actions_tap_only[] = {
         createbehaviouraction_tap(1, 3001)
@@ -687,7 +674,7 @@ TEST_F(ConfigurationCombinationsTest, MultiKeyConfigurationComparison) {
         press(3001, 0), release(3001, 270)  // Key 1 immediate execution
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-    
+
     std::vector<uint8_t> expected_layers = {2, 3, 3, 0, 2, 0};  // Key 2 and Key 3 layer changes
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }

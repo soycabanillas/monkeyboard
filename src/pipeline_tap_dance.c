@@ -333,6 +333,9 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                     actions->tap_key_fn(tap_action->keycode);
                     reset_behaviour_state(status);
                     return end_with_no_capture();
+                } else {
+                    reset_behaviour_state(status);
+                    return end_with_no_capture();
                 }
             }
             break;
