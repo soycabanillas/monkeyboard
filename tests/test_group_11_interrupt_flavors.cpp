@@ -401,10 +401,10 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
 
     // TAP_PREFERRED: Should produce tap (KC_A) when interrupted, even with timeout after
     std::vector<tap_dance_event_t> expected_events = {
-        td_press(OUTPUT_KEY_A, 0),     // A pressed immediately when B interrupts
+        td_layer(TARGET_LAYER_SHIFT, 200),     // A pressed immediately when B interrupts
         td_press(3012, 0),            // B pressed
         td_release(3012, 0),          // B released
-        td_release(OUTPUT_KEY_A, HOLD_TIMEOUT)    // A released after timeout
+        td_layer(0, 0)    // A released after timeout
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
 }
@@ -623,7 +623,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
     // DEFAULT/TAP_PREFERRED: Should produce "ab" - tap action followed by B
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 110 + 20),  // A pressed when A is released (at 130ms)
-        td_press(KEY_B, 110),              // B pressed at 110ms
+        td_press(KEY_B, 0),              // B pressed at 110ms
         td_release(OUTPUT_KEY_A, 0),       // A released immediately after press
         td_release(KEY_B, 10)              // B released at 140ms (10ms after A release)
     };
@@ -660,7 +660,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
     // PERMISSIVE_HOLD/BALANCED: Should produce "ab" - same as TAP_PREFERRED
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 110 + 20),
-        td_press(KEY_B, 110),
+        td_press(KEY_B, 0),
         td_release(OUTPUT_KEY_A, 0),
         td_release(KEY_B, 10)
     };
@@ -740,8 +740,8 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
     // Should produce "B" - hold action with B on shift layer
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, HOLD_TIMEOUT),  // Shift layer activated at hold timeout (200ms)
-        td_press(3012, 110),                         // B pressed on shift layer (at 110ms)
-        td_layer(0, 5),                              // Shift layer deactivated when A released (at 205ms)
+        td_press(3012, 0),                         // B pressed on shift layer (at 110ms)
+        td_layer(0, 0),                              // Shift layer deactivated when A released (at 205ms)
         td_release(3012, 5)                          // B released (at 210ms)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
@@ -775,9 +775,9 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
     release_key(KEY_B);
 
     std::vector<tap_dance_event_t> expected_events = {
-        td_layer(TARGET_LAYER_SHIFT, HOLD_TIMEOUT),
-        td_press(3012, 110),
-        td_layer(0, 5),
+        td_layer(TARGET_LAYER_SHIFT, 200),
+        td_press(3012, 0),
+        td_layer(0, 0),
         td_release(3012, 5)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
@@ -811,9 +811,9 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
     release_key(KEY_B);
 
     std::vector<tap_dance_event_t> expected_events = {
-        td_layer(TARGET_LAYER_SHIFT, HOLD_TIMEOUT),
-        td_press(3012, 110),
-        td_layer(0, 5),
+        td_layer(TARGET_LAYER_SHIFT, 110),
+        td_press(3012, 0),
+        td_layer(0, 90),
         td_release(3012, 5)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));

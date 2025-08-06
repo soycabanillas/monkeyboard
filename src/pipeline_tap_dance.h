@@ -78,7 +78,6 @@ typedef struct {
 
 typedef struct {
     size_t last_behaviour; // The last behaviour that was processed
-    bool is_capturing_keys; // Whether the behaviour is currently capturing keys
 } pipeline_tap_dance_global_status_t;
 
 typedef struct {
@@ -91,7 +90,7 @@ void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_stat
 
 pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create(void);
 
-void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, void* user_data);
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data);
 void pipeline_tap_dance_callback_reset(void* user_data);
 
 #ifdef __cplusplus

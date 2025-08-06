@@ -18,34 +18,6 @@ typedef enum {
     CAPTURE_KEYS_AND_TIMEOUT
 } capture_state_t;
 
-typedef struct {
-    capture_state_t return_data;
-    platform_time_t callback_time;
-    bool capturing_keys;
-} tap_dance_return_data_t;
-
-static tap_dance_return_data_t end_with_no_capture(void) {
-    tap_dance_return_data_t tap_dance_return_data;
-    tap_dance_return_data.return_data = NO_CAPTURE;
-    tap_dance_return_data.capturing_keys = false;
-    return tap_dance_return_data;
-}
-
-static tap_dance_return_data_t end_with_capture_next_keys(void) {
-    tap_dance_return_data_t tap_dance_return_data;
-    tap_dance_return_data.return_data = CAPTURE_KEYS;
-    tap_dance_return_data.capturing_keys = true;
-    return tap_dance_return_data;
-}
-
-static tap_dance_return_data_t end_with_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time) {
-    tap_dance_return_data_t tap_dance_return_data;
-    tap_dance_return_data.return_data = CAPTURE_KEYS_AND_TIMEOUT;
-    tap_dance_return_data.capturing_keys = true;
-    tap_dance_return_data.callback_time = callback_time;
-    return tap_dance_return_data;
-}
-
 static void update_layer(uint8_t layer, pipeline_physical_actions_t* actions) {
     uint8_t buffer_length = actions->get_physical_key_event_count_fn();
     for (uint8_t i = 0; i < buffer_length; i++) {
@@ -58,7 +30,7 @@ static void update_layer(uint8_t layer, pipeline_physical_actions_t* actions) {
 }
 
 // Helper functions to find actions by tap count and type
-pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
+static pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
         if (action->tap_count == tap_count && action->action == TDCL_TAP_KEY_SENDKEY) {
@@ -68,7 +40,7 @@ pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count
     return NULL;
 }
 
-pipeline_tap_dance_action_config_t* get_action_hold_key_changelayertempo(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
+static pipeline_tap_dance_action_config_t* get_action_hold_key_changelayertempo(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
         if (action->tap_count == tap_count && action->action == TDCL_HOLD_KEY_CHANGELAYERTEMPO) {
@@ -78,7 +50,7 @@ pipeline_tap_dance_action_config_t* get_action_hold_key_changelayertempo(uint8_t
     return NULL;
 }
 
-bool has_subsequent_actions(pipeline_tap_dance_behaviour_config_t* config, uint8_t tap_count) {
+static bool has_subsequent_actions(pipeline_tap_dance_behaviour_config_t* config, uint8_t tap_count) {
     for (size_t i = 0; i < config->actionslength; i++) {
         pipeline_tap_dance_action_config_t* action = config->actions[i];
         if (action->tap_count > tap_count) {
@@ -93,23 +65,27 @@ void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *status) {
     status->tap_count = 0;
     status->original_layer = 0;
     status->selected_layer = 0;
-    // platform_key_event_reset(status->key_buffer);
 }
 
-tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
+static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *config,
                              pipeline_tap_dance_behaviour_status_t *status,
                              pipeline_physical_actions_t* actions,
+                             pipeline_physical_return_actions_t* return_actions,
                              platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Interrupting Key Event: %d, state: %d", last_key_event->keycode, status->state);
 
     // Only handle interruptions during hold waiting states
     if (status->state != TAP_DANCE_WAITING_FOR_HOLD) {
-        return end_with_no_capture();
+        return_actions->no_capture_fn();
+        return;
     }
 
     pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
-    if (!hold_action) return end_with_no_capture();
+    if (!hold_action) {
+        return_actions->no_capture_fn();
+        return;
+    }
 
     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
         if (last_key_event->is_press) {
@@ -120,15 +96,19 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
                 update_layer(hold_action->layer, actions);
                 platform_layout_set_layer(hold_action->layer);
             }
-            return end_with_no_capture();
+            return_actions->no_capture_fn();
+            return;
         } else {
-            return end_with_no_capture();
+            return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+            return;
         }
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
-        return end_with_capture_next_keys();
+        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+        return;
     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
         if (last_key_event->is_press) {
-            return end_with_capture_next_keys();
+            return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+            return;
         } else {
             status->state = TAP_DANCE_HOLDING;
             platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
@@ -137,15 +117,16 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
                 update_layer(hold_action->layer, actions);
                 platform_layout_set_layer(hold_action->layer);
             }
-            return end_with_no_capture();
+            return_actions->no_capture_fn();
+            return;
         }
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
+static void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *config,
                                pipeline_tap_dance_behaviour_status_t *status,
                                pipeline_physical_actions_t* actions,
+                               pipeline_physical_return_actions_t* return_actions,
                                platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Press Handler: %d", last_key_event->keycode);
     status->tap_count++;
@@ -155,11 +136,13 @@ tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_c
     if (hold_action != NULL) {
         status->state = TAP_DANCE_WAITING_FOR_HOLD;
         status->selected_layer = hold_action->layer;
-        return end_with_capture_next_keys_or_callback_on_timeout(g_hold_timeout);
+        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, g_hold_timeout);
+        return;
     } else {
         if (has_subsequent_actions(config, status->tap_count)) {
             status->state = TAP_DANCE_WAITING_FOR_RELEASE;
-            return end_with_capture_next_keys();
+            return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NONE, 0);
+            return;
         } else {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
@@ -168,21 +151,23 @@ tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_c
             } else {
                 actions->remove_physical_tap_fn(last_key_event->press_id);
             }
-            return end_with_no_capture();
+            return_actions->no_capture_fn();
+            return;
         }
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
+static void generic_key_release_when_not_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
                                                  pipeline_tap_dance_behaviour_status_t *status,
                                                  pipeline_physical_actions_t* actions,
+                                                 pipeline_physical_return_actions_t* return_actions,
                                                  platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Not Holding): %d", last_key_event->keycode);
     if (has_subsequent_actions(config, status->tap_count)) {
         status->state = TAP_DANCE_WAITING_FOR_TAP;
         actions->remove_physical_tap_fn(last_key_event->press_id);
-        return end_with_capture_next_keys_or_callback_on_timeout(g_tap_timeout);
+        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, g_tap_timeout);
+        return;
     } else {
         if (status->state == TAP_DANCE_WAITING_FOR_HOLD) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
@@ -192,7 +177,8 @@ tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_ta
                 actions->remove_physical_tap_fn(last_key_event->press_id);
             }
             reset_behaviour_state(status);
-            return end_with_no_capture();
+            return_actions->no_capture_fn();
+            return;
         } else if (status->state == TAP_DANCE_WAITING_FOR_RELEASE) {
             // pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             // if (tap_action != NULL) {
@@ -200,43 +186,50 @@ tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_ta
             //     actions->unregister_key_fn(tap_action->keycode);
             // }
             reset_behaviour_state(status);
-            return end_with_no_capture();
+            return_actions->no_capture_fn();
+            return;
         }
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
+static void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviour_config_t *config,
                                               pipeline_tap_dance_behaviour_status_t *status,
                                               pipeline_physical_actions_t* actions,
+                                              pipeline_physical_return_actions_t* return_actions,
                                               platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Holding): %d", last_key_event->keycode);
 
     pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
-    if (!hold_action) return end_with_no_capture();
+    if (!hold_action) {
+        return_actions->no_capture_fn();
+        return;
+    }
 
     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
         platform_layout_set_layer(status->original_layer);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
-        return end_with_no_capture();
+        return_actions->no_capture_fn();
+        return;
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
         platform_layout_set_layer(status->original_layer);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
-        return end_with_no_capture();
+        return_actions->no_capture_fn();
+        return;
     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
         platform_layout_set_layer(status->original_layer);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
-        return end_with_no_capture();
+        return_actions->no_capture_fn();
+        return;
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
+static void handle_key_press(pipeline_tap_dance_behaviour_config_t *config,
                      pipeline_tap_dance_behaviour_status_t *status,
                      pipeline_physical_actions_t* actions,
+                     pipeline_physical_return_actions_t* return_actions,
                      platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key press: %d, state: %d", last_key_event->keycode, status->state);
@@ -244,7 +237,8 @@ tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *
     if (config->actionslength == 0) {
         // No actions configured, just return no capture
         actions->remove_physical_tap_fn(last_key_event->press_id);
-        return end_with_no_capture();
+        return_actions->no_capture_fn();
+        return;
     }
 
     switch (status->state) {
@@ -253,7 +247,7 @@ tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *
             // First press of a new sequence
             status->original_layer = platform_layout_get_current_layer(); // Use current layer from stack
             status->trigger_keypos = last_key_event->keypos; // Store the key position that triggered the tap dance
-            return generic_key_press_handler(config, status, actions, last_key_event);
+            generic_key_press_handler(config, status, actions, return_actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_HOLD:
             DEBUG_TAP_DANCE("-- Main Key press: WAITING_FOR_HOLD");
@@ -263,18 +257,18 @@ tap_dance_return_data_t handle_key_press(pipeline_tap_dance_behaviour_config_t *
             break;
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Main Key press: WAITING_FOR_TAP");
-            return generic_key_press_handler(config, status, actions, last_key_event);
+            generic_key_press_handler(config, status, actions, return_actions, last_key_event);
             break;
         case TAP_DANCE_HOLDING:
             DEBUG_TAP_DANCE("-- Main Key press: HOLDING");
             break;
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
+static void handle_key_release(pipeline_tap_dance_behaviour_config_t *config,
                         pipeline_tap_dance_behaviour_status_t *status,
                         pipeline_physical_actions_t* actions,
+                        pipeline_physical_return_actions_t* return_actions,
                         platform_key_event_t* last_key_event) {
 
     DEBUG_TAP_DANCE("-- Main Key release: %d, state: %d", last_key_event->keycode, status->state);
@@ -285,26 +279,26 @@ tap_dance_return_data_t handle_key_release(pipeline_tap_dance_behaviour_config_t
             break;
         case TAP_DANCE_WAITING_FOR_HOLD:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_HOLD");
-            return generic_key_release_when_not_holding_handler(config, status, actions, last_key_event);
+            generic_key_release_when_not_holding_handler(config, status, actions, return_actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_RELEASE:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_RELEASE");
-            return generic_key_release_when_not_holding_handler(config, status, actions, last_key_event);
+            generic_key_release_when_not_holding_handler(config, status, actions, return_actions, last_key_event);
             break;
         case TAP_DANCE_WAITING_FOR_TAP:
             DEBUG_TAP_DANCE("-- Main Key release: WAITING_FOR_TAP");
             break;
         case TAP_DANCE_HOLDING:
             DEBUG_TAP_DANCE("-- Main Key release: HOLDING");
-            return generic_key_release_when_holding_handler(config, status, actions, last_key_event);
+            generic_key_release_when_holding_handler(config, status, actions, return_actions, last_key_event);
             break;
     }
-    return end_with_no_capture();
 }
 
-tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
+static void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
                     pipeline_tap_dance_behaviour_status_t *status,
-                    pipeline_physical_actions_t* actions) {
+                    pipeline_physical_actions_t* actions,
+                    pipeline_physical_return_actions_t* return_actions) {
 
     DEBUG_TAP_DANCE("-- Timer callback");
 
@@ -319,30 +313,33 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
                         //actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
-                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
                         actions->remove_physical_press_fn(press_id);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
                             platform_layout_set_layer(hold_action->layer);
                         }
-                        return end_with_no_capture();
+                        return_actions->no_capture_fn();
+                        return;
                     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
-                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
                         actions->remove_physical_press_fn(press_id);
                         update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
                             platform_layout_set_layer(hold_action->layer);
                         }
-                        return end_with_no_capture();
+                        return_actions->no_capture_fn();
+                        return;
                     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
                         status->state = TAP_DANCE_HOLDING;
-                        uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
+                        uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
                         actions->remove_physical_press_fn(press_id);
                         update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
                             platform_layout_set_layer(hold_action->layer);
                         }
-                        return end_with_no_capture();
+                        return_actions->no_capture_fn();
+                        return;
                     }
                 }
             }
@@ -357,10 +354,12 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                 if (tap_action != NULL) {
                     actions->tap_key_fn(tap_action->keycode);
                     reset_behaviour_state(status);
-                    return end_with_no_capture();
+                    return_actions->no_capture_fn();
+                    return;
                 } else {
                     reset_behaviour_state(status);
-                    return end_with_no_capture();
+                    return_actions->no_capture_fn();
+                    return;
                 }
             }
             break;
@@ -369,7 +368,6 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
             DEBUG_TAP_DANCE("-- Timer callback: HOLDING");
             break;
     }
-    return end_with_no_capture();
 }
 
 void pipeline_tap_dance_global_state_create(void) {
@@ -433,29 +431,27 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     #define DEBUG_STATE(caption) ((void)0)
 #endif
 
-static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_tap_dance_global_config_t* global_config) {
+static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, pipeline_tap_dance_global_config_t* global_config) {
     platform_key_event_t* last_key_event = params->key_event;
-
-    tap_dance_return_data_t tap_dance_return_data = end_with_no_capture();
 
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         DEBUG_TAP_DANCE("PIPELINE_CALLBACK_KEY_EVENT: %d", last_key_event->keycode);
-        if (global_status->is_capturing_keys) {
+        if (params->is_capturing_keys) {
             pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[global_status->last_behaviour];
             pipeline_tap_dance_behaviour_config_t *config = behaviour->config;
             pipeline_tap_dance_behaviour_status_t *status = behaviour->status;
             if (last_key_event->keycode != config->keycodemodifier) {
-                tap_dance_return_data = handle_interrupting_key(config, status, actions, last_key_event);
+                handle_interrupting_key(config, status, actions, return_actions, last_key_event);
             } else {
                 if (platform_compare_keyposition(last_key_event->keypos, status->trigger_keypos) == false) {
                     DEBUG_TAP_DANCE("Skipping behaviour %zu for key %d, not matching trigger keypos", global_status->last_behaviour, last_key_event->keycode);
                     actions->remove_physical_tap_fn(last_key_event->press_id);
-                    tap_dance_return_data = end_with_capture_next_keys();
+                    return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NONE, 0);
                 } else {
                     if (last_key_event->is_press) {
-                        tap_dance_return_data = handle_key_press(config, status, actions, last_key_event);
+                        handle_key_press(config, status, actions, return_actions, last_key_event);
                     } else {
-                        tap_dance_return_data = handle_key_release(config, status, actions, last_key_event);
+                        handle_key_release(config, status, actions, return_actions, last_key_event);
                     }
                 }
             }
@@ -472,9 +468,9 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
                         actions->remove_physical_tap_fn(last_key_event->press_id);
                     } else {
                         if (last_key_event->is_press) {
-                            tap_dance_return_data = handle_key_press(config, status, actions, last_key_event);
+                            handle_key_press(config, status, actions, return_actions, last_key_event);
                         } else {
-                            tap_dance_return_data = handle_key_release(config, status, actions, last_key_event);
+                            handle_key_release(config, status, actions, return_actions, last_key_event);
                         }
                         global_status->last_behaviour = i;
                     }
@@ -490,39 +486,21 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
             pipeline_tap_dance_behaviour_status_t *status = behaviour->status;
 
             if (config->actionslength > 0) {
-                tap_dance_return_data = handle_timeout(config, status, actions);
+                handle_timeout(config, status, actions, return_actions);
             }
         }
     }
-
-    if (tap_dance_return_data.capturing_keys) {
-        global_status->is_capturing_keys = true;
-        // DEBUG_TAP_DANCE("Capturing keys for tap dance behaviour %zu", global_status->last_behaviour);
-    } else {
-        global_status->is_capturing_keys = false;
-    }
-    switch (tap_dance_return_data.return_data) {
-        case NO_CAPTURE:
-            break;
-        case CAPTURE_KEYS:
-            pipeline_executor_end_with_capture_next_keys();
-            break;
-        case CAPTURE_KEYS_AND_TIMEOUT:
-            pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(tap_dance_return_data.callback_time);
-            break;
-    }
-
     DEBUG_STATE("Finished processing tap dance event:");
 }
 
-void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, void* user_data) {
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
     pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
 
     if (global_config == NULL) {
         DEBUG_PRINT_ERROR("Tap Dance: Global config is NULL");
         return;
     }
-    pipeline_tap_dance_process(params, actions, global_config);
+    pipeline_tap_dance_process(params, actions, return_actions, global_config);
 }
 
 void pipeline_tap_dance_callback_reset(void* user_data) {
