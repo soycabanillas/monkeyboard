@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <vector>
 #include "gtest/gtest.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"

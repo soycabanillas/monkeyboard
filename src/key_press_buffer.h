@@ -14,7 +14,7 @@ extern "C" {
 typedef struct {
     platform_keypos_t keypos;
     uint8_t press_id; // Unique ID for the key press, used to track presses/releases
-    uint8_t layer; // Layer associated with the key press
+    platform_keycode_t keycode; // Keycode associated with the last key press. Ensures that a release will always have the same keycode as the press
     bool ignore_release; // If true, the release of this key will be ignored
 } platform_key_press_key_press_t;
 
@@ -27,7 +27,7 @@ typedef struct {
 platform_key_press_buffer_t* platform_key_press_create(void);
 void platform_key_press_reset(platform_key_press_buffer_t* press_buffer);
 
-platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos, uint8_t layer, uint8_t press_id);
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos, platform_keycode_t keycode, uint8_t press_id);
 bool platform_key_press_remove_press(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);
 
 platform_key_press_key_press_t* platform_key_press_get_press_from_keypos(platform_key_press_buffer_t *press_buffer, platform_keypos_t keypos);

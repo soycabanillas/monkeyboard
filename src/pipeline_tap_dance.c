@@ -46,6 +46,17 @@ static tap_dance_return_data_t end_with_capture_next_keys_or_callback_on_timeout
     return tap_dance_return_data;
 }
 
+static void update_layer(uint8_t layer, pipeline_physical_actions_t* actions) {
+    uint8_t buffer_length = actions->get_physical_key_event_count_fn();
+    for (uint8_t i = 0; i < buffer_length; i++) {
+        platform_key_event_t* event = actions->get_physical_key_event_fn(i);
+        if (event != NULL) {
+            platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, event->keypos);
+            actions->change_key_code_fn(i, keycode);
+        }
+    }
+}
+
 // Helper functions to find actions by tap count and type
 pipeline_tap_dance_action_config_t* get_action_tap_key_sendkey(uint8_t tap_count, pipeline_tap_dance_behaviour_config_t* config) {
     for (size_t i = 0; i < config->actionslength; i++) {
@@ -104,9 +115,9 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
         if (last_key_event->is_press) {
             status->state = TAP_DANCE_HOLDING;
             platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
-            actions->remove_physical_tap_fn(first_key_event->press_id);
+            actions->remove_physical_press_fn(first_key_event->press_id);
             if (platform_layout_is_valid_layer(hold_action->layer)) {
-                actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                update_layer(hold_action->layer, actions);
                 platform_layout_set_layer(hold_action->layer);
             }
             return end_with_no_capture();
@@ -114,20 +125,20 @@ tap_dance_return_data_t handle_interrupting_key(pipeline_tap_dance_behaviour_con
             return end_with_no_capture();
         }
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
+        return end_with_capture_next_keys();
+    } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
         if (last_key_event->is_press) {
-            return end_with_no_capture();
+            return end_with_capture_next_keys();
         } else {
             status->state = TAP_DANCE_HOLDING;
             platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
-            actions->remove_physical_tap_fn(first_key_event->press_id);
+            actions->remove_physical_press_fn(first_key_event->press_id);
             if (platform_layout_is_valid_layer(hold_action->layer)) {
-                actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
+                update_layer(hold_action->layer, actions);
                 platform_layout_set_layer(hold_action->layer);
             }
             return end_with_no_capture();
         }
-    } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
-        return end_with_no_capture();
     }
     return end_with_no_capture();
 }
@@ -152,9 +163,8 @@ tap_dance_return_data_t generic_key_press_handler(pipeline_tap_dance_behaviour_c
         } else {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->remove_physical_press_fn(last_key_event->press_id);
-                actions->register_key_fn(tap_action->keycode);
-                status->state = TAP_DANCE_WAITING_FOR_RELEASE;
+                actions->change_key_code_fn(0, tap_action->keycode);
+                reset_behaviour_state(status);
             } else {
                 actions->remove_physical_tap_fn(last_key_event->press_id);
             }
@@ -177,19 +187,18 @@ tap_dance_return_data_t generic_key_release_when_not_holding_handler(pipeline_ta
         if (status->state == TAP_DANCE_WAITING_FOR_HOLD) {
             pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
             if (tap_action != NULL) {
-                actions->remove_physical_tap_fn(last_key_event->press_id);
-                actions->tap_key_fn(tap_action->keycode);
+                actions->change_key_code_fn(0, tap_action->keycode);
             } else {
                 actions->remove_physical_tap_fn(last_key_event->press_id);
             }
             reset_behaviour_state(status);
             return end_with_no_capture();
         } else if (status->state == TAP_DANCE_WAITING_FOR_RELEASE) {
-            pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
-            if (tap_action != NULL) {
-                actions->remove_physical_release_fn(last_key_event->press_id);
-                actions->unregister_key_fn(tap_action->keycode);
-            }
+            // pipeline_tap_dance_action_config_t* tap_action = get_action_tap_key_sendkey(status->tap_count, config);
+            // if (tap_action != NULL) {
+            //     actions->remove_physical_release_fn(last_key_event->press_id);
+            //     actions->unregister_key_fn(tap_action->keycode);
+            // }
             reset_behaviour_state(status);
             return end_with_no_capture();
         }
@@ -203,9 +212,25 @@ tap_dance_return_data_t generic_key_release_when_holding_handler(pipeline_tap_da
                                               platform_key_event_t* last_key_event) {
     DEBUG_TAP_DANCE("Generic Key Release Handler (Holding): %d", last_key_event->keycode);
 
-    platform_layout_set_layer(status->original_layer);
-    actions->remove_physical_release_fn(last_key_event->press_id);
-    reset_behaviour_state(status);
+    pipeline_tap_dance_action_config_t* hold_action = get_action_hold_key_changelayertempo(status->tap_count, config);
+    if (!hold_action) return end_with_no_capture();
+
+    if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
+        platform_layout_set_layer(status->original_layer);
+        actions->remove_physical_release_fn(last_key_event->press_id);
+        reset_behaviour_state(status);
+        return end_with_no_capture();
+    } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
+        platform_layout_set_layer(status->original_layer);
+        actions->remove_physical_release_fn(last_key_event->press_id);
+        reset_behaviour_state(status);
+        return end_with_no_capture();
+    } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
+        platform_layout_set_layer(status->original_layer);
+        actions->remove_physical_release_fn(last_key_event->press_id);
+        reset_behaviour_state(status);
+        return end_with_no_capture();
+    }
     return end_with_no_capture();
 }
 
@@ -302,18 +327,18 @@ tap_dance_return_data_t handle_timeout(pipeline_tap_dance_behaviour_config_t *co
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
-                        actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
-                        actions->remove_physical_release_fn(press_id);
+                        actions->remove_physical_press_fn(press_id);
+                        update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
                             platform_layout_set_layer(hold_action->layer);
                         }
                         return end_with_no_capture();
                     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
                         status->state = TAP_DANCE_HOLDING;
-                        actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(actions->get_physical_key_event_count_fn() - 1)->press_id;
-                        actions->remove_physical_release_fn(press_id);
+                        actions->remove_physical_press_fn(press_id);
+                        update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
                             platform_layout_set_layer(hold_action->layer);
                         }

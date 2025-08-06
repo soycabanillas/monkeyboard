@@ -124,7 +124,7 @@ TEST_F(ConfigurationCombinationsTest, HoldOnlyConfiguration) {
 
 // Sparse Configuration - Gaps in Tap Counts
 // Objective: Verify behavior with non-sequential tap count configurations
-TEST_F(ConfigurationCombinationsTest, SparseConfiguration) {
+TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};

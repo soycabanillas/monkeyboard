@@ -6,16 +6,14 @@
 #include "common_functions.hpp"
 
 platform_keypos_t find_keypos(uint16_t keycode, uint8_t max_rows, uint8_t max_cols) {
-    uint8_t layer = platform_layout_get_current_layer();
-
     for (uint8_t row = 0; row < max_rows; row++) {
         for (uint8_t col = 0; col < max_cols; col++) {
-            if (platform_layout_get_keycode_from_layer(layer, {row, col}) == keycode) {
+            if (platform_layout_get_keycode_from_layer(0, {row, col}) == keycode) {
                 return {row, col};
             }
         }
     }
-    return {0, 0}; // Default return if not found
+    return {255, 255}; // Default return if not found
 }
 
 // Simplified key event simulation
@@ -29,9 +27,7 @@ void press_key(uint16_t keycode, uint16_t delay_ms) {
         .time = static_cast<uint16_t>(platform_timer_read())
     };
 
-    if (pipeline_process_key(event)) {
-        platform_register_keycode(keycode);
-    }
+    pipeline_process_key(event);
 }
 
 void release_key(uint16_t keycode, uint16_t delay_ms) {
@@ -44,9 +40,7 @@ void release_key(uint16_t keycode, uint16_t delay_ms) {
         .time = static_cast<uint16_t>(platform_timer_read())
     };
 
-    if (pipeline_process_key(event)) {
-        platform_unregister_keycode(keycode);
-    }
+    pipeline_process_key(event);
 }
 
 void tap_key(uint16_t keycode, uint16_t hold_ms) {

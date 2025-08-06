@@ -69,11 +69,12 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
     uint8_t press_id = get_keypress_id();
     uint8_t layer = platform_layout_get_current_layer();
-    platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, layer, press_id);
+    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
+
+    platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, keycode, press_id);
     if (key_press == NULL) {
         return 0; // Failed to add press to key press buffer
     }
-    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
     bool press_added = platform_key_event_add_event_internal(event_buffer, time, keypos, keycode, true, press_id, buffer_full);
     if (!press_added) {
         #if defined(AGNOSTIC_USE_1D_ARRAY)
@@ -106,7 +107,7 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
         platform_key_press_remove_press(key_press_buffer, key_press->keypos);
         return false; // Ignore the release event
     }
-    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(key_press->layer, key_press->keypos);
+    platform_keycode_t keycode = key_press->keycode; // Use the keycode from the key press;
     bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->keypos, keycode, false, key_press->press_id, buffer_full);
     if (!press_added) {
         #if defined(AGNOSTIC_USE_1D_ARRAY)
@@ -171,6 +172,29 @@ void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffe
     platform_key_event_remove_physical_release_by_press_id(event_buffer, press_id);
 }
 
+bool platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode) {
+    platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
+    if (key_press != NULL) {
+        key_press->keycode = keycode; // Update the keycode in the key press buffer
+    }
+    bool press_found_on_event_buffer = false;
+    for (uint8_t i = 0; i < event_buffer->event_buffer_pos; i++) {
+        platform_key_event_t* event = &event_buffer->event_buffer[i];
+        if (event->press_id == press_id) {
+            if (event->is_press) {
+                press_found_on_event_buffer = true;
+                event->keycode = keycode; // Update the keycode for the event
+            } else{
+                if (press_found_on_event_buffer) {
+                    event->keycode = keycode; // Update the keycode for the release event
+                } else {
+                    // Do nothing. The press has already been processed, so we must keep the release keycode the same as the press keycode
+                }
+            }
+        }
+    }
+}
+
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos) {
     if (event_buffer == NULL) {
         return;
@@ -179,23 +203,8 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
         return; // Position out of bounds
     }
     for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
-        bool is_press = event_buffer->event_buffer[i].is_press;
-        if (is_press) {
-            uint8_t press_id = event_buffer->event_buffer[i].press_id;
-            // Update the layer for the press event
-            event_buffer->event_buffer[i].keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
-            // Update the layer for the release event
-            for (uint8_t j = i + 1; j < event_buffer->event_buffer_pos; j++) {
-                if (event_buffer->event_buffer[j].press_id == press_id) {
-                    if (event_buffer->event_buffer[j].is_press) {
-                        break;
-                    } else {
-                        event_buffer->event_buffer[j].keycode = event_buffer->event_buffer[i].keycode;
-                        break;
-                    }
-                }
-            }
-        }
+        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
+        platform_key_event_change_keycode(event_buffer, event_buffer->event_buffer[i].press_id, keycode);
     }
 }
 
@@ -205,7 +214,7 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
         DEBUG_PRINT_ERROR("Key event buffer is NULL\n");
         return;
     }
-    DEBUG_PRINT_RAW("| %03hhu", event_buffer->event_buffer_pos);
+    DEBUG_PRINT_RAW("EVENT: | %03hhu", event_buffer->event_buffer_pos);
     platform_key_event_t* press_buffer = event_buffer->event_buffer;
     for (size_t i = 0; i < event_buffer->event_buffer_pos; i++) {
 
@@ -214,7 +223,7 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
                i, press_buffer[i].keypos,
                press_buffer[i].keycode, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
         #elif defined(AGNOSTIC_USE_2D_ARRAY)
-            DEBUG_PRINT_RAW(" | %zu R:%u, C:%u, K:%02u, P:%d, Id:%u, T:%04u",
+            DEBUG_PRINT_RAW(" | %zu R:%u, C:%u, K:%04u, P:%d, Id:%03u, T:%04u",
                i, press_buffer[i].keypos.row, press_buffer[i].keypos.col,
                press_buffer[i].keycode, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
         #endif

@@ -18,7 +18,6 @@ typedef enum {
 typedef struct {
     platform_time_t callback_time;
     bool capture_key_events;
-    bool key_buffer_changed;
 } capture_pipeline_t;
 
 typedef struct {
@@ -39,7 +38,7 @@ typedef platform_key_event_t* (*key_buffer_get_physical_key_event)(uint8_t index
 typedef void (*key_buffer_remove_physical_press)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_release)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_tap)(uint8_t press_id);
-typedef void (*key_buffer_update_layer_for_physical_events)(uint8_t layer, uint8_t pos);
+typedef void (*key_buffer_change_key_code)(uint8_t pos, platform_keycode_t keycode);
 
 typedef struct {
     key_buffer_tap register_key_fn;
@@ -50,7 +49,7 @@ typedef struct {
     key_buffer_remove_physical_press remove_physical_press_fn;
     key_buffer_remove_physical_release remove_physical_release_fn;
     key_buffer_remove_physical_tap remove_physical_tap_fn;
-    key_buffer_update_layer_for_physical_events update_layer_for_physical_events_fn;
+    key_buffer_change_key_code change_key_code_fn;
 } pipeline_physical_actions_t;
 
 typedef struct {
@@ -100,7 +99,7 @@ void pipeline_executor_add_virtual_pipeline(uint8_t pipeline_position, pipeline_
 void pipeline_executor_end_with_capture_next_keys_or_callback_on_timeout(platform_time_t callback_time);
 void pipeline_executor_end_with_capture_next_keys(void);
 
-bool pipeline_process_key(abskeyevent_t abskeyevent);
+void pipeline_process_key(abskeyevent_t abskeyevent);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,7 @@ void platform_key_press_reset(platform_key_press_buffer_t* key_buffer) {
     key_buffer->press_buffer_pos = 0;
 }
 
-platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos, uint8_t layer, uint8_t press_id) {
+platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_buffer_t *key_buffer, platform_keypos_t keypos, platform_keycode_t keycode, uint8_t press_id) {
 
     if (key_buffer == NULL) {
         return NULL;
@@ -46,7 +46,7 @@ platform_key_press_key_press_t* platform_key_press_add_press(platform_key_press_
     if (key_buffer->press_buffer_pos < PLATFORM_KEY_BUFFER_MAX_ELEMENTS) {
         only_press_buffer[key_buffer->press_buffer_pos].keypos = keypos;
         only_press_buffer[key_buffer->press_buffer_pos].press_id = press_id;
-        only_press_buffer[key_buffer->press_buffer_pos].layer = layer;
+        only_press_buffer[key_buffer->press_buffer_pos].keycode = keycode;
         only_press_buffer[key_buffer->press_buffer_pos].ignore_release = false; // Default to not ignoring release
         ++key_buffer->press_buffer_pos;
         return &only_press_buffer[key_buffer->press_buffer_pos - 1]; // Return the newly added press
@@ -119,6 +119,10 @@ platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platf
     platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
     uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
 
+    if (only_press_buffer_pos == 0) {
+        DEBUG_PRINT("Key press buffer is empty, cannot find press ID %d", press_id);
+        return NULL; // Buffer is empty
+    }
     for (size_t i = 0; i < only_press_buffer_pos; i++) {
         if (only_press_buffer[i].press_id == press_id) {
             return &only_press_buffer[i];
@@ -150,11 +154,11 @@ void print_key_press_buffer(platform_key_press_buffer_t *event_buffer) {
         DEBUG_PRINT_ERROR("Key press buffer is NULL\n");
         return;
     }
-    DEBUG_PRINT_RAW("| %03hhu", event_buffer->press_buffer_pos);
+    DEBUG_PRINT_RAW("PRESS: | %03hhu", event_buffer->press_buffer_pos);
     platform_key_press_key_press_t* press_buffer = event_buffer->press_buffer;
     for (size_t i = 0; i < event_buffer->press_buffer_pos; i++) {
-        DEBUG_PRINT_RAW(" | %zu L:%u, I:%d, Id:%03u",
-               i, press_buffer[i].layer,
+        DEBUG_PRINT_RAW(" | %zu K:%04u, I:%d, Id:%03u",
+               i, press_buffer[i].keycode,
                press_buffer[i].ignore_release, press_buffer[i].press_id);
     }
     DEBUG_PRINT_NL();
