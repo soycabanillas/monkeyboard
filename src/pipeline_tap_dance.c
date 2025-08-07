@@ -136,7 +136,7 @@ static void generic_key_press_handler(pipeline_tap_dance_behaviour_config_t *con
     if (hold_action != NULL) {
         status->state = TAP_DANCE_WAITING_FOR_HOLD;
         status->selected_layer = hold_action->layer;
-        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, g_hold_timeout);
+        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, config->hold_timeout);
         return;
     } else {
         if (has_subsequent_actions(config, status->tap_count)) {
@@ -166,7 +166,7 @@ static void generic_key_release_when_not_holding_handler(pipeline_tap_dance_beha
     if (has_subsequent_actions(config, status->tap_count)) {
         status->state = TAP_DANCE_WAITING_FOR_TAP;
         actions->remove_physical_tap_fn(last_key_event->press_id);
-        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, g_tap_timeout);
+        return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, config->tap_timeout);
         return;
     } else {
         if (status->state == TAP_DANCE_WAITING_FOR_HOLD) {

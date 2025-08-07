@@ -38,7 +38,9 @@ pipeline_tap_dance_action_config_t* createbehaviouraction_hold(uint8_t tap_count
 pipeline_tap_dance_behaviour_t* createbehaviour(platform_keycode_t keycodemodifier, pipeline_tap_dance_action_config_t* actions[], size_t actionslength) {
     pipeline_tap_dance_behaviour_config_t userdata = {
         .keycodemodifier = keycodemodifier,
-        .actionslength = actionslength
+        .actionslength = actionslength,
+        .hold_timeout = g_hold_timeout,
+        .tap_timeout = g_tap_timeout
     };
     pipeline_tap_dance_behaviour_config_t* allocationuserdata = (pipeline_tap_dance_behaviour_config_t*)malloc(sizeof(pipeline_tap_dance_behaviour_config_t) + actionslength * sizeof (pipeline_tap_dance_action_config_t*));
     memcpy(allocationuserdata, &userdata, sizeof userdata);

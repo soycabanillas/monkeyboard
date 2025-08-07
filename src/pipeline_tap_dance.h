@@ -66,6 +66,8 @@ typedef struct {
 
 typedef struct {
     platform_keycode_t keycodemodifier;
+    uint16_t hold_timeout; // Timeout for hold action
+    uint16_t tap_timeout;  // Timeout for tap action
     size_t actionslength;
     pipeline_tap_dance_action_config_t *actions[];
 } pipeline_tap_dance_behaviour_config_t;

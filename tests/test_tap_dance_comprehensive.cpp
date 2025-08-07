@@ -355,7 +355,7 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
 
     std::vector<key_action_t> expected_keys = {
         press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50),
-        press(SINGLE_TAP_KEY, 50 + g_tap_timeout), release(SINGLE_TAP_KEY, 0)
+        press(SINGLE_TAP_KEY, 50 + TAP_TIMEOUT), release(SINGLE_TAP_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 }

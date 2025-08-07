@@ -206,7 +206,7 @@ TEST_F(TimingBoundaryConditionsTest, RaceConditionHoldVsTapTimeout) {
 
     // Expected Output: Continuation with second tap action
     std::vector<key_action_t> expected_keys = {
-        press(TAP_DANCE_KEY, 100 + g_tap_timeout), release(TAP_DANCE_KEY, 0)
+        press(TAP_DANCE_KEY, 100 + TAP_TIMEOUT), release(TAP_DANCE_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
 

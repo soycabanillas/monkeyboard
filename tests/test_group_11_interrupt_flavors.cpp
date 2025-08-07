@@ -43,16 +43,14 @@ protected:
     }
 };
 
-// Test Case 1: AABB sequence - Press A, release A, press B, release B
-// Sequence: LSFT_T(KC_A) down, LSFT_T(KC_A) up, KC_B down, KC_B up
-// All actions happen before hold timeout
-// Expected: All flavors should produce tap (KC_A) then KC_B
 
-TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
+const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
+const uint16_t KEY_B = 3010;          // KC_B
+const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
+const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
+
+static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
+
 
     static const platform_keycode_t keymaps[2][1][2] = {
         {{ TAP_DANCE_KEY, KEY_B }},
@@ -62,10 +60,23 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
+        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, hold_strategy)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
+}
+
+
+// Test Case 1: AABB sequence - Press A, release A, press B, release B
+// Sequence: LSFT_T(KC_A) down, LSFT_T(KC_A) up, KC_B down, KC_B up
+// All actions happen before hold timeout
+// Expected: All flavors should produce tap (KC_A) then KC_B
+
+TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, A up, B down, B up (all before hold timeout)
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down
@@ -85,23 +96,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(BEFORE_HOLD_TIMEOUT);
@@ -119,23 +114,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(BEFORE_HOLD_TIMEOUT);
@@ -158,23 +137,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, wait past hold timeout, A up, B down, B up
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down
@@ -194,23 +157,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(HOLD_TIMEOUT);
@@ -228,23 +175,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(HOLD_TIMEOUT);
@@ -267,23 +198,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, B down, B up, A up (all before hold timeout)
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down
@@ -302,23 +217,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     press_key(KEY_B);
@@ -336,23 +235,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     press_key(KEY_B);
@@ -374,23 +257,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, B down, B up, wait for timeout, A up
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down
@@ -410,23 +277,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     press_key(KEY_B);
@@ -445,23 +296,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     press_key(KEY_B);
@@ -484,23 +319,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, wait past hold timeout, B down, B up, A up
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down
@@ -520,23 +339,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(HOLD_TIMEOUT);
@@ -554,23 +357,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(HOLD_TIMEOUT);
@@ -593,23 +380,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, B down, A up, B up (all before hold timeout)
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down at time 0
@@ -631,23 +402,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(110);
@@ -668,23 +423,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(110);
@@ -710,23 +449,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
 // Expected: All flavors should produce "B" - hold action with B on shift layer
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-    const uint16_t KEY_B = 3010;          // KC_B
-    const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
-    const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}  // Shift layer
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_TAP_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, B down, hold timeout reached, A up, B up
     press_key(TAP_DANCE_KEY);              // LSFT_T(KC_A) down at time 0
@@ -748,23 +471,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_BALANCED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(110);
@@ -784,23 +491,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t KEY_B = 3010;
-    const uint16_t OUTPUT_KEY_A = 3003;
-    const uint8_t TARGET_LAYER_SHIFT = 1;
-
-    static const platform_keycode_t keymaps[2][1][2] = {
-        {{ TAP_DANCE_KEY, KEY_B }},
-        {{ 3011, 3012 }}
-    };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY_A),
-        createbehaviouraction_hold(1, TARGET_LAYER_SHIFT, TAP_DANCE_HOLD_PREFERRED)
-    };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_config->length++;
+    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
     press_key(TAP_DANCE_KEY);
     platform_wait_ms(110);
