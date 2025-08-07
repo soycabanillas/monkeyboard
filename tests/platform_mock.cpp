@@ -398,7 +398,17 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
     g_mock_state.next_token++;
     printf("MOCK: Defer exec token %u for %u ms\n", g_mock_state.next_token, delay_ms);
-    g_mock_state.deferred_calls.push_back({g_mock_state.next_token, g_mock_state.timer + delay_ms, callback, data});
+
+    deferred_call_t new_call = {g_mock_state.next_token, g_mock_state.timer + delay_ms, callback, data};
+
+    // Insert in chronological order by execution time
+    auto insert_pos = g_mock_state.deferred_calls.begin();
+    while (insert_pos != g_mock_state.deferred_calls.end() &&
+           insert_pos->execution_time <= new_call.execution_time) {
+        ++insert_pos;
+    }
+    g_mock_state.deferred_calls.insert(insert_pos, new_call);
+
     return g_mock_state.next_token;
 }
 
