@@ -144,7 +144,7 @@ TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
     std::vector<tap_dance_event_t> expected_events_1 = {
         td_press(3001, 50 + TAP_TIMEOUT), td_release(3001, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_1));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events_1));
 
     reset_mock_state();
 
@@ -155,7 +155,7 @@ TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
 
     std::vector<tap_dance_event_t> expected_events_2 = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_2));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events_2));
     reset_mock_state();
 
     // Third Tap
@@ -166,7 +166,7 @@ TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
     std::vector<tap_dance_event_t> expected_events_3 = {
         td_press(3003, 50 + 50), td_release(3003, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events_3));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events_3));
 }
 
 // Test 9.4: Custom Timeout Configuration

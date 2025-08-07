@@ -31,8 +31,6 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 
 // Time operations
 void platform_wait_ms(platform_time_t ms);
-platform_time_t platform_timer_read(void);
-platform_time_t platform_timer_elapsed(platform_time_t last);
 
 // Deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data);

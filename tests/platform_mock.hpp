@@ -3,12 +3,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
-#include <set>
 #include "gtest/gtest.h"
 #include "platform_types.h"
 
 
 void reset_mock_state(void);
+void mock_set_timer(platform_time_t time);
+platform_time_t mock_get_timer(void);
 void mock_advance_timer(platform_time_t ms);
 void mock_reset_timer(void);
 
@@ -83,6 +84,7 @@ struct MockPlatformState {
     // Constructor and method declarations
     MockPlatformState();
 
+    void set_timer(platform_time_t time);
     void advance_timer(platform_time_t ms);
     void reset();
 
@@ -90,7 +92,8 @@ struct MockPlatformState {
     ::testing::AssertionResult key_actions_match(const std::vector<key_action_t>& expected) const;
     ::testing::AssertionResult key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
     ::testing::AssertionResult key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t start_time = 0) const;
-    ::testing::AssertionResult tap_dance_event_actions_match(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
+    ::testing::AssertionResult tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const;
+    ::testing::AssertionResult tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
     bool layer_history_matches(const std::vector<uint8_t>& expected) const;
     std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
     std::vector<uint8_t> get_layer_history_since(size_t start_index) const;

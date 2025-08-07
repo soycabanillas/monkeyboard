@@ -65,7 +65,7 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY, BEFORE_TAP_TIMEOUT), td_release(OUTPUT_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Simple Hold
@@ -96,7 +96,7 @@ TEST_F(BasicStateMachineTest, SimpleHold) {
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, HOLD_TIMEOUT), td_layer(0, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 
 }
 
@@ -126,7 +126,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY, JUST_BEFORE_HOLD_TIMEOUT), td_release(OUTPUT_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Hold Timeout Boundary - Exactly At
@@ -157,7 +157,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, HOLD_TIMEOUT), td_layer(0, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Hold Timeout Boundary - Just After
@@ -187,7 +187,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, HOLD_TIMEOUT), td_layer(0, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // No Hold Action Configured - Immediate Execution
@@ -216,7 +216,7 @@ TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, BEFORE_HOLD_TIMEOUT)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Only Hold Action Configured - Timeout Not Reached
@@ -244,7 +244,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutNotReached) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Only Hold Action - Timeout Reached
@@ -273,7 +273,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, HOLD_TIMEOUT), td_layer(0, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // State Machine Reset Verification - Tap -> Reset -> Hold
@@ -319,7 +319,7 @@ TEST_F(BasicStateMachineTest, TapResetHold) {
         td_press(OUTPUT_KEY_1, BEFORE_HOLD_TIMEOUT + TAP_TIMEOUT), td_release(OUTPUT_KEY_1, 0),
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // State Machine Reset Verification - Tap -> Reset -> Tap
@@ -367,7 +367,7 @@ TEST_F(BasicStateMachineTest, TapResetTap) {
         td_press(OUTPUT_KEY_1, BEFORE_HOLD_TIMEOUT + TAP_TIMEOUT), td_release(OUTPUT_KEY_1, 0),
         td_press(OUTPUT_KEY_1, BEFORE_HOLD_TIMEOUT + TAP_TIMEOUT), td_release(OUTPUT_KEY_1, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // State Machine Reset Verification - Hold -> Reset -> Tap
@@ -413,7 +413,7 @@ TEST_F(BasicStateMachineTest, HoldResetTap) {
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT),
         td_press(OUTPUT_KEY_1, BEFORE_HOLD_TIMEOUT + TAP_TIMEOUT), td_release(OUTPUT_KEY_1, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // State Machine Reset Verification - Hold -> Reset -> Hold
@@ -459,7 +459,7 @@ TEST_F(BasicStateMachineTest, HoldResetHold) {
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT),
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Hold with no actions configured
@@ -480,7 +480,7 @@ TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }
 
 // Tap with no actions configured
@@ -500,5 +500,5 @@ TEST_F(BasicStateMachineTest, TapWithNoActionsConfigured) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }

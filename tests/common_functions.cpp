@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "pipeline_executor.h"
 #include "platform_interface.h"
+#include "platform_mock.hpp"
 #include "platform_types.h"
 #include "common_functions.hpp"
 
@@ -18,26 +19,53 @@ platform_keypos_t find_keypos(uint16_t keycode, uint8_t max_rows, uint8_t max_co
 
 // Simplified key event simulation
 void press_key(uint16_t keycode, uint16_t delay_ms) {
-    if (delay_ms > 0) platform_wait_ms(delay_ms);
+    if (delay_ms > 0) mock_advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode, 4, 4);
     abskeyevent_t event = {
         .keypos = keypos,
         .pressed = true,
-        .time = static_cast<uint16_t>(platform_timer_read())
+        .time = static_cast<uint16_t>(mock_get_timer())
+    };
+
+    pipeline_process_key(event);
+}
+
+void press_key_at(uint16_t keycode, uint16_t time) {
+
+    mock_set_timer(time);
+
+    platform_keypos_t keypos = find_keypos(keycode, 4, 4);
+    abskeyevent_t event = {
+        .keypos = keypos,
+        .pressed = true,
+        .time = time
     };
 
     pipeline_process_key(event);
 }
 
 void release_key(uint16_t keycode, uint16_t delay_ms) {
-    if (delay_ms > 0) platform_wait_ms(delay_ms);
+    if (delay_ms > 0) mock_advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode, 4, 4);
     abskeyevent_t event = {
         .keypos = keypos,
         .pressed = false,
-        .time = static_cast<uint16_t>(platform_timer_read())
+        .time = static_cast<uint16_t>(mock_get_timer())
+    };
+
+    pipeline_process_key(event);
+}
+
+void release_key_at(uint16_t keycode, uint16_t time) {
+    mock_set_timer(time);
+
+    platform_keypos_t keypos = find_keypos(keycode, 4, 4);
+    abskeyevent_t event = {
+        .keypos = keypos,
+        .pressed = false,
+        .time = time
     };
 
     pipeline_process_key(event);
