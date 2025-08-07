@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <vector>
 #include "common_functions.hpp"
 #include "gtest/gtest.h"
 #include "platform_interface.h"
@@ -66,7 +67,7 @@ TEST_F(ActionOverflowTest, BasicTapActionOverflow) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms (2nd tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms (3rd tap - overflow)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (4th tap - overflow)
-    platform_wait_ms(200);          // t=470ms
+    wait_ms(200);          // t=470ms
 
     // Expected Output: Uses last configured action (2nd tap action)
     std::vector<key_action_t> expected_keys = {
@@ -96,9 +97,9 @@ TEST_F(ActionOverflowTest, HoldActionNonOverflow) {
     tap_key(TAP_DANCE_KEY, 30);      // t=0-30ms (1st tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms (2nd tap)
     press_key(TAP_DANCE_KEY, 50);    // t=160ms (3rd tap - overflow, attempt hold)
-    platform_wait_ms(250);          // t=410ms (exceed hold timeout)
+    wait_ms(250);          // t=410ms (exceed hold timeout)
     release_key(TAP_DANCE_KEY);      // t=410ms
-    platform_wait_ms(200);          // t=610ms
+    wait_ms(200);          // t=610ms
 
     // Expected Output: Tap action only (no hold available for 3rd tap)
     std::vector<key_action_t> expected_keys = {
@@ -155,9 +156,9 @@ TEST_F(ActionOverflowTest, ExtremeOverflowHighTapCount) {
     // Perform 10 rapid taps
     for (int i = 0; i < 10; i++) {
         tap_key(TAP_DANCE_KEY, 20);
-        platform_wait_ms(30);       // t = i*50 to (i*50+20)
+        wait_ms(30);       // t = i*50 to (i*50+20)
     }
-    platform_wait_ms(200);          // Final timeout at t=700ms
+    wait_ms(200);          // Final timeout at t=700ms
 
     // Expected Output: Still uses last configured action (2nd tap)
     std::vector<key_action_t> expected_keys = {
@@ -197,7 +198,7 @@ TEST_F(ActionOverflowTest, OverflowHoldAttemptWithStrategy) {
     press_key(INTERRUPTING_KEY, 50);   // t=210ms (interrupt - would trigger hold if available)
     release_key(INTERRUPTING_KEY, 50); // t=260ms
     release_key(TAP_DANCE_KEY, 50);    // t=310ms
-    platform_wait_ms(200);            // t=510ms
+    wait_ms(200);            // t=510ms
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 80),
@@ -228,16 +229,16 @@ TEST_F(ActionOverflowTest, OverflowMixedWithNonOverflowHold) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);        // t=0ms (1st tap - hold available)
-    platform_wait_ms(250);          // t=250ms (hold timeout exceeded)
+    wait_ms(250);          // t=250ms (hold timeout exceeded)
     release_key(TAP_DANCE_KEY);      // t=250ms
-    platform_wait_ms(50);           // t=300ms
+    wait_ms(50);           // t=300ms
 
     // New sequence with overflow
     tap_key(TAP_DANCE_KEY, 30);      // t=330-360ms (1st tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=410-460ms (2nd tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=510-540ms (3rd tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=590-620ms (4th tap - overflow)
-    platform_wait_ms(200);          // t=820ms
+    wait_ms(200);          // t=820ms
 
     std::vector<uint8_t> expected_layers = {0};  // First sequence - hold action
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -271,7 +272,7 @@ TEST_F(ActionOverflowTest, OverflowBoundaryExactlyAtLastConfiguredAction) {
     tap_key(TAP_DANCE_KEY, 30);      // t=0-30ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms (exactly at boundary)
-    platform_wait_ms(200);          // t=390ms
+    wait_ms(200);          // t=390ms
 
     std::vector<key_action_t> expected_keys = {
         press(3003, 390), release(3003, 390)  // Uses exact configured action (not overflow)
@@ -302,7 +303,7 @@ TEST_F(ActionOverflowTest, OverflowBoundaryOneBeyondLastConfigured) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (first overflow)
-    platform_wait_ms(200);          // t=470ms
+    wait_ms(200);          // t=470ms
 
     std::vector<key_action_t> expected_keys = {
         press(3003, 470), release(3003, 470)  // Uses last configured action (overflow behavior)
@@ -331,7 +332,7 @@ TEST_F(ActionOverflowTest, OverflowWithHoldAvailableAtOverflowCount) {
     tap_key(TAP_DANCE_KEY, 30);      // t=0-30ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
     press_key(TAP_DANCE_KEY, 50);    // t=160ms (3rd tap - hold available)
-    platform_wait_ms(250);          // t=410ms
+    wait_ms(250);          // t=410ms
     release_key(TAP_DANCE_KEY);      // t=410ms
 
     std::vector<uint8_t> expected_layers = {3, 0};  // Hold action available at 3rd tap
@@ -385,14 +386,14 @@ TEST_F(ActionOverflowTest, OverflowResetVerification) {
     // First overflow sequence (5 taps)
     for (int i = 0; i < 5; i++) {
         tap_key(TAP_DANCE_KEY, 20);
-        platform_wait_ms(30);
+        wait_ms(30);
     }
-    platform_wait_ms(200);          // First sequence completes
+    wait_ms(200);          // First sequence completes
 
     // Second sequence (2 taps - should not be affected by previous overflow)
     tap_key(TAP_DANCE_KEY, 30);      // Should be 1st tap
     tap_key(TAP_DANCE_KEY, 50, 30);  // Should be 2nd tap
-    platform_wait_ms(200);
+    wait_ms(200);
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 350), release(3002, 350),  // First sequence - overflow (5th tap uses 2nd action)
@@ -423,7 +424,7 @@ TEST_F(ActionOverflowTest, OverflowWithDifferentActionTypes) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (overflow)
-    platform_wait_ms(200);          // t=470ms
+    wait_ms(200);          // t=470ms
 
     std::vector<key_action_t> expected_keys = {
         press(3003, 470), release(3003, 470)  // Uses 3rd action (SENDKEY) for overflow
@@ -451,16 +452,16 @@ TEST_F(ActionOverflowTest, ContinuousOverflowMultipleSequences) {
     tap_key(TAP_DANCE_KEY, 20);
     tap_key(TAP_DANCE_KEY, 30, 20);
     tap_key(TAP_DANCE_KEY, 30, 20);  // 3rd tap - overflow
-    platform_wait_ms(200);          // t=220ms
+    wait_ms(200);          // t=220ms
 
-    platform_wait_ms(100);          // Gap between sequences
+    wait_ms(100);          // Gap between sequences
 
     // Second overflow sequence
     tap_key(TAP_DANCE_KEY, 20);      // t=340-360ms
     tap_key(TAP_DANCE_KEY, 30, 20);  // t=380-410ms
     tap_key(TAP_DANCE_KEY, 30, 20);  // t=440-470ms
     tap_key(TAP_DANCE_KEY, 30, 20);  // t=500-530ms (4th tap - overflow)
-    platform_wait_ms(200);          // t=730ms
+    wait_ms(200);          // t=730ms
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 220), release(3002, 220),  // First overflow - 3rd tap uses 2nd action
@@ -486,7 +487,7 @@ TEST_F(ActionOverflowTest, OverflowEdgeCaseZeroConfiguredActions) {
     tap_dance_config->length++;
 
     tap_key(TAP_DANCE_KEY, 50);      // t=0-50ms (no tap action available)
-    platform_wait_ms(200);          // t=250ms
+    wait_ms(200);          // t=250ms
 
     std::vector<key_action_t> expected_keys = {};  // No output - no tap actions configured
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));

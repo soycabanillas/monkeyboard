@@ -69,7 +69,7 @@ TEST_F(HoldStrategyTest, TapPreferredInterruptionIgnored) {
     press_key(INTERRUPTING_KEY, 50);   // t=50ms (interrupt)
     release_key(INTERRUPTING_KEY, 50); // t=100ms
     release_key(TAP_DANCE_KEY, 50);    // t=150ms (before hold timeout)
-    platform_wait_ms(200);            // Wait for tap timeout
+    wait_ms(200);            // Wait for tap timeout
 
     // Expected: Interrupting key processed normally, tap action (interruption ignored)
     std::vector<key_action_t> expected_keys = {
@@ -103,7 +103,7 @@ TEST_F(HoldStrategyTest, TapPreferredHoldViaTimeoutOnly) {
     press_key(TAP_DANCE_KEY);          // t=0ms
     press_key(INTERRUPTING_KEY, 50);   // t=50ms (interrupt)
     release_key(INTERRUPTING_KEY, 50); // t=100ms
-    platform_wait_ms(150);            // t=250ms (hold timeout exceeded)
+    wait_ms(150);            // t=250ms (hold timeout exceeded)
     release_key(TAP_DANCE_KEY);        // t=250ms
 
     // Expected: Hold action at timeout (delayed execution)
@@ -137,7 +137,7 @@ TEST_F(HoldStrategyTest, TapPreferredMultipleInterruptions) {
     press_key(3003, 20);               // t=50ms (another interruption)
     release_key(INTERRUPTING_KEY, 30); // t=80ms
     release_key(TAP_DANCE_KEY, 50);    // t=100ms
-    platform_wait_ms(200);            // Wait for tap timeout
+    wait_ms(200);            // Wait for tap timeout
 
     // Expected: All ignored, tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -423,7 +423,7 @@ TEST_F(HoldStrategyTest, HoldPreferredTapWithoutInterruption) {
 
     press_key(TAP_DANCE_KEY);          // t=0ms
     release_key(TAP_DANCE_KEY, 100);   // t=100ms (no interruption)
-    platform_wait_ms(200);
+    wait_ms(200);
 
     std::vector<key_action_t> expected_keys = {
         press(OUTPUT_KEY, 300), release(OUTPUT_KEY, 300)  // Tap action (no interruption)
@@ -493,7 +493,7 @@ TEST_F(HoldStrategyTest, InterruptionDuringWaitingForTapState) {
     release_key(TAP_DANCE_KEY, 100);   // t=100ms (enter WAITING_FOR_TAP)
     press_key(INTERRUPTING_KEY, 50);   // t=150ms (interrupt during tap wait)
     release_key(INTERRUPTING_KEY, 50); // t=200ms
-    platform_wait_ms(150);            // t=350ms (tap timeout expires)
+    wait_ms(150);            // t=350ms (tap timeout expires)
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY, 150),    // Interrupt processed normally

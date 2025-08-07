@@ -63,7 +63,7 @@ TEST_F(TimingBoundaryConditionsTest, HoldTimeoutBoundary1msBefore) {
 
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 199); // t=199ms (1ms before hold timeout)
-    platform_wait_ms(200);          // t=399ms (tap timeout)
+    wait_ms(200);          // t=399ms (tap timeout)
 
     // Expected Output: Tap action (released before hold timeout)
     std::vector<key_action_t> expected_keys = {
@@ -89,7 +89,7 @@ TEST_F(TimingBoundaryConditionsTest, HoldTimeoutBoundaryExactlyAt) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(200);          // t=200ms (exactly at hold timeout)
+    wait_ms(200);          // t=200ms (exactly at hold timeout)
     release_key(TAP_DANCE_KEY);      // t=200ms
 
     // Expected Output: Hold action (timeout reached exactly)
@@ -141,7 +141,7 @@ TEST_F(TimingBoundaryConditionsTest, TapTimeoutBoundarySequenceReset) {
 
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(200);          // t=300ms (tap timeout expires - sequence resets)
+    wait_ms(200);          // t=300ms (tap timeout expires - sequence resets)
 
     // Expected Output: Immediate execution on press
     std::vector<key_action_t> expected_keys = {
@@ -171,7 +171,7 @@ TEST_F(TimingBoundaryConditionsTest, TapTimeoutBoundarySequenceContinuation) {
     release_key(TAP_DANCE_KEY, 100); // t=100ms
     press_key(TAP_DANCE_KEY, 199);   // t=299ms (1ms before tap timeout)
     release_key(TAP_DANCE_KEY, 50);  // t=349ms
-    platform_wait_ms(200);          // t=549ms
+    wait_ms(200);          // t=549ms
 
     // Expected Output: Continuation with second tap action
     std::vector<key_action_t> expected_keys = {
@@ -201,7 +201,7 @@ TEST_F(TimingBoundaryConditionsTest, RaceConditionHoldVsTapTimeout) {
     release_key(TAP_DANCE_KEY, 100); // t=100ms (start tap timeout)
     // Next press at exactly when both timeouts could occur
     press_key(TAP_DANCE_KEY, 200);   // t=300ms (tap timeout + hold start)
-    platform_wait_ms(200);          // t=500ms (hold timeout)
+    wait_ms(200);          // t=500ms (hold timeout)
     release_key(TAP_DANCE_KEY);      // t=500ms
 
     // Expected Output: Continuation with second tap action
@@ -283,7 +283,7 @@ TEST_F(TimingBoundaryConditionsTest, RapidSequenceTimingSubTimeoutWindows) {
     release_key(TAP_DANCE_KEY, 10);     // t=30ms
     press_key(TAP_DANCE_KEY, 10);       // t=40ms
     release_key(TAP_DANCE_KEY, 10);     // t=50ms
-    platform_wait_ms(200);          // t=250ms
+    wait_ms(200);          // t=250ms
 
     // Expected Output: Second tap action (rapid 3-tap sequence uses 2nd action overflow)
     std::vector<key_action_t> expected_keys = {
@@ -308,10 +308,10 @@ TEST_F(TimingBoundaryConditionsTest, TimingPrecisionMillisecondAccuracy) {
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
 
-    platform_wait_ms(1000);         // t=1000ms (establish high baseline)
+    wait_ms(1000);         // t=1000ms (establish high baseline)
     press_key(TAP_DANCE_KEY);        // t=1000ms
     release_key(TAP_DANCE_KEY, 150); // t=1150ms
-    platform_wait_ms(200);          // t=1350ms
+    wait_ms(200);          // t=1350ms
 
     // Expected Output: Precise timing maintained
     std::vector<key_action_t> expected_keys = {
@@ -358,7 +358,7 @@ TEST_F(TimingBoundaryConditionsTest, MultipleTimeoutWindowsSequenceChain) {
     // Wait near second tap timeout, then continue
     press_key(TAP_DANCE_KEY, 195);   // t=490ms (within second tap timeout)
     release_key(TAP_DANCE_KEY, 50);  // t=540ms
-    platform_wait_ms(200);          // t=740ms
+    wait_ms(200);          // t=740ms
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 740), release(3002, 740)  // Third tap uses second action (overflow)
@@ -386,9 +386,9 @@ TEST_F(TimingBoundaryConditionsTest, TimeoutAccumulationLongSequence) {
     for (int i = 0; i < 5; i++) {
         press_key(TAP_DANCE_KEY);        // t=i*180ms
         release_key(TAP_DANCE_KEY, 50);  // t=i*180+50ms
-        platform_wait_ms(130);          // t=i*180+180ms
+        wait_ms(130);          // t=i*180+180ms
     }
-    platform_wait_ms(200);              // Final timeout
+    wait_ms(200);              // Final timeout
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 1100), release(3002, 1100)  // Uses second action (overflow from 5 taps)
@@ -416,7 +416,7 @@ TEST_F(TimingBoundaryConditionsTest, ZeroDurationEdgeCases) {
     release_key(TAP_DANCE_KEY, 0);   // t=0ms (zero duration)
     press_key(TAP_DANCE_KEY, 0);     // t=0ms (immediate second press)
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(200);          // t=300ms
+    wait_ms(200);          // t=300ms
 
     std::vector<key_action_t> expected_keys = {
         press(3002, 300), release(3002, 300)  // Second tap action (two zero-duration taps)

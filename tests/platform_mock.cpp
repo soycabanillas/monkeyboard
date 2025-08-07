@@ -394,11 +394,6 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
     return platform_layout_get_keycode_from_layer_impl(layer, position);
 }
 
-// Mock time operations
-void platform_wait_ms(platform_time_t ms) {
-    g_mock_state.advance_timer(ms);
-}
-
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
     g_mock_state.next_token++;

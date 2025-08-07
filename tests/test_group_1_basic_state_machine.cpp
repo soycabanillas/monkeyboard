@@ -90,7 +90,7 @@ TEST_F(BasicStateMachineTest, SimpleHold) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -151,7 +151,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(HOLD_TIMEOUT);
+    wait_ms(HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -267,7 +267,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -305,14 +305,14 @@ TEST_F(BasicStateMachineTest, TapResetHold) {
 
     // First sequence - tap
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(BEFORE_HOLD_TIMEOUT);
+    wait_ms(BEFORE_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     // Second sequence - hold
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -351,17 +351,17 @@ TEST_F(BasicStateMachineTest, TapResetTap) {
 
     // First sequence - tap
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(BEFORE_HOLD_TIMEOUT);
+    wait_ms(BEFORE_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     // Second sequence - tap
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(BEFORE_HOLD_TIMEOUT);
+    wait_ms(BEFORE_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_1, BEFORE_HOLD_TIMEOUT + TAP_TIMEOUT), td_release(OUTPUT_KEY_1, 0),
@@ -399,15 +399,15 @@ TEST_F(BasicStateMachineTest, HoldResetTap) {
 
     // First sequence - hold
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     // Second sequence - tap
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(BEFORE_HOLD_TIMEOUT);
+    wait_ms(BEFORE_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT),
@@ -445,15 +445,15 @@ TEST_F(BasicStateMachineTest, HoldResetHold) {
 
     // First sequence - hold
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     // Second sequence - hold
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_1, HOLD_TIMEOUT), td_layer(0, AFTER_HOLD_TIMEOUT - HOLD_TIMEOUT),
@@ -475,7 +475,7 @@ TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(AFTER_HOLD_TIMEOUT);
+    wait_ms(AFTER_HOLD_TIMEOUT);
     release_key(TAP_DANCE_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {

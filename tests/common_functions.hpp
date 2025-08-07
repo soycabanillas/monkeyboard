@@ -24,3 +24,4 @@ void release_key(uint16_t keycode, uint16_t delay_ms = 0);
 void release_key_at(uint16_t keycode, uint16_t time);
 void tap_key(uint16_t keycode, uint16_t hold_ms = 0);
 void tap_key(uint16_t keycode, uint16_t delay_before_ms, uint16_t hold_ms);
+void wait_ms(platform_time_t ms);

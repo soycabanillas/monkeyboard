@@ -106,7 +106,7 @@ TEST_F(ConfigurationCombinationsTest, HoldOnlyConfiguration) {
 
     // Tap Attempt (No Action)
     tap_key(TAP_DANCE_KEY, 50);      // t=0-50ms
-    platform_wait_ms(200);          // t=250ms
+    wait_ms(200);          // t=250ms
 
     std::vector<key_action_t> expected_keys = {};  // No output (no tap action configured)
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
@@ -115,7 +115,7 @@ TEST_F(ConfigurationCombinationsTest, HoldOnlyConfiguration) {
 
     // Hold Execution
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(250);          // t=250ms
+    wait_ms(250);          // t=250ms
     release_key(TAP_DANCE_KEY);      // t=250ms
 
     std::vector<uint8_t> expected_layers = {1, 0};  // Layer 1 activation/deactivation
@@ -139,7 +139,7 @@ TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
 
     // First Tap
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     std::vector<tap_dance_event_t> expected_events_1 = {
         td_press(3001, 50 + TAP_TIMEOUT), td_release(3001, 0)
@@ -151,7 +151,7 @@ TEST_F(ConfigurationCombinationsTest, SparseConfigurationTapNothingTap) {
     // Second Tap
     tap_key(TAP_DANCE_KEY, 50);
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(TAP_TIMEOUT);
+    wait_ms(TAP_TIMEOUT);
 
     std::vector<tap_dance_event_t> expected_events_2 = {
     };
@@ -191,7 +191,7 @@ TEST_F(ConfigurationCombinationsTest, CustomTimeoutConfiguration) {
 
     // Short Hold Timeout
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(150);          // t=150ms (exceed 100ms timeout)
+    wait_ms(150);          // t=150ms (exceed 100ms timeout)
     release_key(TAP_DANCE_KEY);      // t=150ms
 
     std::vector<uint8_t> expected_layers_1 = {1, 0};  // Layer 1 activation/deactivation
@@ -202,7 +202,7 @@ TEST_F(ConfigurationCombinationsTest, CustomTimeoutConfiguration) {
     // Long Tap Timeout
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
-    platform_wait_ms(300);          // t=350ms (300ms tap timeout)
+    wait_ms(300);          // t=350ms (300ms tap timeout)
     std::vector<key_action_t> expected_keys_1 = {
         press(3001, 350), release(3001, 350)
     };
@@ -215,7 +215,7 @@ TEST_F(ConfigurationCombinationsTest, CustomTimeoutConfiguration) {
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
     press_key(TAP_DANCE_KEY, 299);   // t=349ms (1ms before tap timeout)
     release_key(TAP_DANCE_KEY, 50);  // t=399ms
-    platform_wait_ms(300);          // t=699ms
+    wait_ms(300);          // t=699ms
 
     std::vector<key_action_t> expected_keys_2 = {
         press(3001, 699), release(3001, 699)  // single tap, sequence continued
@@ -245,7 +245,7 @@ TEST_F(ConfigurationCombinationsTest, AsymmetricTimeoutConfiguration) {
     // Tap Timeout Before Hold Timeout
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(150);          // t=250ms (tap timeout)
+    wait_ms(150);          // t=250ms (tap timeout)
     std::vector<key_action_t> expected_keys_1 = {
         press(3001, 250), release(3001, 250)
     };
@@ -255,7 +255,7 @@ TEST_F(ConfigurationCombinationsTest, AsymmetricTimeoutConfiguration) {
 
     // Hold Timeout After Release
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(350);          // t=350ms (exceed 300ms hold timeout)
+    wait_ms(350);          // t=350ms (exceed 300ms hold timeout)
     release_key(TAP_DANCE_KEY);      // t=350ms
 
     std::vector<uint8_t> expected_layers_2 = {TARGET_LAYER, 0};  // Layer 1 activation/deactivation
@@ -359,9 +359,9 @@ TEST_F(ConfigurationCombinationsTest, MaximumConfigurationComplexity) {
     // Attempt to reach 5th tap count
     for (int i = 0; i < 5; i++) {
         tap_key(TAP_DANCE_KEY, 10);
-        platform_wait_ms(20);
+        wait_ms(20);
     }
-    platform_wait_ms(200);          // t=150ms
+    wait_ms(200);          // t=150ms
 
     // Expected: {TAP_5_OUTPUT, PRESS, 1200}, {TAP_5_OUTPUT, RELEASE, 1200},
     std::vector<key_action_t> expected_keys = {
@@ -374,10 +374,10 @@ TEST_F(ConfigurationCombinationsTest, MaximumConfigurationComplexity) {
     // Then test 5th hold action
     for (int i = 0; i < 4; i++) {
         tap_key(TAP_DANCE_KEY, 10);
-        platform_wait_ms(20);
+        wait_ms(20);
     }
     press_key(TAP_DANCE_KEY, 20);
-    platform_wait_ms(250);
+    wait_ms(250);
     release_key(TAP_DANCE_KEY);
 
     std::vector<uint8_t> expected_layers = {5, 0};  // Layer 5 activation/deactivation
@@ -461,7 +461,7 @@ TEST_F(ConfigurationCombinationsTest, MixedActionTypesConfiguration) {
     tap_key(TAP_DANCE_KEY, 30);
     tap_key(TAP_DANCE_KEY, 40, 30);
     press_key(TAP_DANCE_KEY, 30);
-    platform_wait_ms(250);
+    wait_ms(250);
     release_key(TAP_DANCE_KEY);
     std::vector<uint8_t> expected_layers = {3, 0};  // Layer 3 activation/deactivation
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -533,7 +533,7 @@ TEST_F(ConfigurationCombinationsTest, ConfigurationWithLargeTimeoutValues) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(1100);         // t=1100ms (exceed 1000ms timeout)
+    wait_ms(1100);         // t=1100ms (exceed 1000ms timeout)
     release_key(TAP_DANCE_KEY);      // t=1100ms
 
     std::vector<uint8_t> expected_layers = {1, 0};  // Hold activation/deactivation
@@ -560,7 +560,7 @@ TEST_F(ConfigurationCombinationsTest, ConfigurationEdgeCases) {
     // Clear precedence rules (tap timeout from release, hold from press)
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(200);          // t=300ms
+    wait_ms(200);          // t=300ms
 
     std::vector<key_action_t> expected_keys = {
         press(3001, 300), release(3001, 300)  // Tap timeout from release
@@ -602,7 +602,7 @@ TEST_F(ConfigurationCombinationsTest, ConfigurationConsistencyVerification) {
     tap_dance_config->length++;
 
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(200);
+    wait_ms(200);
     std::vector<key_action_t> expected_no_action = {};  // No action (no tap configured)
     EXPECT_TRUE(g_mock_state.key_actions_match(expected_no_action));
 
@@ -618,7 +618,7 @@ TEST_F(ConfigurationCombinationsTest, ConfigurationConsistencyVerification) {
     tap_dance_config->length++;
 
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(200);
+    wait_ms(200);
     std::vector<key_action_t> expected_delayed = {
         press(3001, 250), release(3001, 250)  // Delayed tap execution
     };
@@ -661,7 +661,7 @@ TEST_F(ConfigurationCombinationsTest, MultiKeyConfigurationComparison) {
     press_key(TAP_DANCE_KEY_1);      // t=0ms
     press_key(TAP_DANCE_KEY_2, 10);  // t=10ms
     press_key(TAP_DANCE_KEY_3, 10);  // t=20ms
-    platform_wait_ms(250);          // t=270ms
+    wait_ms(250);          // t=270ms
     release_key(TAP_DANCE_KEY_1);    // t=270ms
     release_key(TAP_DANCE_KEY_2);    // t=270ms
     release_key(TAP_DANCE_KEY_3);    // t=270ms

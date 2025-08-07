@@ -72,7 +72,7 @@ TEST_F(ComplexInterruptionScenariosTest, MultipleSequentialInterruptionsTapPrefe
     release_key(INTERRUPTING_KEY_1, 30); // t=100ms
     release_key(INTERRUPTING_KEY_2, 50); // t=150ms
     release_key(TAP_DANCE_KEY, 30);      // t=180ms (before hold timeout)
-    platform_wait_ms(200);              // t=380ms
+    wait_ms(200);              // t=380ms
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY_1, 30), release(INTERRUPTING_KEY_1, 100),
@@ -108,7 +108,7 @@ TEST_F(ComplexInterruptionScenariosTest, MultipleSequentialInterruptionsBalanced
     release_key(INTERRUPTING_KEY_1, 30); // t=80ms (first complete cycle)
     release_key(INTERRUPTING_KEY_2, 40); // t=120ms (second complete cycle)
     release_key(TAP_DANCE_KEY, 30);      // t=150ms
-    platform_wait_ms(200);              // t=350ms
+    wait_ms(200);              // t=350ms
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY_1, 30), release(INTERRUPTING_KEY_1, 80),
@@ -144,7 +144,7 @@ TEST_F(ComplexInterruptionScenariosTest, MultipleSequentialInterruptionsHoldPref
     release_key(INTERRUPTING_KEY_1, 30); // t=80ms
     release_key(INTERRUPTING_KEY_2, 40); // t=120ms
     release_key(TAP_DANCE_KEY, 30);      // t=150ms
-    platform_wait_ms(200);              // t=350ms
+    wait_ms(200);              // t=350ms
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY_1, 30),
@@ -271,7 +271,7 @@ TEST_F(ComplexInterruptionScenariosTest, InterruptionDuringDifferentStates) {
     release_key(TAP_DANCE_KEY, 100);     // t=100ms (enter WAITING_FOR_TAP)
     press_key(INTERRUPTING_KEY_1, 50);   // t=150ms (interrupt during WAITING_FOR_TAP)
     release_key(INTERRUPTING_KEY_1, 50); // t=200ms
-    platform_wait_ms(200);              // t=400ms
+    wait_ms(200);              // t=400ms
 
     std::vector<key_action_t> expected_keys_2 = {
         press(INTERRUPTING_KEY_1, 150),
@@ -408,7 +408,7 @@ TEST_F(ComplexInterruptionScenariosTest, InterruptionTimingPrecision) {
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
 
-    platform_wait_ms(1000);             // t=1000ms (establish baseline)
+    wait_ms(1000);             // t=1000ms (establish baseline)
     press_key(TAP_DANCE_KEY);            // t=1000ms
     press_key(INTERRUPTING_KEY_1, 50);   // t=1050ms (precise interrupt timing)
     release_key(INTERRUPTING_KEY_1, 50); // t=1100ms
@@ -485,11 +485,11 @@ TEST_F(ComplexInterruptionScenariosTest, InterruptionStateRecovery) {
     press_key(INTERRUPTING_KEY_1, 30);   // t=30ms
     release_key(INTERRUPTING_KEY_1, 40); // t=70ms
     release_key(TAP_DANCE_KEY, 30);      // t=100ms
-    platform_wait_ms(200);              // t=300ms (first sequence completes)
+    wait_ms(200);              // t=300ms (first sequence completes)
 
     // Second sequence should start clean
     press_key(TAP_DANCE_KEY, 50);        // t=350ms
-    platform_wait_ms(250);              // t=600ms (hold timeout)
+    wait_ms(250);              // t=600ms (hold timeout)
     release_key(TAP_DANCE_KEY);          // t=600ms
 
     std::vector<key_action_t> expected_keys = {
@@ -568,7 +568,7 @@ TEST_F(ComplexInterruptionScenariosTest, InterruptionWithOverflowScenarios) {
     press_key(INTERRUPTING_KEY_1, 30);   // t=140ms (interrupt during overflow)
     release_key(INTERRUPTING_KEY_1, 30); // t=170ms (complete cycle)
     release_key(TAP_DANCE_KEY, 30);      // t=200ms
-    platform_wait_ms(200);              // t=400ms
+    wait_ms(200);              // t=400ms
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY_1, 140),

@@ -80,3 +80,7 @@ void tap_key(uint16_t keycode, uint16_t delay_before_ms, uint16_t hold_ms) {
     press_key(keycode, delay_before_ms);
     release_key(keycode, hold_ms);
 }
+
+void wait_ms(platform_time_t ms) {
+    mock_advance_timer(ms);
+}

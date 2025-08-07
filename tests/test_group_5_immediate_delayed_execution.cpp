@@ -89,7 +89,7 @@ TEST_F(ImmediateDelayedExecutionTest, DelayedExecutionHoldActionAvailable) {
 
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms (before hold timeout)
-    platform_wait_ms(200);          // t=300ms (tap timeout)
+    wait_ms(200);          // t=300ms (tap timeout)
 
     // Expected Output: Delayed execution at tap timeout
     std::vector<key_action_t> expected_keys = {
@@ -143,7 +143,7 @@ TEST_F(ImmediateDelayedExecutionTest, DelayedExecutionHoldTimeoutReached) {
 
     // Input Sequence: press_key(TAP_DANCE_KEY); platform_wait_ms(250); release_key(TAP_DANCE_KEY);
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(250);          // t=250ms (exceed hold timeout)
+    wait_ms(250);          // t=250ms (exceed hold timeout)
     release_key(TAP_DANCE_KEY);      // t=250ms
 
     // Expected Output: Hold action at timeout, deactivation on release
@@ -173,7 +173,7 @@ TEST_F(ImmediateDelayedExecutionTest, ExecutionModeTransitionMultiTapSequence) {
     release_key(TAP_DANCE_KEY, 100); // t=100ms
     press_key(TAP_DANCE_KEY, 50);    // t=150ms (2nd tap - no hold, immediate)
     release_key(TAP_DANCE_KEY, 100); // t=250ms
-    platform_wait_ms(200);          // t=450ms
+    wait_ms(200);          // t=450ms
 
     // Expected Output: Delayed execution for 1st tap, immediate for 2nd tap
     std::vector<key_action_t> expected_keys = {
@@ -234,7 +234,7 @@ TEST_F(ImmediateDelayedExecutionTest, DelayedExecutionOverflowHoldAvailable) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms (2nd tap)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms (3rd tap - no hold at this count)
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (4th tap - overflow)
-    platform_wait_ms(200);          // t=470ms
+    wait_ms(200);          // t=470ms
 
     // Expected Output: Uses 3rd tap action (last configured, delayed execution)
     std::vector<key_action_t> expected_keys = {
@@ -263,7 +263,7 @@ TEST_F(ImmediateDelayedExecutionTest, ImmediateExecutionDecisionTableVerificatio
         tap_key(TAP_DANCE_KEY, 30);      // t=0-30ms
         tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
         tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms (3rd tap - overflow)
-        platform_wait_ms(200);          // t=390ms
+        wait_ms(200);          // t=390ms
 
         // Expected: Immediate execution on each press
         std::vector<key_action_t> expected_keys = {
@@ -288,7 +288,7 @@ TEST_F(ImmediateDelayedExecutionTest, ImmediateExecutionDecisionTableVerificatio
         tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
         tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms
         tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (overflow)
-        platform_wait_ms(200);          // t=470ms
+        wait_ms(200);          // t=470ms
 
         // Expected: Delayed execution, hold action possible
         std::vector<key_action_t> expected_keys = {
@@ -317,10 +317,10 @@ TEST_F(ImmediateDelayedExecutionTest, DelayedExecutionTimingPrecision) {
     tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_config->length++;
 
-    platform_wait_ms(100);          // t=100ms (establish baseline)
+    wait_ms(100);          // t=100ms (establish baseline)
     press_key(TAP_DANCE_KEY);        // t=100ms
     release_key(TAP_DANCE_KEY, 50);  // t=150ms (before hold timeout)
-    platform_wait_ms(200);          // t=350ms (tap timeout from release)
+    wait_ms(200);          // t=350ms (tap timeout from release)
 
     std::vector<key_action_t> expected_keys = {
         press(3001, 350), release(3001, 350)  // Exactly at tap timeout (150ms + 200ms)
@@ -353,7 +353,7 @@ TEST_F(ImmediateDelayedExecutionTest, MixedExecutionModesStrategyIntegration) {
     press_key(INTERRUPTING_KEY, 50);   // t=150ms (interrupt - would trigger hold if available)
     release_key(INTERRUPTING_KEY, 50); // t=200ms
     release_key(TAP_DANCE_KEY, 50);    // t=250ms
-    platform_wait_ms(200);            // t=450ms
+    wait_ms(200);            // t=450ms
 
     std::vector<key_action_t> expected_keys = {
         press(INTERRUPTING_KEY, 150),
@@ -396,7 +396,7 @@ TEST_F(ImmediateDelayedExecutionTest, ExecutionModeDecisionTableVerification) {
     tap_dance_config->length++;
 
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(200);
+    wait_ms(200);
     std::vector<key_action_t> expected_delayed = {
         press(3001, 250), release(3001, 250)  // Delayed execution
     };
@@ -465,7 +465,7 @@ TEST_F(ImmediateDelayedExecutionTest, ExecutionResponsivenessComparison) {
 
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(200);          // t=300ms
+    wait_ms(200);          // t=300ms
     // Expected output at t=300ms (after tap timeout)
     std::vector<key_action_t> expected_delayed = {
         press(3001, 300), release(3001, 300)
@@ -518,9 +518,9 @@ TEST_F(ImmediateDelayedExecutionTest, ComplexExecutionModeScenario) {
     // Test 5th tap (overflow, hold exists at 4th) - Delayed expected
     for (int i = 0; i < 5; i++) {
         tap_key(TAP_DANCE_KEY, 20);
-        platform_wait_ms(30);
+        wait_ms(30);
     }
-    platform_wait_ms(200);
+    wait_ms(200);
 
     std::vector<key_action_t> expected_keys = {
         press(3004, 350), release(3004, 350)  // Delayed execution (hold exists at lower count)

@@ -64,7 +64,7 @@ TEST_F(ActionExecutionVerificationTest, BasicSendkeyActionExecution) {
     tap_dance_config->length++;
 
     tap_key(TAP_DANCE_KEY, 50);      // t=0-50ms
-    platform_wait_ms(200);          // t=250ms
+    wait_ms(200);          // t=250ms
 
     // Expected Output: Immediate press (no hold configured), release follows input timing
     std::vector<key_action_t> expected_keys = {
@@ -93,7 +93,7 @@ TEST_F(ActionExecutionVerificationTest, BasicChangelayertempoActionExecution) {
     tap_dance_config->length++;
 
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(250);          // t=250ms (exceed hold timeout)
+    wait_ms(250);          // t=250ms (exceed hold timeout)
     release_key(TAP_DANCE_KEY);      // t=250ms
 
     // Expected Output: Layer activation at hold timeout, deactivation on key release
@@ -119,7 +119,7 @@ TEST_F(ActionExecutionVerificationTest, ActionParameterValidation) {
 
     // Test SENDKEY Parameter
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(200);
+    wait_ms(200);
 
     std::vector<key_action_t> expected_keys = {
         press(0x41, 200), release(0x41, 200)  // 'A' key
@@ -130,7 +130,7 @@ TEST_F(ActionExecutionVerificationTest, ActionParameterValidation) {
 
     // Test CHANGELAYERTEMPO Parameter
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(250);
+    wait_ms(250);
     release_key(TAP_DANCE_KEY);
 
     std::vector<uint8_t> expected_layers = {3, 0};  // Layer 3
@@ -158,7 +158,7 @@ TEST_F(ActionExecutionVerificationTest, ActionExecutionPerformanceRapidSequences
     // 10 rapid tap sequences
     for (int i = 0; i < 10; i++) {
         tap_key(TAP_DANCE_KEY, 5);   // Very fast taps
-        platform_wait_ms(10);       // Minimal gap
+        wait_ms(10);       // Minimal gap
     }
 
     // Expected Output: 10 pairs of press/release events at precise timing
@@ -188,13 +188,13 @@ TEST_F(ActionExecutionVerificationTest, ActionStateCleanupVerification) {
 
     // First sequence - hold with early termination
     press_key(TAP_DANCE_KEY);        // t=0ms
-    platform_wait_ms(250);          // t=250ms (layer activated)
+    wait_ms(250);          // t=250ms (layer activated)
     release_key(TAP_DANCE_KEY);      // t=250ms (layer deactivated)
 
     // Immediate second sequence - should start clean
     press_key(TAP_DANCE_KEY);        // t=250ms
     release_key(TAP_DANCE_KEY, 50);  // t=300ms (tap, not hold)
-    platform_wait_ms(200);          // t=500ms
+    wait_ms(200);          // t=500ms
 
     std::vector<key_action_t> expected_keys = {
         press(3001, 0), release(3001, 50)

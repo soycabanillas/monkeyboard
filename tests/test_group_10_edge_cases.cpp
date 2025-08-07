@@ -65,9 +65,9 @@ TEST_F(EdgeCasesTest, RapidFireStressTest) {
     // Input: 50 rapid taps in 500ms (10ms per tap cycle)
     for (int i = 0; i < 50; i++) {
         tap_key(TAP_DANCE_KEY, 1);    // 1ms hold
-        platform_wait_ms(9);         // 9ms gap
+        wait_ms(9);         // 9ms gap
     }
-    platform_wait_ms(200);           // Final timeout
+    wait_ms(200);           // Final timeout
 
     // Expected: Uses second action (overflow from 50 taps)
     std::vector<key_action_t> expected_keys = {
@@ -95,7 +95,7 @@ TEST_F(EdgeCasesTest, ZeroDurationSingleTap) {
 
     // Input: tap_key(TAP_DANCE_KEY, 0); platform_wait_ms(200);
     tap_key(TAP_DANCE_KEY, 0);       // t=0ms (instantaneous)
-    platform_wait_ms(200);          // t=200ms
+    wait_ms(200);          // t=200ms
 
     // Expected: Immediate execution
     std::vector<key_action_t> expected_keys = {
@@ -122,9 +122,9 @@ TEST_F(EdgeCasesTest, FinalSystemIntegrityCheck) {
 
     // Input: Simple verification sequence
     tap_key(TAP_DANCE_KEY, 50);      // Basic tap
-    platform_wait_ms(300);          // Clean gap
+    wait_ms(300);          // Clean gap
     press_key(TAP_DANCE_KEY);        // Basic hold
-    platform_wait_ms(250);
+    wait_ms(250);
     release_key(TAP_DANCE_KEY);
 
     // Expected: Perfect tap and hold

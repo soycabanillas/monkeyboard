@@ -67,7 +67,7 @@ TEST_F(MultiTapTest, BasicTwoTapSequence) {
     release_key(TAP_DANCE_KEY, 100); // t=100ms (1st tap completes)
     press_key(TAP_DANCE_KEY, 150);   // t=250ms (2nd tap begins, within timeout)
     release_key(TAP_DANCE_KEY, 100); // t=350ms (2nd tap completes)
-    platform_wait_ms(200);          // t=550ms (tap timeout expires)
+    wait_ms(200);          // t=550ms (tap timeout expires)
 
     // Expected: Second tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -103,7 +103,7 @@ TEST_F(MultiTapTest, ThreeTapSequence) {
     release_key(TAP_DANCE_KEY, 100); // t=350ms (2nd tap completes)
     press_key(TAP_DANCE_KEY, 150);   // t=500ms (3rd tap begins, within timeout)
     release_key(TAP_DANCE_KEY, 100); // t=600ms (3rd tap completes)
-    platform_wait_ms(200);          // t=800ms (tap timeout expires)
+    wait_ms(200);          // t=800ms (tap timeout expires)
 
     // Expected: Third tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -132,10 +132,10 @@ TEST_F(MultiTapTest, SequenceResetTapTimeout) {
     // Input: press_key(TAP_DANCE_KEY); release_key(TAP_DANCE_KEY, 100); platform_wait_ms(200); press_key(TAP_DANCE_KEY, 50); release_key(TAP_DANCE_KEY, 100); platform_wait_ms(200);
     press_key(TAP_DANCE_KEY);        // t=0ms
     release_key(TAP_DANCE_KEY, 100); // t=100ms
-    platform_wait_ms(200);          // t=300ms (tap timeout expires - sequence resets)
+    wait_ms(200);          // t=300ms (tap timeout expires - sequence resets)
     press_key(TAP_DANCE_KEY, 50);    // t=350ms (new sequence begins)
     release_key(TAP_DANCE_KEY, 100); // t=450ms
-    platform_wait_ms(200);          // t=650ms
+    wait_ms(200);          // t=650ms
 
     // Expected: First sequence completes (1st tap), Second sequence (also 1st tap)
     std::vector<key_action_t> expected_keys = {
@@ -165,7 +165,7 @@ TEST_F(MultiTapTest, MultiTapHoldActionFirstTap) {
     // Input: press_key(TAP_DANCE_KEY); release_key(TAP_DANCE_KEY, 50); platform_wait_ms(250);
     press_key(TAP_DANCE_KEY);        // t=0ms (1st tap)
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
-    platform_wait_ms(250);          // t=300ms (hold timeout exceeded)
+    wait_ms(250);          // t=300ms (hold timeout exceeded)
 
     // Expected: Layer activation at timeout, deactivation on release
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, 0};
@@ -194,7 +194,7 @@ TEST_F(MultiTapTest, MultiTapHoldActionSecondTap) {
     press_key(TAP_DANCE_KEY);        // t=0ms (1st tap)
     release_key(TAP_DANCE_KEY, 100); // t=100ms (1st tap complete)
     press_key(TAP_DANCE_KEY, 50);    // t=150ms (2nd tap begins)
-    platform_wait_ms(250);          // t=400ms (hold 2nd tap)
+    wait_ms(250);          // t=400ms (hold 2nd tap)
     release_key(TAP_DANCE_KEY);      // t=400ms
 
     // Expected: Hold action for 2nd tap count (150ms + 200ms timeout)
@@ -225,7 +225,7 @@ TEST_F(MultiTapTest, HoldActionNotAvailableForTapCount) {
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
     press_key(TAP_DANCE_KEY, 50);    // t=100ms (2nd tap - no hold action)
     release_key(TAP_DANCE_KEY, 100); // t=200ms
-    platform_wait_ms(250);          // t=450ms
+    wait_ms(250);          // t=450ms
 
     // Expected: Tap action (no hold available for 2nd tap)
     std::vector<key_action_t> expected_keys = {
@@ -256,7 +256,7 @@ TEST_F(MultiTapTest, RapidTapSequence) {
         press_key(TAP_DANCE_KEY, 10);
         release_key(TAP_DANCE_KEY, 10);
     }
-    platform_wait_ms(200);          // t=100ms
+    wait_ms(200);          // t=100ms
 
     // Expected: Third tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -287,7 +287,7 @@ TEST_F(MultiTapTest, MixedTapAndHoldInSequence) {
     press_key(TAP_DANCE_KEY);        // t=0ms (1st tap)
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
     press_key(TAP_DANCE_KEY, 50);    // t=100ms (2nd tap begins)
-    platform_wait_ms(250);          // t=350ms (hold 2nd tap)
+    wait_ms(250);          // t=350ms (hold 2nd tap)
     release_key(TAP_DANCE_KEY);      // t=350ms
 
     // Expected: Hold action for 2nd tap count (150ms + 200ms timeout)
@@ -316,7 +316,7 @@ TEST_F(MultiTapTest, TapCountBoundaryExactTimeoutEdge) {
     release_key(TAP_DANCE_KEY, 200); // t=200ms (exactly at timeout)
     press_key(TAP_DANCE_KEY, 200);   // t=400ms (new sequence, exactly at timeout)
     release_key(TAP_DANCE_KEY, 50);  // t=450ms
-    platform_wait_ms(200);          // t=650ms
+    wait_ms(200);          // t=650ms
 
     // Expected: Normal tap action behavior
     std::vector<key_action_t> expected_keys = {
@@ -349,7 +349,7 @@ TEST_F(MultiTapTest, MaximumPracticalTapCount) {
         press_key(TAP_DANCE_KEY, 20);
         release_key(TAP_DANCE_KEY, 20);
     }
-    platform_wait_ms(200);          // t=100ms
+    wait_ms(200);          // t=100ms
 
     // Expected: Fifth tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -381,7 +381,7 @@ TEST_F(MultiTapTest, SequenceContinuationVsNewSequence) {
     release_key(TAP_DANCE_KEY, 100); // t=100ms
     press_key(TAP_DANCE_KEY, 199);   // t=299ms (1ms before timeout)
     release_key(TAP_DANCE_KEY, 50);  // t=349ms
-    platform_wait_ms(200);          // t=549ms
+    wait_ms(200);          // t=549ms
 
     // Expected: First sequence completes (1st tap), Second sequence (also 1st tap)
     std::vector<key_action_t> expected_keys = {
@@ -416,7 +416,7 @@ TEST_F(MultiTapTest, MultiTapWithStrategyInterruption) {
     press_key(3003, 50);             // t=150ms (interrupt - would trigger hold if available)
     release_key(3003, 50);           // t=200ms (complete cycle)
     release_key(TAP_DANCE_KEY, 50);  // t=250ms
-    platform_wait_ms(200);          // t=450ms
+    wait_ms(200);          // t=450ms
 
     // Expected: Hold action for 2nd tap count (150ms + 200ms timeout)
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, 0};
@@ -445,7 +445,7 @@ TEST_F(MultiTapTest, TapCountResetVerification) {
     release_key(TAP_DANCE_KEY, 50);  // t=50ms
     press_key(TAP_DANCE_KEY, 50);    // t=100ms (2nd tap - new sequence)
     release_key(TAP_DANCE_KEY, 100); // t=200ms
-    platform_wait_ms(250);          // t=450ms
+    wait_ms(250);          // t=450ms
 
     // Expected: Tap action (no hold available for 2nd tap)
     std::vector<key_action_t> expected_keys = {
@@ -476,7 +476,7 @@ TEST_F(MultiTapTest, VeryFastMultiTapSequence) {
         press_key(TAP_DANCE_KEY, 10);
         release_key(TAP_DANCE_KEY, 10);
     }
-    platform_wait_ms(200);          // t=100ms
+    wait_ms(200);          // t=100ms
 
     // Expected: Third tap action executed
     std::vector<key_action_t> expected_keys = {
@@ -507,7 +507,7 @@ TEST_F(MultiTapTest, MultiTapOverflowPreview) {
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=80-110ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=160-190ms
     tap_key(TAP_DANCE_KEY, 50, 30);  // t=240-270ms (overflow)
-    platform_wait_ms(200);          // t=470ms
+    wait_ms(200);          // t=470ms
 
     // Expected: Uses last configured action (2nd tap action)
     std::vector<key_action_t> expected_keys = {

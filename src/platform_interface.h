@@ -29,9 +29,6 @@ uint8_t platform_layout_get_current_layer(void);
 platform_keycode_t platform_layout_get_keycode(platform_keypos_t position);
 platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platform_keypos_t position);
 
-// Time operations
-void platform_wait_ms(platform_time_t ms);
-
 // Deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data);
 bool platform_cancel_deferred_exec(platform_deferred_token token);

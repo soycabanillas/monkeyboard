@@ -136,7 +136,7 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     // No tap dance configuration - empty config
 
     tap_key(NORMAL_KEY);
-    platform_wait_ms(250);
+    wait_ms(250);
 
     // Should only have the original key press/release, no tap dance actions
     std::vector<key_action_t> expected_keys = {
@@ -178,7 +178,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
     // End tap dance config
 
     press_key(TAP_DANCE_KEY);
-    platform_wait_ms(250);  // Wait for hold timeout
+    wait_ms(250);  // Wait for hold timeout
 
     release_key(TAP_DANCE_KEY);
 
@@ -220,9 +220,9 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     // End tap dance config
 
     press_key(TAP_DANCE_KEY);   // Press key
-    platform_wait_ms(100);  // Wait less than hold timeout
+    wait_ms(100);  // Wait less than hold timeout
     release_key(TAP_DANCE_KEY); // Release before timeout
-    platform_wait_ms(250);  // Wait for tap timeout
+    wait_ms(250);  // Wait for tap timeout
 
     std::vector<key_action_t> expected_keys = {
         press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)         // Tap output
@@ -269,7 +269,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
 
     // Second tap
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(250);  // Wait for timeout
+    wait_ms(250);  // Wait for timeout
 
     expected_keys = {
         press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50)   // Double tap output
@@ -310,7 +310,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     tap_key(TAP_DANCE_KEY);
     tap_key(TAP_DANCE_KEY, 50);
     tap_key(TAP_DANCE_KEY, 50);
-    platform_wait_ms(250);
+    wait_ms(250);
 
     std::vector<key_action_t> expected_keys = {
         press(TRIPLE_TAP_KEY, 50), release(TRIPLE_TAP_KEY, 50)
@@ -351,7 +351,7 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     tap_key(TAP_DANCE_KEY, 50);
     tap_key(TAP_DANCE_KEY, 50);
 
-    platform_wait_ms(250);
+    wait_ms(250);
 
     std::vector<key_action_t> expected_keys = {
         press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50),
