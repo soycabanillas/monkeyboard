@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "pipeline_executor.h"
-#include "platform_interface.h"
+#include "platform_types.h"
 
 uint8_t modifier_state = 0;
 
@@ -21,7 +21,7 @@ pipeline_oneshot_modifier_global_status_t* pipeline_oneshot_modifier_global_stat
     return global_status;
 }
 
-void pipeline_oneshot_modifier_callback(pipeline_callback_params_t* params, pipeline_actions_t* actions, void* user_data) {
+void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
     // platform_log_debug("pipeline_oneshot_modifier_callback || up: %u || press: %u", params->up, params->callback_type);
     pipeline_oneshot_modifier_global_t* global = (pipeline_oneshot_modifier_global_t*)user_data;
     pipeline_oneshot_modifier_global_config_t* global_config = global->config;
@@ -96,4 +96,10 @@ void pipeline_oneshot_modifier_callback(pipeline_callback_params_t* params, pipe
             global_status->modifiers_applied = true;
         }
     }
+}
+
+void pipeline_oneshot_modifier_callback_reset(void* user_data) {
+    pipeline_oneshot_modifier_global_t* global = (pipeline_oneshot_modifier_global_t*)user_data;
+    global->status->modifiers = 0;
+    global->status->modifiers_applied = false;
 }
