@@ -55,26 +55,41 @@ static void tap_key(platform_keycode_t keycode) {
 }
 
 static uint8_t get_physical_key_event_count(void) {
-    return pipeline_executor_state.key_event_buffer->event_buffer_pos;
+    return pipeline_executor_state.event_length;
 }
 
 static platform_key_event_t* get_physical_key_event(uint8_t index) {
-    if (index < pipeline_executor_state.key_event_buffer->event_buffer_pos) {
+    if (index < pipeline_executor_state.event_length) {
         return &pipeline_executor_state.key_event_buffer->event_buffer[index];
     }
     return NULL; // Out of bounds
 }
 
 static void remove_physical_press(uint8_t press_id) {
+    uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_press_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
+    uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
+    if (new_length < current_length) {
+        pipeline_executor_state.event_length = pipeline_executor_state.event_length - (current_length - new_length);
+    }
 }
 
 static void remove_physical_release(uint8_t press_id) {
+    uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_release_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
+    uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
+    if (new_length < current_length) {
+        pipeline_executor_state.event_length = pipeline_executor_state.event_length - (current_length - new_length);
+    }
 }
 
 static void remove_physical_tap(uint8_t press_id) {
+    uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_tap_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
+    uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
+    if (new_length < current_length) {
+        pipeline_executor_state.event_length = pipeline_executor_state.event_length - (current_length - new_length);
+    }
 }
 
 static void change_key_code(uint8_t pos, platform_keycode_t keycode) {
@@ -130,14 +145,13 @@ static void physical_event_triggered(pipeline_executor_state_t* pipeline_executo
     pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &physical_actions, &physical_return_actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
 }
 
-static void physical_event_triggered_with_timer(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, uint16_t callback_time, bool is_capturing_keys) {
+static void physical_event_triggered_with_timer(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, bool is_capturing_keys) {
     reset_return_data(&pipeline_executor_state->return_data);
 
     pipeline_physical_callback_params_t callback_params;
     callback_params.callback_type = PIPELINE_CALLBACK_TIMER;
-    callback_params.callback_time = callback_time;
     callback_params.is_capturing_keys = is_capturing_keys;
-    DEBUG_EXECUTOR("Executing pipeline %hhu with callback time %hu", pipeline_index, callback_time);
+    DEBUG_EXECUTOR("Executing pipeline %hhu", pipeline_index);
 
     pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &physical_actions, &physical_return_actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
 }
@@ -173,18 +187,17 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     DEBUG_PRINT("=== TIMER ===");
 
     capture_pipeline_t last_execution = pipeline_executor_state.return_data;
-    platform_time_t callback_time = last_execution.callback_time;
 
     uint8_t pipeline_index = pipeline_executor_state.physical_pipeline_index;
 
-    physical_event_triggered_with_timer(&pipeline_executor_state, pipeline_index, callback_time, last_execution.capture_key_events);
+    physical_event_triggered_with_timer(&pipeline_executor_state, pipeline_index, last_execution.capture_key_events);
     last_execution = pipeline_executor_state.return_data;
 
     bool pipeline_capturing_key_events = last_execution.capture_key_events;
 
     // Move the physical keys to the virtual event buffer
-    if (pipeline_capturing_key_events == false && pipeline_executor_state.key_event_buffer->event_buffer_pos > 0) {
-        for (size_t i = 0; i < pipeline_executor_state.key_event_buffer->event_buffer_pos; i++) {
+    if (pipeline_capturing_key_events == false && pipeline_executor_state.event_length > 0) {
+        for (size_t i = 0; i < pipeline_executor_state.event_length; i++) {
             platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[i];
             if (event->is_press) {
                 platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, event->keycode);
@@ -238,6 +251,7 @@ static void process_key_pool(void) {
 
     // If the previous execution captured key events, we need to process them first
     if (last_execution.capture_key_events == true) {
+        pipeline_executor_state.event_length = pipeline_executor_state.key_event_buffer->event_buffer_pos; // Set the event length to the current buffer size
         physical_event_triggered(&pipeline_executor_state, pipeline_index, key_event, true);
         last_execution = pipeline_executor_state.return_data;
         pipeline_index = pipeline_executor_state.physical_pipeline_index + 1; // Move to the next pipeline
@@ -249,11 +263,19 @@ static void process_key_pool(void) {
             pipeline_executor_state.physical_pipeline_index = i;
             for (size_t j = 0; j < pipeline_executor_state.key_event_buffer->event_buffer_pos; j++) {
                 key_event = &pipeline_executor_state.key_event_buffer->event_buffer[j];
+                pipeline_executor_state.event_length = j + 1;
                 physical_event_triggered(&pipeline_executor_state, i, key_event, false);
                 last_execution = pipeline_executor_state.return_data;
-                if (last_execution.capture_key_events == true) break;
+                if (last_execution.capture_key_events == true && last_execution.callback_time > 0 && pipeline_executor_state.event_length < pipeline_executor_state.key_event_buffer->event_buffer_pos) {
+                    platform_time_t time_span = pipeline_executor_state.key_event_buffer->event_buffer[pipeline_executor_state.key_event_buffer->event_buffer_pos].time - pipeline_executor_state.key_event_buffer->event_buffer[pipeline_executor_state.key_event_buffer->event_buffer_pos - 1].time;
+                    if (time_span >= last_execution.callback_time) {
+                        physical_event_triggered_with_timer(&pipeline_executor_state, pipeline_index, last_execution.capture_key_events);
+                        last_execution = pipeline_executor_state.return_data;
+                    }
+                }
+                if (last_execution.capture_key_events == true && pipeline_executor_state.event_length == pipeline_executor_state.key_event_buffer->event_buffer_pos) break;
             }
-            if (last_execution.capture_key_events == true) break;
+            if (last_execution.capture_key_events == true && pipeline_executor_state.event_length == pipeline_executor_state.key_event_buffer->event_buffer_pos) break;
         }
     }
 

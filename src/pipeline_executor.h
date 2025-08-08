@@ -30,7 +30,6 @@ typedef struct {
 typedef struct {
     pipeline_callback_type_t callback_type;
     platform_key_event_t* key_event; // Only used for PIPELINE_CALLBACK_KEY_EVENT
-    platform_time_t callback_time; // Only used for PIPELINE_CALLBACK_TIMER
     bool is_capturing_keys; // Indicates if the pipeline is capturing key events
 } pipeline_physical_callback_params_t;
 
@@ -95,6 +94,7 @@ typedef struct {
     platform_virtual_event_buffer_t *virtual_event_buffer;
     capture_pipeline_t return_data;
     size_t physical_pipeline_index; // Index of the current pipeline being executed
+    uint8_t event_length; // Length of the key event buffer. This length is used when the event buffer has to be replayed for the next pipeline
     platform_deferred_token deferred_exec_callback_token;
     bool is_callback_set; // Indicates if a callback is set for deferred execution
 } pipeline_executor_state_t;
