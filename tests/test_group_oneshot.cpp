@@ -14,7 +14,7 @@ extern "C" {
 #include "pipeline_executor.h"
 }
 
-class BasicStateMachineTest : public ::testing::Test {
+class OneShotModifier : public ::testing::Test {
 protected:
     void SetUp() override {
         reset_mock_state();
@@ -30,7 +30,7 @@ protected:
 
 // Simple One-Shot Modifier
 // Objective: Verify basic one-shot modifier functionality
-TEST_F(BasicStateMachineTest, SimpleTap) {
+TEST_F(OneShotModifier, SimpleOneShotModifier) {
     const uint16_t ONE_SHOT_KEY = 3000;
     const uint16_t OUTPUT_KEY = 3001;
 
@@ -38,9 +38,10 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
     platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
 
+    size_t number_of_pairs = 1;
     pipeline_oneshot_modifier_global_status_t* global_status = pipeline_oneshot_modifier_global_state_create();
-    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config) + sizeof(pipeline_oneshot_modifier_pair_t*)));
-    global_config->length = 1;
+    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config) + sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
+    global_config->length = number_of_pairs;
     global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_SHIFT);
     pipeline_oneshot_modifier_global_t global;
     global.config = global_config;
@@ -55,7 +56,7 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
     release_key(OUTPUT_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
-        td_press(OUTPUT_KEY << MACRO_KEY_MODIFIER_LEFT_SHIFT, 0),
+        td_press(OUTPUT_KEY | MACRO_KEY_MODIFIER_LEFT_SHIFT, 0),
         td_release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));

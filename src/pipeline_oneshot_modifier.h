@@ -17,7 +17,6 @@ typedef struct {
 
 typedef struct {
     uint8_t modifiers;
-    bool modifiers_applied;
 } pipeline_oneshot_modifier_global_status_t;
 
 typedef struct {

@@ -21,6 +21,10 @@ set(CORE_SOURCES
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
+    src/pipeline_oneshot_modifier.c
+    src/pipeline_oneshot_modifier_initializer.c
+    src/pipeline_key_replacer.c
+    src/pipeline_key_replacer_initializer.c
     src/platform_layout.c
     src/platform_types.c
 )
@@ -33,6 +37,10 @@ set(CORE_HEADERS
     src/pipeline_executor.h
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h
+    src/pipeline_oneshot_modifier.h
+    src/pipeline_oneshot_modifier_initializer.h
+    src/pipeline_key_replacer.h
+    src/pipeline_key_replacer_initializer.h
     src/platform_interface.h
     src/platform_layout.h
     src/platform_types.h
@@ -93,8 +101,8 @@ if(BUILD_TESTS)
             ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
 
-    # Link the platform mock with the core library (not the other way around)
-    target_link_libraries(platform_mock PRIVATE tap_dance_engine)
+    # Link the platform mock with the core library and Google Test
+    target_link_libraries(platform_mock PRIVATE tap_dance_engine gtest)
 
     # Find test files (excluding platform_mock.cpp since it's now a separate library)
     file(GLOB_RECURSE TEST_SOURCES

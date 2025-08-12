@@ -20,17 +20,17 @@
 #endif
 
 #if defined(DEBUG)
-    static const char* timer_behavior_to_string(pipeline_executor_timer_behavior_t timer_behavior) {
-        switch (timer_behavior) {
-            case PIPELINE_EXECUTOR_TIMEOUT_NEW: return "NEW";
-            case PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS: return "PREVIOUS";
-            case PIPELINE_EXECUTOR_TIMEOUT_NONE: return "NONE";
-            default: return "UNKNOWN";
-        }
+static const char* timer_behavior_to_string(pipeline_executor_timer_behavior_t timer_behavior) {
+    switch (timer_behavior) {
+        case PIPELINE_EXECUTOR_TIMEOUT_NEW: return "NEW";
+        case PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS: return "PREVIOUS";
+        case PIPELINE_EXECUTOR_TIMEOUT_NONE: return "NONE";
+        default: return "UNKNOWN";
     }
+}
     #define DEBUG_RETURN_DATA() \
         DEBUG_PRINT("Return Data:"); \
-        DEBUG_PRINT("| Capture: %s, Behavior: %s, Time: %hu", pipeline_executor_state.return_data.capture_key_events ? "true" : "false", timer_behavior_to_string(pipeline_executor_state.return_data.timer_behavior), pipeline_executor_state.return_data.callback_time);
+        DEBUG_PRINT("| Capture: %s, Behavior: %s, Time: %u", pipeline_executor_state.return_data.capture_key_events ? "true" : "false", timer_behavior_to_string(pipeline_executor_state.return_data.timer_behavior), pipeline_executor_state.return_data.callback_time);
 #else
     #define DEBUG_RETURN_DATA() ((void)0)
 #endif
@@ -61,6 +61,17 @@ static uint8_t get_physical_key_event_count(void) {
 static platform_key_event_t* get_physical_key_event(uint8_t index) {
     if (index < pipeline_executor_state.event_length) {
         return &pipeline_executor_state.key_event_buffer->event_buffer[index];
+    }
+    return NULL; // Out of bounds
+}
+
+static uint8_t get_virtual_key_event_count(void) {
+    return pipeline_executor_state.event_length;
+}
+
+static platform_virtual_buffer_virtual_event_t* get_virtual_key_event(uint8_t index) {
+    if (index < pipeline_executor_state.virtual_event_buffer->press_buffer_pos) {
+        return &pipeline_executor_state.virtual_event_buffer->press_buffer[index];
     }
     return NULL; // Out of bounds
 }
@@ -156,11 +167,11 @@ static void physical_event_triggered_with_timer(pipeline_executor_state_t* pipel
     pipeline_executor_config->physical_pipelines[pipeline_index]->callback(&callback_params, &physical_actions, &physical_return_actions, pipeline_executor_config->physical_pipelines[pipeline_index]->data);
 }
 
-static void virtual_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_virtual_event_buffer_t* press_buffer_selected) {
+static void virtual_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_virtual_buffer_virtual_event_t* key_event) {
     reset_return_data(&pipeline_executor_state->return_data);
 
     pipeline_virtual_callback_params_t callback_params;
-    callback_params.key_events = press_buffer_selected;
+    callback_params.key_event = key_event;
     DEBUG_EXECUTOR("Executing virtual pipeline %hhu with key events", pipeline_index);
 
     pipeline_executor_config->virtual_pipelines[pipeline_index]->callback(&callback_params, &virtual_actions, pipeline_executor_config->virtual_pipelines[pipeline_index]->data);
@@ -211,14 +222,14 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     last_execution = pipeline_executor_state.return_data;
 
     if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW && last_execution.callback_time > 0) {
-        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %hu", last_execution.callback_time);
+        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", last_execution.callback_time);
         pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(last_execution.callback_time, physical_event_deferred_exec_callback, NULL);
         pipeline_executor_state.is_callback_set = true; // Set the callback set flag
     }
 
     // Process the virtual pipelines
     for (size_t i = 0; i < pipeline_executor_config->virtual_pipelines_length; i++) {
-        virtual_event_triggered(&pipeline_executor_state, i, pipeline_executor_state.virtual_event_buffer);
+        virtual_event_triggered(&pipeline_executor_state, i, &pipeline_executor_state.virtual_event_buffer->press_buffer[i]);
         last_execution = pipeline_executor_state.return_data;
     }
 
@@ -302,14 +313,14 @@ static void process_key_pool(void) {
         }
     }
     if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW && last_execution.callback_time > 0) {
-        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %hu", pipeline_executor_state.return_data.callback_time);
+        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", pipeline_executor_state.return_data.callback_time);
         pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.return_data.callback_time, physical_event_deferred_exec_callback, NULL);
         pipeline_executor_state.is_callback_set = true; // Set the callback set flag
     }
 
     // Process the virtual pipelines
     for (size_t i = 0; i < pipeline_executor_config->virtual_pipelines_length; i++) {
-        virtual_event_triggered(&pipeline_executor_state, i, pipeline_executor_state.virtual_event_buffer);
+        virtual_event_triggered(&pipeline_executor_state, i, &pipeline_executor_state.virtual_event_buffer->press_buffer[i]);
         last_execution = pipeline_executor_state.return_data;
     }
 
@@ -376,6 +387,8 @@ void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t vi
     virtual_actions.register_key_fn = &register_key;
     virtual_actions.unregister_key_fn = &unregister_key;
     virtual_actions.tap_key_fn = &tap_key;
+    virtual_actions.get_virtual_key_event_count_fn = &get_virtual_key_event_count;
+    virtual_actions.get_virtual_key_event_fn = &get_virtual_key_event;
 
     physical_return_actions.key_capture_fn = &end_with_capture_next_keys;
     physical_return_actions.no_capture_fn = &no_capture;

@@ -34,7 +34,7 @@ typedef struct {
 } pipeline_physical_callback_params_t;
 
 typedef struct {
-    platform_virtual_event_buffer_t* key_events;
+    platform_virtual_buffer_virtual_event_t* key_event;
 } pipeline_virtual_callback_params_t;
 
 typedef void (*key_buffer_tap)(platform_keycode_t keycode);
@@ -42,6 +42,8 @@ typedef void (*key_buffer_untap)(platform_keycode_t keycode);
 typedef void (*key_buffer_key)(platform_keycode_t keycode);
 typedef uint8_t (*key_buffer_get_physical_key_event_count)(void);
 typedef platform_key_event_t* (*key_buffer_get_physical_key_event)(uint8_t index);
+typedef uint8_t (*key_buffer_get_virtual_key_event_count)(void);
+typedef platform_virtual_buffer_virtual_event_t* (*key_buffer_get_virtual_key_event)(uint8_t index);
 typedef void (*key_buffer_remove_physical_press)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_release)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_tap)(uint8_t press_id);
@@ -63,6 +65,8 @@ typedef struct {
     key_buffer_tap register_key_fn;
     key_buffer_untap unregister_key_fn;
     key_buffer_key tap_key_fn;
+    key_buffer_get_virtual_key_event_count get_virtual_key_event_count_fn;
+    key_buffer_get_virtual_key_event get_virtual_key_event_fn;
 } pipeline_virtual_actions_t;
 
 typedef void (*pipeline_executor_return_key_capture)(pipeline_executor_timer_behavior_t timer_behavior, platform_time_t time);
