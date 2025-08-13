@@ -156,20 +156,6 @@ static void init_2D_map_and_layers(const uint16_t* layers, uint8_t num_layers, u
 }
 #endif
 
-#if defined(FRAMEWORK_QMK)
-
-void platform_layout_init_qmk_keymap_impl(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
-    platform_layout_init_2d_keymap_impl(layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
-}
-
-#elif defined(FRAMEWORK_ZMK)
-
-void platform_layout_init_qmk_keymap_impl(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
-    platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
-}
-
-#endif
-
 #if defined (AGNOSTIC_USE_1D_ARRAY)
 
 void platform_layout_init_1d_keymap_impl(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
@@ -180,6 +166,20 @@ void platform_layout_init_1d_keymap_impl(platform_keycode_t **layers, uint8_t nu
 
 void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     init_2D_map_and_layers(layers, num_layers, rows, cols);
+}
+
+#endif
+
+#if defined(FRAMEWORK_QMK)
+
+void platform_layout_init_qmk_keymap_impl(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
+    platform_layout_init_2d_keymap_impl(layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
+}
+
+#elif defined(FRAMEWORK_ZMK)
+
+void platform_layout_init_zmk_keymap_impl(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
+    platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
 }
 
 #endif

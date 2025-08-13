@@ -52,7 +52,7 @@ TEST_F(ActionOverflowTest, BasicTapActionOverflow) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -84,7 +84,7 @@ TEST_F(ActionOverflowTest, HoldActionNonOverflow) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -115,7 +115,7 @@ TEST_F(ActionOverflowTest, OverflowImmediateExecution) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -143,7 +143,7 @@ TEST_F(ActionOverflowTest, ExtremeOverflowHighTapCount) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -182,7 +182,7 @@ TEST_F(ActionOverflowTest, OverflowHoldAttemptWithStrategy) {
     static const platform_keycode_t keymaps[1][2][1] = {
         {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -216,7 +216,7 @@ TEST_F(ActionOverflowTest, OverflowMixedWithNonOverflowHold) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -256,7 +256,7 @@ TEST_F(ActionOverflowTest, OverflowBoundaryExactlyAtLastConfiguredAction) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -286,7 +286,7 @@ TEST_F(ActionOverflowTest, OverflowBoundaryOneBeyondLastConfigured) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -317,7 +317,7 @@ TEST_F(ActionOverflowTest, OverflowWithHoldAvailableAtOverflowCount) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -345,7 +345,7 @@ TEST_F(ActionOverflowTest, ImmediateExecutionDecisionTableOverflowScenarios) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     // Test immediate execution (SENDKEY only, no hold)
     pipeline_tap_dance_action_config_t* actions_immediate[] = {
@@ -373,7 +373,7 @@ TEST_F(ActionOverflowTest, OverflowResetVerification) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -408,7 +408,7 @@ TEST_F(ActionOverflowTest, OverflowWithDifferentActionTypes) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -438,7 +438,7 @@ TEST_F(ActionOverflowTest, ContinuousOverflowMultipleSequences) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -477,7 +477,7 @@ TEST_F(ActionOverflowTest, OverflowEdgeCaseZeroConfiguredActions) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     // Only hold actions, no tap actions
     pipeline_tap_dance_action_config_t* actions[] = {

@@ -55,7 +55,7 @@ TEST_F(HoldStrategyTest, TapPreferredInterruptionIgnored) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -90,7 +90,7 @@ TEST_F(HoldStrategyTest, TapPreferredHoldViaTimeoutOnly) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -122,7 +122,7 @@ TEST_F(HoldStrategyTest, TapPreferredMultipleInterruptions) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -157,7 +157,7 @@ TEST_F(HoldStrategyTest, BalancedHoldOnCompleteyCycle) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -193,7 +193,7 @@ TEST_F(HoldStrategyTest, BalancedTapWhenTriggerReleasedFirst) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -227,7 +227,7 @@ TEST_F(HoldStrategyTest, BalancedIncompleteInterruptionCycle) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -262,7 +262,7 @@ TEST_F(HoldStrategyTest, BalancedMultipleInterruptingKeys) {
     static const platform_keycode_t keymaps[1][4][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY_1 }, { INTERRUPTING_KEY_2 }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 4, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 4, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -301,7 +301,7 @@ TEST_F(HoldStrategyTest, BalancedTimeoutVsCompleteCycleRace) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -338,7 +338,7 @@ TEST_F(HoldStrategyTest, HoldPreferredImmediateHold) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -374,7 +374,7 @@ TEST_F(HoldStrategyTest, HoldPreferredFirstInterruptionWins) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -412,7 +412,7 @@ TEST_F(HoldStrategyTest, HoldPreferredTapWithoutInterruption) {
     static const platform_keycode_t keymaps[1][2][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -444,7 +444,7 @@ TEST_F(HoldStrategyTest, StrategyComparisonSameInputPattern) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     // Test with BALANCED strategy
     pipeline_tap_dance_action_config_t* actions[] = {
@@ -480,7 +480,7 @@ TEST_F(HoldStrategyTest, InterruptionDuringWaitingForTapState) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -514,7 +514,7 @@ TEST_F(HoldStrategyTest, EdgeCaseInterruptionAtExactTimeoutBoundary) {
     static const platform_keycode_t keymaps[1][2][1] = {
         {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -548,7 +548,7 @@ TEST_F(HoldStrategyTest, StrategyWithNoHoldActionAvailable) {
     static const platform_keycode_t keymaps[1][3][1] = {
         {{ TAP_DANCE_KEY }, { OUTPUT_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 3, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 3, 1);
 
     // Only tap actions, no hold actions
     pipeline_tap_dance_action_config_t* actions[] = {

@@ -57,7 +57,7 @@ static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, t
         {{ TAP_DANCE_KEY, KEY_B }},
         {{ 3011, 3012 }}  // Shift layer
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 1, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 1, 2);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY_A),

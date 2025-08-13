@@ -27,6 +27,21 @@ static void tap_dance_add_key_event(platform_keycode_t keycode, bool pressed) {
     g_mock_state.tap_dance_events.push_back(event);
 }
 
+static void tap_dance_add_report_event(platform_keycode_t keycode, bool pressed) {
+    tap_dance_event_t event;
+    event.type = pressed ? tap_dance_event_type_t::REPORT_PRESS : tap_dance_event_type_t::REPORT_RELEASE;
+    event.keycode = keycode;
+    event.time = g_mock_state.timer; // Use current timer for the event
+    g_mock_state.tap_dance_events.push_back(event);
+}
+
+static void tap_dance_add_report_send(void) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::REPORT_SEND;
+    event.time = g_mock_state.timer; // Use current timer for the event
+    g_mock_state.tap_dance_events.push_back(event);
+}
+
 // Mock implementation of platform interface for testing
 
 // MockPlatformState method implementations
@@ -175,6 +190,15 @@ void MockPlatformState::reset() {
             case tap_dance_event_type_t::LAYER_CHANGE:
                 actual_desc = "LAYER_CHANGE(" + std::to_string(actual.layer) + ")";
                 break;
+            case tap_dance_event_type_t::REPORT_PRESS:
+                actual_desc = "REPORT_PRESS(" + std::to_string(actual.keycode) + ")";
+                break;
+            case tap_dance_event_type_t::REPORT_RELEASE:
+                actual_desc = "REPORT_RELEASE(" + std::to_string(actual.keycode) + ")";
+                break;
+            case tap_dance_event_type_t::REPORT_SEND:
+                actual_desc = "REPORT_SEND";
+                break;
         }
         switch (expected.type) {
             case tap_dance_event_type_t::KEY_PRESS:
@@ -185,6 +209,15 @@ void MockPlatformState::reset() {
                 break;
             case tap_dance_event_type_t::LAYER_CHANGE:
                 expected_desc = "LAYER_CHANGE(" + std::to_string(expected.layer) + ")";
+                break;
+            case tap_dance_event_type_t::REPORT_PRESS:
+                expected_desc = "REPORT_PRESS(" + std::to_string(expected.keycode) + ")";
+                break;
+            case tap_dance_event_type_t::REPORT_RELEASE:
+                expected_desc = "REPORT_RELEASE(" + std::to_string(expected.keycode) + ")";
+                break;
+            case tap_dance_event_type_t::REPORT_SEND:
+                expected_desc = "REPORT_SEND";
                 break;
         }
 
@@ -197,16 +230,6 @@ void MockPlatformState::reset() {
 }
 
 ::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const {
-    if (expected.empty()) {
-        if (!key_actions.empty() || !layer_history.empty()) {
-            return ::testing::AssertionFailure()
-                << "Expected empty event sequence but found "
-                << key_actions.size() << " key actions and "
-                << layer_history.size() << " layer changes";
-        }
-        return ::testing::AssertionSuccess();
-    }
-
     if (tap_dance_events.size() != expected.size()) {
         return ::testing::AssertionFailure()
             << "Event count mismatch: actual=" << tap_dance_events.size()
@@ -245,16 +268,6 @@ void MockPlatformState::reset() {
 }
 
 ::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
-    if (expected.empty()) {
-        if (!key_actions.empty() || !layer_history.empty()) {
-            return ::testing::AssertionFailure()
-                << "Expected empty event sequence but found "
-                << key_actions.size() << " key actions and "
-                << layer_history.size() << " layer changes";
-        }
-        return ::testing::AssertionSuccess();
-    }
-
     if (tap_dance_events.size() != expected.size()) {
         return ::testing::AssertionFailure()
             << "Event count mismatch: actual=" << tap_dance_events.size()
@@ -345,6 +358,23 @@ void platform_unregister_keycode(platform_keycode_t keycode) {
     tap_dance_add_key_event(keycode, false);
 }
 
+void platform_add_key(platform_keycode_t keycode) {
+    printf("MOCK: Add key %u\n", keycode);
+    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
+    tap_dance_add_report_event(keycode, true);
+}
+
+void platform_del_key(platform_keycode_t keycode) {
+    printf("MOCK: Del key %u\n", keycode);
+    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
+    tap_dance_add_report_event(keycode, false);
+}
+
+void platform_send_report(void) {
+    printf("MOCK: Send report\n");
+    tap_dance_add_report_send();
+}
+
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
     return (key1.row == key2.row && key1.col == key2.col);
 }
@@ -365,7 +395,7 @@ void platform_layout_init_1d_keymap(platform_keycode_t **layers, uint8_t num_lay
     platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
 }
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
-void platform_layout_init_2d_keymap(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+void platform_layout_init_2D_keymap(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     platform_layout_init_2d_keymap_impl(layers,  num_layers, rows, cols);
 }
 #endif
@@ -423,15 +453,6 @@ bool platform_cancel_deferred_exec(platform_deferred_token token) {
     return true;
 }
 
-// Mock memory operations
-void* platform_malloc(size_t size) {
-    return malloc(size);
-}
-
-void platform_free(void* ptr) {
-    free(ptr);
-}
-
 // Test utilities
 void mock_set_timer(platform_time_t time) {
     g_mock_state.set_timer(time);
@@ -487,6 +508,29 @@ tap_dance_event_t td_layer(uint8_t layer, platform_time_t time) {
     tap_dance_event_t event;
     event.type = tap_dance_event_type_t::LAYER_CHANGE;
     event.layer = layer;
+    event.time = time;
+    return event;
+}
+
+tap_dance_event_t td_report_press(platform_keycode_t keycode, platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::REPORT_PRESS;
+    event.keycode = keycode;
+    event.time = time;
+    return event;
+}
+
+tap_dance_event_t td_report_release(platform_keycode_t keycode, platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::REPORT_RELEASE;
+    event.keycode = keycode;
+    event.time = time;
+    return event;
+}
+
+tap_dance_event_t td_report_send(platform_time_t time) {
+    tap_dance_event_t event;
+    event.type = tap_dance_event_type_t::REPORT_SEND;
     event.time = time;
     return event;
 }
