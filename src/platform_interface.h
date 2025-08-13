@@ -15,6 +15,10 @@ extern "C" {
 void platform_tap_keycode(platform_keycode_t keycode);
 void platform_register_keycode(platform_keycode_t keycode);
 void platform_unregister_keycode(platform_keycode_t keycode);
+void platform_add_key(platform_keycode_t keycode);
+void platform_del_key(platform_keycode_t keycode);
+void platform_send_report(void);
+
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2);
 
 // Layer operations

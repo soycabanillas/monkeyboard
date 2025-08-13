@@ -47,7 +47,10 @@ struct key_action_t {
 enum class tap_dance_event_type_t : uint8_t {
     KEY_PRESS = 0,
     KEY_RELEASE = 1,
-    LAYER_CHANGE = 2
+    LAYER_CHANGE = 2,
+    REPORT_PRESS = 3, // For report press events
+    REPORT_RELEASE = 4, // For report release events
+    REPORT_SEND = 5 // For report send events
 };
 
 struct tap_dance_event_t {
@@ -66,6 +69,11 @@ struct tap_dance_event_t {
                 return keycode == other.keycode;
             case tap_dance_event_type_t::LAYER_CHANGE:
                 return layer == other.layer;
+            case tap_dance_event_type_t::REPORT_PRESS:
+            case tap_dance_event_type_t::REPORT_RELEASE:
+                return keycode == other.keycode; // For report events, we only care about keycode equality
+            case tap_dance_event_type_t::REPORT_SEND:
+                return true; // For report events, we only care about type equality
         }
         return false;
     }
@@ -111,3 +119,6 @@ std::vector<key_action_t> tap_sequence(platform_keycode_t keycode);
 tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time = 0);
 tap_dance_event_t td_release(platform_keycode_t keycode, platform_time_t time = 0);
 tap_dance_event_t td_layer(uint8_t layer, platform_time_t time = 0);
+tap_dance_event_t td_report_press(platform_keycode_t keycode, platform_time_t time = 0);
+tap_dance_event_t td_report_release(platform_keycode_t keycode, platform_time_t time = 0);
+tap_dance_event_t td_report_send(platform_time_t time = 0);

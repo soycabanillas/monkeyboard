@@ -31,18 +31,18 @@ protected:
 // Simple One-Shot Modifier
 // Objective: Verify basic one-shot modifier functionality
 TEST_F(OneShotModifier, SimpleOneShotModifier) {
-    const uint16_t ONE_SHOT_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3001;
+    const uint16_t ONE_SHOT_KEY = 100;
+    const uint16_t OUTPUT_KEY = 101;
 
     static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY, OUTPUT_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 2);
 
 
     size_t number_of_pairs = 1;
     pipeline_oneshot_modifier_global_status_t* global_status = pipeline_oneshot_modifier_global_state_create();
     pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config) + sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
     global_config->length = number_of_pairs;
-    global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_SHIFT);
+    global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_CTRL);
     pipeline_oneshot_modifier_global_t global;
     global.config = global_config;
     global.status = global_status;
@@ -56,8 +56,12 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     release_key(OUTPUT_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
-        td_press(OUTPUT_KEY | MACRO_KEY_MODIFIER_LEFT_SHIFT, 0),
-        td_release(OUTPUT_KEY, 0)
+        td_report_press(PLATFORM_KC_LEFT_CTRL, 0),
+        td_report_press(OUTPUT_KEY, 0),
+        td_report_send(0),
+        td_report_release(PLATFORM_KC_LEFT_CTRL, 0),
+        td_report_send(0),
+        td_release(OUTPUT_KEY),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
 }

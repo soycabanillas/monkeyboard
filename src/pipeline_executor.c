@@ -41,17 +41,48 @@ pipeline_physical_actions_t physical_actions;
 pipeline_virtual_actions_t virtual_actions;
 pipeline_physical_return_actions_t physical_return_actions;
 
-static void register_key(platform_keycode_t keycode) {
+static void register_virtual_key(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, keycode);
 }
 
-static void unregister_key(platform_keycode_t keycode) {
+static void unregister_virtual_key(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, keycode);
+}
+
+static void tap_virtual_key(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, keycode);
+    platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, keycode);
+}
+
+static void register_key(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_register_keycode(keycode);
+}
+static void unregister_key(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_unregister_keycode(keycode);
 }
 
 static void tap_key(platform_keycode_t keycode) {
-    platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, keycode);
-    platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, keycode);
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_register_keycode(keycode);
+    platform_unregister_keycode(keycode);
+}
+
+static void report_press(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_add_key(keycode);
+}
+static void report_release(platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_del_key(keycode);
+}
+static void report_send(void) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
+    platform_send_report();
 }
 
 static uint8_t get_physical_key_event_count(void) {
@@ -77,6 +108,7 @@ static platform_virtual_buffer_virtual_event_t* get_virtual_key_event(uint8_t in
 }
 
 static void remove_physical_press(uint8_t press_id) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_press_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
     uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
@@ -86,6 +118,7 @@ static void remove_physical_press(uint8_t press_id) {
 }
 
 static void remove_physical_release(uint8_t press_id) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_release_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
     uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
@@ -95,6 +128,7 @@ static void remove_physical_release(uint8_t press_id) {
 }
 
 static void remove_physical_tap(uint8_t press_id) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     uint8_t current_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
     platform_key_event_remove_physical_tap_by_press_id(pipeline_executor_state.key_event_buffer, press_id);
     uint8_t new_length = pipeline_executor_state.key_event_buffer->event_buffer_pos;
@@ -104,6 +138,7 @@ static void remove_physical_tap(uint8_t press_id) {
 }
 
 static void change_key_code(uint8_t pos, platform_keycode_t keycode) {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
     uint8_t total_events = get_physical_key_event_count();
     if (pos < total_events) {
         platform_key_event_t* event = get_physical_key_event(pos);
@@ -113,6 +148,10 @@ static void change_key_code(uint8_t pos, platform_keycode_t keycode) {
     } else {
         DEBUG_PRINT_ERROR("Position out of bounds: %d", pos);
     }
+}
+
+static void mark_as_processed() {
+    pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
 }
 
 static void end_with_capture_next_keys(pipeline_executor_timer_behavior_t timer_behavior, platform_time_t time) {
@@ -139,6 +178,7 @@ static void no_capture(void) {
 }
 
 static void reset_return_data(capture_pipeline_t* return_data) {
+    return_data->processed = false; // Reset processed state
     return_data->timer_behavior = PIPELINE_EXECUTOR_TIMEOUT_NONE;
     return_data->callback_time = 0;
     return_data->capture_key_events = false;
@@ -177,14 +217,24 @@ static void virtual_event_triggered(pipeline_executor_state_t* pipeline_executor
     pipeline_executor_config->virtual_pipelines[pipeline_index]->callback(&callback_params, &virtual_actions, pipeline_executor_config->virtual_pipelines[pipeline_index]->data);
 }
 
-static void flush_virtual_event_buffer(void) {
+static void process_virtual_event_buffer(void) {
+    capture_pipeline_t last_execution;
+
+    // Process the virtual pipelines
     for (size_t pos = 0; pos < pipeline_executor_state.virtual_event_buffer->press_buffer_pos; pos++) {
-        if (pipeline_executor_state.virtual_event_buffer->press_buffer[pos].is_press) {
-            DEBUG_EXECUTOR("Registering virtual keycode %d", pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
-            platform_register_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
-        } else {
-            DEBUG_EXECUTOR("Unregistering virtual keycode %d", pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
-            platform_unregister_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
+        bool processed = false;
+        for (size_t i = 0; i < pipeline_executor_config->virtual_pipelines_length; i++) {
+            virtual_event_triggered(&pipeline_executor_state, i, &pipeline_executor_state.virtual_event_buffer->press_buffer[pos]);
+            last_execution = pipeline_executor_state.return_data;
+            processed = last_execution.processed;
+            if (processed == true) break;
+        }
+        if (processed == false) {
+            if (pipeline_executor_state.virtual_event_buffer->press_buffer[pos].is_press) {
+                platform_register_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
+            } else {
+                platform_unregister_keycode(pipeline_executor_state.virtual_event_buffer->press_buffer[pos].keycode);
+            }
         }
     }
 
@@ -228,15 +278,7 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     }
 
     // Process the virtual pipelines
-    for (size_t i = 0; i < pipeline_executor_config->virtual_pipelines_length; i++) {
-        virtual_event_triggered(&pipeline_executor_state, i, &pipeline_executor_state.virtual_event_buffer->press_buffer[i]);
-        last_execution = pipeline_executor_state.return_data;
-    }
-
-    // Flush the virtual event buffer if no key events are captured and the buffer has changed
-    // if (pipeline_capturing_key_events == false && key_digested == true) {
-        flush_virtual_event_buffer();
-    // }
+    process_virtual_event_buffer();
 
     DEBUG_BUFFERS("Key event buffer after time out:");
     DEBUG_RETURN_DATA();
@@ -319,20 +361,14 @@ static void process_key_pool(void) {
     }
 
     // Process the virtual pipelines
-    for (size_t i = 0; i < pipeline_executor_config->virtual_pipelines_length; i++) {
-        virtual_event_triggered(&pipeline_executor_state, i, &pipeline_executor_state.virtual_event_buffer->press_buffer[i]);
-        last_execution = pipeline_executor_state.return_data;
-    }
-
-    // Flush the virtual event buffer if no key events are captured and the buffer has changed
-    // if (pipeline_capturing_key_events == false && key_digested == true) {
-        flush_virtual_event_buffer();
-    // }
+    process_virtual_event_buffer();
 }
 
 static void pipeline_executor_create_state(void) {
     pipeline_executor_state.key_event_buffer = platform_key_event_create();
     pipeline_executor_state.virtual_event_buffer = platform_virtual_event_create();
+    pipeline_executor_state.return_data.processed = false;
+    pipeline_executor_state.return_data.timer_behavior = PIPELINE_EXECUTOR_TIMEOUT_NONE;
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.physical_pipeline_index = 0; // Initialize the pipeline index
@@ -348,6 +384,8 @@ static void pipeline_executor_create_state(void) {
 void pipeline_executor_reset_state(void) {
     platform_key_event_reset(pipeline_executor_state.key_event_buffer);
     platform_virtual_event_reset(pipeline_executor_state.virtual_event_buffer);
+    pipeline_executor_state.return_data.processed = false;
+    pipeline_executor_state.return_data.timer_behavior = PIPELINE_EXECUTOR_TIMEOUT_NONE;
     pipeline_executor_state.return_data.callback_time = 0;
     pipeline_executor_state.return_data.capture_key_events = false;
     pipeline_executor_state.physical_pipeline_index = 0; // Reset the pipeline index
@@ -374,21 +412,26 @@ void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t vi
     pipeline_executor_config->physical_pipelines = malloc(sizeof(physical_pipeline_t*) * physical_pipeline_count);
     pipeline_executor_config->virtual_pipelines = malloc(sizeof(virtual_pipeline_t*) * virtual_pipeline_count);
 
-    physical_actions.register_key_fn = &register_key;
-    physical_actions.unregister_key_fn = &unregister_key;
-    physical_actions.tap_key_fn = &tap_key;
+    physical_actions.register_key_fn = &register_virtual_key;
+    physical_actions.unregister_key_fn = &unregister_virtual_key;
+    physical_actions.tap_key_fn = &tap_virtual_key;
     physical_actions.get_physical_key_event_count_fn = &get_physical_key_event_count;
     physical_actions.get_physical_key_event_fn = &get_physical_key_event;
     physical_actions.remove_physical_press_fn = &remove_physical_press;
     physical_actions.remove_physical_release_fn = &remove_physical_release;
     physical_actions.remove_physical_tap_fn = &remove_physical_tap;
     physical_actions.change_key_code_fn = &change_key_code;
+    physical_actions.mark_as_processed_fn = &mark_as_processed;
 
     virtual_actions.register_key_fn = &register_key;
     virtual_actions.unregister_key_fn = &unregister_key;
     virtual_actions.tap_key_fn = &tap_key;
+    virtual_actions.report_press_fn = &report_press;
+    virtual_actions.report_release_fn = &report_release;
+    virtual_actions.report_send_fn = &report_send;
     virtual_actions.get_virtual_key_event_count_fn = &get_virtual_key_event_count;
     virtual_actions.get_virtual_key_event_fn = &get_virtual_key_event;
+    virtual_actions.mark_as_processed_fn = &mark_as_processed;
 
     physical_return_actions.key_capture_fn = &end_with_capture_next_keys;
     physical_return_actions.no_capture_fn = &no_capture;

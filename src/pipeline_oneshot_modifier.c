@@ -1,4 +1,5 @@
 #include "pipeline_oneshot_modifier.h"
+#include <bits/stdint-uintn.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "pipeline_executor.h"
@@ -23,12 +24,68 @@ void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_p
     for (size_t i = 0; i < global_config->length; i++)
     {
         if (global_config->modifier_pairs[i]->keycode == key_event->keycode) {
-            global_status->modifiers = global_status->modifiers | global_config->modifier_pairs[i]->modifiers;
+            if (key_event->is_press) {
+                global_status->modifiers = global_status->modifiers | global_config->modifier_pairs[i]->modifiers;
+            }
+            actions->mark_as_processed_fn(); // Mark the key event as processed
             return;
         }
     }
-    if (global_status->modifiers != 0 && key_event->keycode <= 0xFF) {
-        key_event->keycode = key_event->keycode | (global_status->modifiers << 8);
+    if (global_status->modifiers != 0 && key_event->keycode <= 0xFF && key_event->is_press == true) {
+        actions->mark_as_processed_fn();
+        uint16_t modifiers = global_status->modifiers;
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT) {
+            actions->report_press_fn(PLATFORM_KC_LEFT_SHIFT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT) {
+            actions->report_press_fn(PLATFORM_KC_RIGHT_SHIFT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL) {
+            actions->report_press_fn(PLATFORM_KC_LEFT_CTRL);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL) {
+            actions->report_press_fn(PLATFORM_KC_RIGHT_CTRL);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_ALT) {
+            actions->report_press_fn(PLATFORM_KC_LEFT_ALT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT) {
+            actions->report_press_fn(PLATFORM_KC_RIGHT_ALT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_GUI) {
+            actions->report_press_fn(PLATFORM_KC_LEFT_GUI);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI) {
+            actions->report_press_fn(PLATFORM_KC_RIGHT_GUI);
+        }
+        actions->report_press_fn(key_event->keycode);
+        actions->report_send_fn();
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT) {
+            actions->report_release_fn(PLATFORM_KC_LEFT_SHIFT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_SHIFT) {
+            actions->report_release_fn(PLATFORM_KC_RIGHT_SHIFT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_CTRL) {
+            actions->report_release_fn(PLATFORM_KC_LEFT_CTRL);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_CTRL) {
+            actions->report_release_fn(PLATFORM_KC_RIGHT_CTRL);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_ALT) {
+            actions->report_release_fn(PLATFORM_KC_LEFT_ALT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_ALT) {
+            actions->report_release_fn(PLATFORM_KC_RIGHT_ALT);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_LEFT_GUI) {
+            actions->report_release_fn(PLATFORM_KC_LEFT_GUI);
+        }
+        if (modifiers & MACRO_KEY_MODIFIER_RIGHT_GUI) {
+            actions->report_release_fn(PLATFORM_KC_RIGHT_GUI);
+        }
+        actions->report_send_fn();
+        global_status->modifiers = 0; // Reset the modifier state after processing
     }
 }
 
