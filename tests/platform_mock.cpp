@@ -453,15 +453,6 @@ bool platform_cancel_deferred_exec(platform_deferred_token token) {
     return true;
 }
 
-// Mock memory operations
-void* platform_malloc(size_t size) {
-    return malloc(size);
-}
-
-void platform_free(void* ptr) {
-    free(ptr);
-}
-
 // Test utilities
 void mock_set_timer(platform_time_t time) {
     g_mock_state.set_timer(time);
