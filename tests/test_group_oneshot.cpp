@@ -35,7 +35,7 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     const uint16_t OUTPUT_KEY = 101;
 
     static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY, OUTPUT_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 2);
 
 
     size_t number_of_pairs = 1;

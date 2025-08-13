@@ -52,7 +52,7 @@ TEST_F(TimingBoundaryConditionsTest, HoldTimeoutBoundary1msBefore) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -79,7 +79,7 @@ TEST_F(TimingBoundaryConditionsTest, HoldTimeoutBoundaryExactlyAt) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -105,7 +105,7 @@ TEST_F(TimingBoundaryConditionsTest, HoldTimeoutBoundaryJustAfter) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -130,7 +130,7 @@ TEST_F(TimingBoundaryConditionsTest, TapTimeoutBoundarySequenceReset) {
     const uint16_t OUTPUT_KEY = 3001;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -158,7 +158,7 @@ TEST_F(TimingBoundaryConditionsTest, TapTimeoutBoundarySequenceContinuation) {
     const uint16_t OUTPUT_KEY = 3001;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
@@ -188,7 +188,7 @@ TEST_F(TimingBoundaryConditionsTest, RaceConditionHoldVsTapTimeout) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -235,7 +235,7 @@ TEST_F(TimingBoundaryConditionsTest, RaceConditionStrategyVsTimeout) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][2][1] = {{{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -267,7 +267,7 @@ TEST_F(TimingBoundaryConditionsTest, RapidSequenceTimingSubTimeoutWindows) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -299,7 +299,7 @@ TEST_F(TimingBoundaryConditionsTest, TimingPrecisionMillisecondAccuracy) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -340,7 +340,7 @@ TEST_F(TimingBoundaryConditionsTest, MultipleTimeoutWindowsSequenceChain) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -372,7 +372,7 @@ TEST_F(TimingBoundaryConditionsTest, TimeoutAccumulationLongSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -402,7 +402,7 @@ TEST_F(TimingBoundaryConditionsTest, ZeroDurationEdgeCases) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -433,7 +433,7 @@ TEST_F(TimingBoundaryConditionsTest, TimeoutBoundaryWithStrategyIntegration) {
     static const platform_keycode_t keymaps[1][2][1] = {
         {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -467,7 +467,7 @@ TEST_F(TimingBoundaryConditionsTest, ComplexTimingScenarioMixedBoundaries) {
     static const platform_keycode_t keymaps[1][2][1] = {
         {{ TAP_DANCE_KEY }, { INTERRUPTING_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 2, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 2, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),

@@ -395,7 +395,7 @@ void platform_layout_init_1d_keymap(platform_keycode_t **layers, uint8_t num_lay
     platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
 }
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
-void platform_layout_init_2d_keymap(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+void platform_layout_init_2D_keymap(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     platform_layout_init_2d_keymap_impl(layers,  num_layers, rows, cols);
 }
 #endif

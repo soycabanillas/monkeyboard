@@ -22,11 +22,17 @@ void platform_send_report(void);
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2);
 
 // Layer operations
-#if defined(FRAMEWORK_QMK)
-void platform_layout_init_qmk_keymap(const uint16_t keymap[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers);
+#if defined(AGNOSTIC_USE_1D_ARRAY)
+void platform_layout_init_1D_keymap(const uint16_t keymap[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers);
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
-void platform_layout_init_2d_keymap(const uint16_t* keymap_array, uint8_t num_layers, uint8_t rows, uint8_t cols);
+void platform_layout_init_2D_keymap(const uint16_t* keymap_array, uint8_t num_layers, uint8_t rows, uint8_t cols);
 #endif
+#if defined(FRAMEWORK_QMK)
+void platform_layout_init_qmk_keymap(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers);
+#elif defined(FRAMEWORK_ZMK)
+void platform_layout_init_zmk_keymap(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys)
+#endif
+
 bool platform_layout_is_valid_layer(uint8_t layer);
 void platform_layout_set_layer(uint8_t layer);
 uint8_t platform_layout_get_current_layer(void);

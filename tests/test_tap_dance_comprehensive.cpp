@@ -60,7 +60,7 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
     static const platform_keycode_t keymaps[1][1][1] = {
         {{ TAP_DANCE_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
     // End keymap setup
 
     // Begin tap dance config
@@ -95,7 +95,7 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
             { 3022, 3023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config
@@ -131,7 +131,7 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     static const platform_keycode_t keymaps[1][1][1] = {
         {{ NORMAL_KEY }}
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
     // End keymap setup
     // No tap dance configuration - empty config
 
@@ -166,7 +166,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
             { 5022, 5023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config
@@ -207,7 +207,7 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
             { 6022, 6023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config
@@ -248,7 +248,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
             { 7022, 7023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config
@@ -294,7 +294,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
             { 8022, 8023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config
@@ -334,7 +334,7 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
             { 9022, 9023 }
         }
     };
-    platform_layout_init_2d_keymap((const uint16_t*)keymaps, 2, 2, 2);
+    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 2, 2);
     // End keymap setup
 
     // Begin tap dance config - only single and double tap configured
