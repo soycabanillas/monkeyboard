@@ -52,7 +52,7 @@ typedef void (*key_buffer_remove_physical_press)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_release)(uint8_t press_id);
 typedef void (*key_buffer_remove_physical_tap)(uint8_t press_id);
 typedef void (*key_buffer_change_key_code)(uint8_t pos, platform_keycode_t keycode);
-typedef void (*key_buffer_mark_as_processed)();
+typedef void (*key_buffer_mark_as_processed)(void);
 
 typedef struct {
     key_buffer_tap register_key_fn;

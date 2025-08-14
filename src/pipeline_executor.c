@@ -150,7 +150,7 @@ static void change_key_code(uint8_t pos, platform_keycode_t keycode) {
     }
 }
 
-static void mark_as_processed() {
+static void mark_as_processed(void) {
     pipeline_executor_state.return_data.processed = true; // Mark the key event as processed
 }
 

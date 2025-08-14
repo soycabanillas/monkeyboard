@@ -36,7 +36,7 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
 void platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
 void platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
 void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
-bool platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode);
+void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode);
 
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);
 

@@ -1,12 +1,12 @@
 #include "pipeline_key_replacer.h"
+#include "key_virtual_buffer.h"
 #include "pipeline_executor.h"
-#include "platform_interface.h"
 #include <stddef.h>
 
 void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
     //platform_log_debug("pipeline_key_replacer_callback || up: %u || press: %u", params->up, params->callback_type);
     platform_virtual_buffer_virtual_event_t* key_event = params->key_event;
-    
+
     pipeline_key_replacer_global_t* data = (pipeline_key_replacer_global_t*)user_data;
     if (key_event->is_press) {
         for (size_t i = 0; i < data->config->length; i++)
@@ -29,6 +29,6 @@ void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_param
     }
 }
 
-void pipeline_oneshot_modifier_callback_reset(void* user_data) {
+void pipeline_key_replacer_modifier_callback_reset(void* user_data) {
 
 }

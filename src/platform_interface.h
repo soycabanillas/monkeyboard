@@ -43,6 +43,9 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data);
 bool platform_cancel_deferred_exec(platform_deferred_token token);
 
+// Timer
+platform_time_t monkeyboard_get_time_32(void);
+
 
 #ifdef DEBUG
     #define DEBUG_PRINT(fmt, ...) printf("" fmt "\n", ##__VA_ARGS__)

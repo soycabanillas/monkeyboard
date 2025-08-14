@@ -1,7 +1,7 @@
 #include "pipeline_oneshot_modifier.h"
-#include <bits/stdint-uintn.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "key_virtual_buffer.h"
 #include "pipeline_executor.h"
 #include "platform_types.h"
 
@@ -15,7 +15,7 @@ pipeline_oneshot_modifier_global_status_t* pipeline_oneshot_modifier_global_stat
 
 void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
     platform_virtual_buffer_virtual_event_t* key_event = params->key_event;
-    
+
     // platform_log_debug("pipeline_oneshot_modifier_callback || up: %u || press: %u", params->up, params->callback_type);
     pipeline_oneshot_modifier_global_t* global = (pipeline_oneshot_modifier_global_t*)user_data;
     pipeline_oneshot_modifier_global_config_t* global_config = global->config;

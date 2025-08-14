@@ -173,7 +173,7 @@ void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_lay
 #if defined(FRAMEWORK_QMK)
 
 void platform_layout_init_qmk_keymap_impl(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
-    platform_layout_init_2d_keymap_impl(layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
+    platform_layout_init_2d_keymap_impl((const uint16_t*)layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
 }
 
 #elif defined(FRAMEWORK_ZMK)

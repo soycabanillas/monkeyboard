@@ -2,7 +2,6 @@
 #include "key_press_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
-#include <regex.h>
 #include <stdbool.h>
 #include <stdint.h>
 #ifdef DEBUG
@@ -172,7 +171,7 @@ void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffe
     platform_key_event_remove_physical_release_by_press_id(event_buffer, press_id);
 }
 
-bool platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode) {
+void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode) {
     platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
     if (key_press != NULL) {
         key_press->keycode = keycode; // Update the keycode in the key press buffer
