@@ -66,7 +66,7 @@ static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, t
     pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
     tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
-    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
+    tap_dance_config->behaviours[0] = tap_dance_behavior;
     tap_dance_config->length++;
 }
 
