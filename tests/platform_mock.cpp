@@ -383,11 +383,11 @@ bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2
 
 #if defined(FRAMEWORK_QMK)
 void platform_layout_init_qmk_keymap(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
-    platform_layout_init_qmk_keymap_impl(layers, num_layers) {
+    platform_layout_init_qmk_keymap_impl(layers, num_layers);
 }
 #elif defined(FRAMEWORK_ZMK)
 void platform_layout_init_zmk_keymap(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
-    platform_layout_init_zmk_keymap_impl(layers, num_layers, key_map, num_keys)
+    platform_layout_init_zmk_keymap_impl(layers, num_layers, key_map, num_keys);
 }
 #endif
 #if defined(AGNOSTIC_USE_1D_ARRAY)
