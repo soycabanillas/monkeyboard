@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct {
     size_t length;
-    pipeline_key_replacer_pair_t* modifier_pairs[];
+    pipeline_key_replacer_pair_t** modifier_pairs;
 } pipeline_key_replacer_global_config_t;
 
 typedef struct {

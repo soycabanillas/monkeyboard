@@ -49,12 +49,17 @@
 // pipeline_key_replacer_global_config_t* pipeline_key_replacer_global_config_create(void) {
 //     size_t n_elements = 7;
 
-//     pipeline_key_replacer_global_config_t* global_config = malloc(sizeof(pipeline_key_replacer_global_config_t) + n_elements * sizeof(pipeline_key_replacer_pair_t*));
+//     pipeline_key_replacer_global_config_t* global_config = malloc(sizeof(pipeline_key_replacer_global_config_t));
 //     if (!global_config) {
 //         return NULL;
 //     }
-
+//
 //     global_config->length = n_elements;
+//     global_config->modifier_pairs = malloc(sizeof(pipeline_key_replacer_pair_t*) * n_elements);
+//     if (!global_config->modifier_pairs) {
+//         free(global_config);
+//         return NULL;
+//     }
 //     global_config->modifier_pairs[0] = pipeline_key_replacer_create_pairs(CKC_REPLACE_SHIFTED_2, callback_ckc_replace_shifted_2);
 //     global_config->modifier_pairs[1] = pipeline_key_replacer_create_pairs(CKC_REPLACE_SHIFTED_3, callback_ckc_replace_shifted_3);
 //     global_config->modifier_pairs[2] = pipeline_key_replacer_create_pairs(CKC_REPLACE_SHIFTED_4, callback_ckc_replace_shifted_4);
