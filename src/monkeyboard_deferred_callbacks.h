@@ -28,11 +28,21 @@ typedef struct {
     bool                active;
 } deferred_callback_entry_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Public API functions
 deferred_token_t schedule_deferred_callback(uint32_t delay_ms, deferred_callback_t callback, void *context);
 bool cancel_deferred_callback(deferred_token_t token);
+void execute_callback(deferred_callback_entry_t *callback);
 void execute_deferred_executions(void);
+deferred_callback_entry_t *get_next_deferred_callback(uint32_t current_time);
 void clear_all_deferred_callbacks(void);
 uint8_t get_pending_callback_count(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

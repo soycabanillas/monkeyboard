@@ -104,6 +104,22 @@ bool cancel_deferred_callback(deferred_token_t token) {
     return true;
 }
 
+// Execute the next pending callback immediately
+void execute_callback(deferred_callback_entry_t *callback) {
+    if (callback != NULL) {
+        callback->callback(callback->context);
+        // Mark slot as inactive
+        callback->active = false;
+
+        // Clear the callback data for safety
+        callback->callback = NULL;
+        callback->context = NULL;
+        callback->execute_time = 0;
+        callback->add_order = 0;
+        callback->token = DEFERRED_INVALID_TOKEN;
+    }
+}
+
 // Main task function - call this from housekeeping_task_user() or work queue
 void execute_deferred_executions(void) {
     uint32_t current_time = monkeyboard_get_time_32();
@@ -116,17 +132,7 @@ void execute_deferred_executions(void) {
         // Handle timer wraparound by checking if difference is in valid range
         if (((current_time) - (callback_queue[i].execute_time)) < 0x80000000UL) {
             // Execute the callback with its context
-            callback_queue[i].callback(callback_queue[i].context);
-
-            // Mark slot as inactive
-            callback_queue[i].active = false;
-
-            // Clear the callback data for safety
-            callback_queue[i].callback = NULL;
-            callback_queue[i].context = NULL;
-            callback_queue[i].execute_time = 0;
-            callback_queue[i].add_order = 0;
-            callback_queue[i].token = DEFERRED_INVALID_TOKEN;
+            execute_callback(&callback_queue[i]);
         } else {
             // Since the queue is sorted by time, we can break early
             // if this callback isn't due yet
@@ -134,6 +140,19 @@ void execute_deferred_executions(void) {
         }
     }
 }
+
+// Get the first pending callback that is due to execute
+deferred_callback_entry_t *get_next_deferred_callback(uint32_t current_time) {
+
+    for (int8_t i = 0; i < MAX_DEFERRED_CALLBACKS; i++) {
+        if (callback_queue[i].active && ((current_time) - (callback_queue[i].execute_time)) < 0x80000000UL) {
+            return &callback_queue[i];
+        }
+    }
+    return NULL;
+}
+
+
 
 // Clear all pending callbacks
 void clear_all_deferred_callbacks(void) {

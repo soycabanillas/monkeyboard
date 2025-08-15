@@ -1,6 +1,7 @@
 #include "../src/platform_interface.h"
 #include "../src/platform_layout.h"
 #include "gtest/gtest.h"
+#include "monkeyboard_deferred_callbacks.h"
 #include "platform_types.h"
 #include "platform_mock.hpp"
 #include <stdlib.h>
@@ -48,15 +49,13 @@ static void tap_dance_add_report_send(void) {
 MockPlatformState::MockPlatformState() : timer(0), next_token(1) {}
 
 void MockPlatformState::set_timer(platform_time_t time) {
-    for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
-        if (it->execution_time <= time) {
-            // Execute the deferred callback
-            timer = it->execution_time; // Set timer to the execution time of the deferred call
-            it->callback(it->data);
-            // Remove the executed deferred call
-            it = g_mock_state.deferred_calls.erase(it);
-            if (it == g_mock_state.deferred_calls.end()) break; // Avoid invalid iterator
-        }
+    execute_deferred_executions();
+    deferred_callback_entry_t* entry = get_next_deferred_callback(time);
+    while (entry != nullptr && entry->execute_time <= time) {
+        // Execute the deferred callback
+        timer = entry->execute_time; // Set timer to the execution time of the deferred call
+        execute_callback(entry);
+        entry = get_next_deferred_callback(time);
     }
     timer = time;
 }
@@ -426,20 +425,8 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
-    g_mock_state.next_token++;
     printf("MOCK: Defer exec token %u for %u ms\n", g_mock_state.next_token, delay_ms);
-
-    deferred_call_t new_call = {g_mock_state.next_token, g_mock_state.timer + delay_ms, callback, data};
-
-    // Insert in chronological order by execution time
-    auto insert_pos = g_mock_state.deferred_calls.begin();
-    while (insert_pos != g_mock_state.deferred_calls.end() &&
-           insert_pos->execution_time <= new_call.execution_time) {
-        ++insert_pos;
-    }
-    g_mock_state.deferred_calls.insert(insert_pos, new_call);
-
-    return g_mock_state.next_token;
+    return schedule_deferred_callback(delay_ms, callback, data);
 }
 
 // Mock timer
@@ -449,13 +436,7 @@ platform_time_t monkeyboard_get_time_32(void) {
 
 bool platform_cancel_deferred_exec(platform_deferred_token token) {
     printf("MOCK: Cancel deferred exec token %u\n", token);
-    for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
-        if (it->token == token) {
-            g_mock_state.deferred_calls.erase(it);
-            return true;
-        }
-    }
-    return true;
+    return cancel_deferred_callback(token);
 }
 
 // Test utilities
