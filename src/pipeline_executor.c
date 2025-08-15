@@ -1,16 +1,14 @@
+#include "monkeyboard_debug.h"
 #include "pipeline_executor.h"
 #include <stdint.h>
 #include "key_virtual_buffer.h"
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include "key_event_buffer.h"
-#include "key_press_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 
-#if defined(DEBUG)
+#if defined(MONKEYBOARD_DEBUG)
+    #include "key_press_buffer.h"
     #define DEBUG_BUFFERS(caption) \
         DEBUG_PRINT("%s", caption); \
         print_key_press_buffer(pipeline_executor_state.key_event_buffer->key_press_buffer); \
@@ -19,7 +17,7 @@
     #define DEBUG_BUFFERS(caption) ((void)0)
 #endif
 
-#if defined(DEBUG)
+#if defined(MONKEYBOARD_DEBUG)
 static const char* timer_behavior_to_string(pipeline_executor_timer_behavior_t timer_behavior) {
     switch (timer_behavior) {
         case PIPELINE_EXECUTOR_TIMEOUT_NEW: return "NEW";

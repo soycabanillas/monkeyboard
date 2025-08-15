@@ -40,7 +40,7 @@ void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer
 
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);
 
-#ifdef DEBUG
+#ifdef MONKEYBOARD_DEBUG
 void print_key_event_buffer(platform_key_event_buffer_t *event_buffer);
 #endif
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef DEFERRED_CALLBACKS_H
 #define DEFERRED_CALLBACKS_H
 

@@ -1,12 +1,10 @@
+#include "monkeyboard_debug.h"
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 #include <stdbool.h>
 #include <stdint.h>
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -207,7 +205,7 @@ void platform_key_event_update_layer_for_physical_events(platform_key_event_buff
     }
 }
 
-#ifdef DEBUG
+#ifdef MONKEYBOARD_DEBUG
 void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
     if (event_buffer == NULL) {
         DEBUG_PRINT_ERROR("Key event buffer is NULL\n");

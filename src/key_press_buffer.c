@@ -1,11 +1,9 @@
+#include "monkeyboard_debug.h"
 #include "key_press_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 #include <stdbool.h>
 #include <stdint.h>
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -148,7 +146,7 @@ bool platform_key_press_ignore_release_by_press_id(platform_key_press_buffer_t *
     return false;
 }
 
-#ifdef DEBUG
+#ifdef MONKEYBOARD_DEBUG
 void print_key_press_buffer(platform_key_press_buffer_t *event_buffer) {
     if (event_buffer == NULL) {
         DEBUG_PRINT_ERROR("Key press buffer is NULL\n");

@@ -1,8 +1,6 @@
+#include "monkeyboard_debug.h"
 #include "pipeline_tap_dance.h"
 #include <stdint.h>
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include "key_event_buffer.h"
@@ -385,7 +383,7 @@ static void pipeline_tap_dance_global_state_reset(pipeline_tap_dance_global_conf
     global_status->last_behaviour = 0;
 }
 
-#ifdef DEBUG
+#ifdef MONKEYBOARD_DEBUG
 
 static const char* tap_dance_state_to_string(tap_dance_state_t state) {
     switch (state) {
@@ -423,7 +421,7 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
 }
 #endif
 
-#if defined(DEBUG)
+#if defined(MONKEYBOARD_DEBUG)
     #define DEBUG_STATE(caption) \
         DEBUG_PRINT_RAW("%s\n", caption); \
         print_tap_dance_status(global_config);
@@ -463,7 +461,7 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
                 pipeline_tap_dance_behaviour_status_t *status = behaviour->status;
 
                 if (last_key_event->keycode == config->keycodemodifier) {
-                    if (platform_compare_keyposition(last_key_event->keypos, status->trigger_keypos) == false) {
+                    if (status->state != TAP_DANCE_IDLE && platform_compare_keyposition(last_key_event->keypos, status->trigger_keypos) == false) {
                         DEBUG_TAP_DANCE("Skipping behaviour %zu for key %d, not matching trigger keypos", i, last_key_event->keycode);
                         actions->remove_physical_tap_fn(last_key_event->press_id);
                     } else {

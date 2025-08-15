@@ -3,17 +3,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "monkeyboard_platform_detection.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // Platform-specific keycode definitions - only when needed
-#if defined(QMK_KEYBOARD) || defined(QUANTUM_H)
+#if defined(FRAMEWORK_QMK)
 
-    #define FRAMEWORK_QMK
-
-    #include "quantum.h"
+    #include "keycodes.h"
     #define PLATFORM_KC_LEFT_SHIFT  KC_LSFT
     #define PLATFORM_KC_RIGHT_SHIFT KC_RSFT
     #define PLATFORM_KC_LEFT_CTRL   KC_LCTL
@@ -22,9 +21,8 @@ extern "C" {
     #define PLATFORM_KC_RIGHT_ALT   KC_RALT
     #define PLATFORM_KC_LEFT_GUI    KC_LGUI
     #define PLATFORM_KC_RIGHT_GUI   KC_RGUI
-#elif defined(CONFIG_ZMK) || defined(__ZEPHYR__)
 
-    #define FRAMEWORK_ZMK
+#elif defined(FRAMEWORK_ZMK)
 
     #include <zmk/keys.h>
     #define PLATFORM_KC_LEFT_SHIFT  LSHIFT
@@ -35,9 +33,8 @@ extern "C" {
     #define PLATFORM_KC_RIGHT_ALT   RALT
     #define PLATFORM_KC_LEFT_GUI    LGUI
     #define PLATFORM_KC_RIGHT_GUI   RGUI
-#elif defined(UNIT_TESTING)
 
-    #define FRAMEWORK_UNIT_TEST
+#elif defined(FRAMEWORK_UNIT_TEST)
 
     #define PLATFORM_KC_LEFT_SHIFT  0xE1
     #define PLATFORM_KC_RIGHT_SHIFT 0xE5
@@ -47,6 +44,7 @@ extern "C" {
     #define PLATFORM_KC_RIGHT_ALT   0xE6
     #define PLATFORM_KC_LEFT_GUI    0xE3
     #define PLATFORM_KC_RIGHT_GUI   0xE7
+
 #endif
 
 #define MACRO_KEY_MODIFIER_LEFT_SHIFT  (1 << 0)
