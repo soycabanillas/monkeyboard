@@ -59,24 +59,26 @@ TEST_F(HoldStrategyTest, TapPreferredInterruptionIgnored) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 1, TAP_DANCE_TAP_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 50); platform_wait_ms(200);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms (interrupt)
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms (before hold timeout)
-    wait_ms(200);            // Wait for tap timeout
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
 
-    // Expected: Interrupting key processed normally, tap action (interruption ignored)
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50), release(INTERRUPTING_KEY, 100),
-        press(OUTPUT_KEY, 350), release(OUTPUT_KEY, 350)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_press(OUTPUT_KEY, 350),
+        td_release(OUTPUT_KEY, 350)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.2: TAP_PREFERRED - Hold via Timeout Only
@@ -94,21 +96,26 @@ TEST_F(HoldStrategyTest, TapPreferredHoldViaTimeoutOnly) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 1, TAP_DANCE_TAP_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms (interrupt)
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    wait_ms(150);            // t=250ms (hold timeout exceeded)
-    release_key(TAP_DANCE_KEY);        // t=250ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 250);
 
-    // Expected: Hold action at timeout (delayed execution)
-    std::vector<uint8_t> expected_layers = {1, 0};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_layer(1, 200),
+        td_layer(0, 250)
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.3: TAP_PREFERRED - Multiple Interruptions
@@ -126,24 +133,28 @@ TEST_F(HoldStrategyTest, TapPreferredMultipleInterruptions) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 1, TAP_DANCE_TAP_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 30); release_key(INTERRUPTING_KEY, 30); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 30);   // t=30ms
-    press_key(3003, 20);               // t=50ms (another interruption)
-    release_key(INTERRUPTING_KEY, 30); // t=80ms
-    release_key(TAP_DANCE_KEY, 50);    // t=100ms
-    wait_ms(200);            // Wait for tap timeout
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 30);
+    press_key_at(3003, 50);
+    release_key_at(INTERRUPTING_KEY, 80);
+    release_key_at(TAP_DANCE_KEY, 130);
 
-    // Expected: All ignored, tap action executed
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 350), release(OUTPUT_KEY, 350)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 30),
+        td_press(3003, 50),
+        td_release(INTERRUPTING_KEY, 80),
+        td_press(OUTPUT_KEY, 330),
+        td_release(OUTPUT_KEY, 330)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.4: BALANCED - Hold on Complete Press/Release Cycle
@@ -163,23 +174,24 @@ TEST_F(HoldStrategyTest, BalancedHoldOnCompleteyCycle) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms
-    release_key(INTERRUPTING_KEY, 50); // t=100ms (complete cycle)
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms (trigger still held)
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
 
-    // Expected: Hold triggered by complete cycle
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50), release(INTERRUPTING_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_layer(1, 100),
+        td_layer(0, 150)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.5: BALANCED - Tap when Trigger Released First
@@ -199,21 +211,24 @@ TEST_F(HoldStrategyTest, BalancedTapWhenTriggerReleasedFirst) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 50); release_key(INTERRUPTING_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms
-    release_key(TAP_DANCE_KEY, 50);    // t=100ms (trigger released first)
-    release_key(INTERRUPTING_KEY, 50); // t=150ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(TAP_DANCE_KEY, 100);
+    release_key_at(INTERRUPTING_KEY, 150);
 
-    // Expected: Tap triggered when trigger released
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50), release(INTERRUPTING_KEY, 100),
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_press(OUTPUT_KEY, 100),
+        td_release(OUTPUT_KEY, 100),
+        td_release(INTERRUPTING_KEY, 150)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.6: BALANCED - Incomplete Interruption Cycle
@@ -233,21 +248,24 @@ TEST_F(HoldStrategyTest, BalancedIncompleteInterruptionCycle) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 100); release_key(INTERRUPTING_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms
-    release_key(TAP_DANCE_KEY, 100);   // t=100ms (release tap, interrupt still held)
-    release_key(INTERRUPTING_KEY, 50); // t=150ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(TAP_DANCE_KEY, 150);
+    release_key_at(INTERRUPTING_KEY, 200);
 
-    // Expected: Tap action executed, hold action pending
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50), release(INTERRUPTING_KEY, 100),
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_press(OUTPUT_KEY, 150),
+        td_release(OUTPUT_KEY, 150),
+        td_release(INTERRUPTING_KEY, 200)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.7: BALANCED - Multiple Interrupting Keys
@@ -268,26 +286,28 @@ TEST_F(HoldStrategyTest, BalancedMultipleInterruptingKeys) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY_1, 50); release_key(INTERRUPTING_KEY_1, 50); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY_1, 50);   // t=50ms
-    press_key(INTERRUPTING_KEY_2, 20);   // t=70ms (second interruption)
-    release_key(INTERRUPTING_KEY_1, 50); // t=100ms (complete cycle)
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms
-    release_key(INTERRUPTING_KEY_2, 50); // t=200ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY_1, 50);
+    press_key_at(INTERRUPTING_KEY_2, 70);
+    release_key_at(INTERRUPTING_KEY_1, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
+    release_key_at(INTERRUPTING_KEY_2, 200);
 
-    // Expected: Hold triggered by first complete cycle
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY_1, 50), release(INTERRUPTING_KEY_1, 100),
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY_1, 50),
+        td_press(INTERRUPTING_KEY_2, 70),
+        td_release(INTERRUPTING_KEY_1, 100),
+        td_layer(1, 100),
+        td_layer(0, 150),
+        td_release(INTERRUPTING_KEY_2, 200)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.8: BALANCED - Timeout vs Complete Cycle Race
@@ -307,24 +327,24 @@ TEST_F(HoldStrategyTest, BalancedTimeoutVsCompleteCycleRace) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 190); release_key(INTERRUPTING_KEY, 15); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 190);  // t=190ms (close to timeout)
-    release_key(INTERRUPTING_KEY, 15); // t=205ms (complete cycle after timeout)
-    release_key(TAP_DANCE_KEY, 50);    // t=250ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 190);
+    release_key_at(INTERRUPTING_KEY, 205);
+    release_key_at(TAP_DANCE_KEY, 250);
 
-    // Expected: Hold triggered by timeout (happens first)
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 190), release(INTERRUPTING_KEY, 205),
-        press(OUTPUT_KEY, 250), release(OUTPUT_KEY, 250)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 190),
+        td_layer(1, 200),
+        td_release(INTERRUPTING_KEY, 205),
+        td_layer(0, 250)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.9: HOLD_PREFERRED - Immediate Hold on Any Press
@@ -344,23 +364,24 @@ TEST_F(HoldStrategyTest, HoldPreferredImmediateHold) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: press_key(TAP_DANCE_KEY); press_key(INTERRUPTING_KEY, 50); release_key(INTERRUPTING_KEY, 50); release_key(TAP_DANCE_KEY, 50);
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms (immediate hold trigger)
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
 
-    // Expected: Immediate hold on interrupt press
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50), release(INTERRUPTING_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(1, 50),
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_layer(0, 150)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.10: HOLD_PREFERRED - First Interruption Wins
@@ -380,26 +401,28 @@ TEST_F(HoldStrategyTest, HoldPreferredFirstInterruptionWins) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 30);   // t=30ms (first interrupt - triggers hold)
-    press_key(3003, 20);               // t=50ms (second interrupt - ignored)
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    release_key(3003, 50);             // t=150ms
-    release_key(TAP_DANCE_KEY, 50);    // t=200ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 30);
+    press_key_at(3003, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(3003, 150);
+    release_key_at(TAP_DANCE_KEY, 200);
 
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 30),
-        press(3003, 50),                 // Second key processed normally
-        release(INTERRUPTING_KEY, 100),
-        release(3003, 150)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(1, 30),
+        td_press(INTERRUPTING_KEY, 30),
+        td_press(3003, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_release(3003, 150),
+        td_layer(0, 200)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0}; // Hold on first interrupt
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.11: HOLD_PREFERRED - Tap without Interruption
@@ -418,25 +441,25 @@ TEST_F(HoldStrategyTest, HoldPreferredTapWithoutInterruption) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    release_key(TAP_DANCE_KEY, 100);   // t=100ms (no interruption)
-    wait_ms(200);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 100);
 
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 300), release(OUTPUT_KEY, 300)  // Tap action (no interruption)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 300),
+        td_release(OUTPUT_KEY, 300)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.12: Strategy Comparison - Same Input Pattern
 // Objective: Verify different strategies produce different outputs with identical input
 TEST_F(HoldStrategyTest, StrategyComparisonSameInputPattern) {
-    // This would be implemented as multiple sub-tests with different strategy configurations
-    // Each using the same input pattern but expecting different outputs
-
     const uint16_t TAP_DANCE_KEY = 3000;
     const uint16_t OUTPUT_KEY = 3001;
     const uint16_t INTERRUPTING_KEY = 3002;
@@ -451,22 +474,24 @@ TEST_F(HoldStrategyTest, StrategyComparisonSameInputPattern) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 50),
-        release(INTERRUPTING_KEY, 100)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_layer(1, 100),
+        td_layer(0, 150)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0}; // BALANCED - hold (complete cycle)
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.13: Interruption During WAITING_FOR_TAP State
@@ -484,24 +509,26 @@ TEST_F(HoldStrategyTest, InterruptionDuringWaitingForTapState) {
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
+        createbehaviouraction_hold(1, 1, TAP_DANCE_TAP_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    release_key(TAP_DANCE_KEY, 100);   // t=100ms (enter WAITING_FOR_TAP)
-    press_key(INTERRUPTING_KEY, 50);   // t=150ms (interrupt during tap wait)
-    release_key(INTERRUPTING_KEY, 50); // t=200ms
-    wait_ms(150);            // t=350ms (tap timeout expires)
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 100);
+    press_key_at(INTERRUPTING_KEY, 150);
+    release_key_at(INTERRUPTING_KEY, 200);
 
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 150),    // Interrupt processed normally
-        release(INTERRUPTING_KEY, 200),
-        press(OUTPUT_KEY, 300),          // Original sequence completes
-        release(OUTPUT_KEY, 300)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(INTERRUPTING_KEY, 150),
+        td_release(INTERRUPTING_KEY, 200),
+        td_press(OUTPUT_KEY, 300),
+        td_release(OUTPUT_KEY, 300)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.14: Edge Case - Interruption at Exact Timeout Boundary
@@ -520,22 +547,24 @@ TEST_F(HoldStrategyTest, EdgeCaseInterruptionAtExactTimeoutBoundary) {
         createbehaviouraction_tap(1, 3001),
         createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 200);  // t=200ms (exactly at timeout)
-    release_key(INTERRUPTING_KEY, 1);  // t=201ms (complete cycle just after)
-    release_key(TAP_DANCE_KEY, 49);    // t=250ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 200);
+    release_key_at(INTERRUPTING_KEY, 201);
+    release_key_at(TAP_DANCE_KEY, 250);
 
-    std::vector<key_action_t> expected_keys = {
-        press(INTERRUPTING_KEY, 200),
-        release(INTERRUPTING_KEY, 201)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(INTERRUPTING_KEY, 200),
+        td_release(INTERRUPTING_KEY, 201),
+        td_layer(0, 250)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
-
-    std::vector<uint8_t> expected_layers = {1, 0}; // Timeout wins (happens first)
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 2.15: Strategy with No Hold Action Available
@@ -554,20 +583,23 @@ TEST_F(HoldStrategyTest, StrategyWithNoHoldActionAvailable) {
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);          // t=0ms
-    press_key(INTERRUPTING_KEY, 50);   // t=50ms (would trigger hold if available)
-    release_key(INTERRUPTING_KEY, 50); // t=100ms
-    release_key(TAP_DANCE_KEY, 50);    // t=150ms
+    press_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(INTERRUPTING_KEY, 50);
+    release_key_at(INTERRUPTING_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 0),            // Immediate execution (no hold available)
-        press(INTERRUPTING_KEY, 50),
-        release(INTERRUPTING_KEY, 100),
-        release(OUTPUT_KEY, 150)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 0),
+        td_press(INTERRUPTING_KEY, 50),
+        td_release(INTERRUPTING_KEY, 100),
+        td_release(OUTPUT_KEY, 150)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 

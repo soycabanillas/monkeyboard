@@ -67,16 +67,20 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
-    tap_key(TAP_DANCE_KEY);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 0);
 
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 0)         // Tap dance output
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 0)         // Tap dance output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
@@ -103,25 +107,31 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
     // First tap
-    tap_key(TAP_DANCE_KEY);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 0);
 
     // Second tap
-    tap_key(TAP_DANCE_KEY, 50, 50);
+    press_key_at(TAP_DANCE_KEY, 100);
+    release_key_at(TAP_DANCE_KEY, 100);
 
     // Third tap
-    tap_key(TAP_DANCE_KEY, 50, 50);
+    press_key_at(TAP_DANCE_KEY, 200);
+    release_key_at(TAP_DANCE_KEY, 200);
 
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 0),
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0),
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 0),
+        td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100),
+        td_press(OUTPUT_KEY, 200), td_release(OUTPUT_KEY, 200)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
@@ -135,14 +145,15 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     // End keymap setup
     // No tap dance configuration - empty config
 
-    tap_key(NORMAL_KEY);
+    press_key_at(NORMAL_KEY, 0);
+    release_key_at(NORMAL_KEY, 0);
     wait_ms(250);
 
     // Should only have the original key press/release, no tap dance actions
-    std::vector<key_action_t> expected_keys = {
-        press(NORMAL_KEY, 0), release(NORMAL_KEY, 0)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(NORMAL_KEY, 0), td_release(NORMAL_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 
     std::vector<uint8_t> expected_layers = {}; // No layer changes
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -173,18 +184,22 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
-    press_key(TAP_DANCE_KEY);
+    press_key_at(TAP_DANCE_KEY, 0);
     wait_ms(250);  // Wait for hold timeout
+    release_key_at(TAP_DANCE_KEY, 250);
 
-    release_key(TAP_DANCE_KEY);
-
-    std::vector<key_action_t> expected_keys = {
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(TARGET_LAYER, 200),
+        td_layer(BASE_LAYER, 250)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, BASE_LAYER};
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
@@ -215,19 +230,20 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
         createbehaviouraction_tap(1, OUTPUT_KEY),
         createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
-    press_key(TAP_DANCE_KEY);   // Press key
-    wait_ms(100);  // Wait less than hold timeout
-    release_key(TAP_DANCE_KEY); // Release before timeout
-    wait_ms(250);  // Wait for tap timeout
+    press_key_at(TAP_DANCE_KEY, 0);   // Press key
+    release_key_at(TAP_DANCE_KEY, 100); // Release before timeout
 
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 100), release(OUTPUT_KEY, 0)         // Tap output
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100)         // Tap output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // ==================== MULTI-TAP SEQUENCES ====================
@@ -256,25 +272,30 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
         createbehaviouraction_tap(1, SINGLE_TAP_KEY),
         createbehaviouraction_tap(2, DOUBLE_TAP_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
     // First tap
-    tap_key(TAP_DANCE_KEY);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 0);
     // Should wait for potential second tap, no tap output yet
-    std::vector<key_action_t> expected_keys = {
+    std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 
     // Second tap
-    tap_key(TAP_DANCE_KEY, 50);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 50);
     wait_ms(250);  // Wait for timeout
 
-    expected_keys = {
-        press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50)   // Double tap output
+    expected_events = {
+        td_press(DOUBLE_TAP_KEY, 0), td_release(DOUBLE_TAP_KEY, 50)   // Double tap output
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
@@ -303,19 +324,25 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
         createbehaviouraction_tap(2, DOUBLE_TAP_KEY),
         createbehaviouraction_tap(3, TRIPLE_TAP_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 3);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
-    tap_key(TAP_DANCE_KEY);
-    tap_key(TAP_DANCE_KEY, 50);
-    tap_key(TAP_DANCE_KEY, 50);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(TAP_DANCE_KEY, 50);
+    release_key_at(TAP_DANCE_KEY, 100);
+    press_key_at(TAP_DANCE_KEY, 150);
+    release_key_at(TAP_DANCE_KEY, 200);
     wait_ms(250);
 
-    std::vector<key_action_t> expected_keys = {
-        press(TRIPLE_TAP_KEY, 50), release(TRIPLE_TAP_KEY, 50)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(TRIPLE_TAP_KEY, 150), td_release(TRIPLE_TAP_KEY, 200)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
@@ -342,21 +369,27 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
         createbehaviouraction_tap(1, SINGLE_TAP_KEY),
         createbehaviouraction_tap(2, DOUBLE_TAP_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
     // End tap dance config
 
     // Three taps (exceeds configuration)
-    tap_key(TAP_DANCE_KEY);
-    tap_key(TAP_DANCE_KEY, 50);
-    tap_key(TAP_DANCE_KEY, 50);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 0);
+    press_key_at(TAP_DANCE_KEY, 50);
+    release_key_at(TAP_DANCE_KEY, 100);
+    press_key_at(TAP_DANCE_KEY, 150);
+    release_key_at(TAP_DANCE_KEY, 200);
 
     wait_ms(250);
 
-    std::vector<key_action_t> expected_keys = {
-        press(DOUBLE_TAP_KEY, 0), release(DOUBLE_TAP_KEY, 50),
-        press(SINGLE_TAP_KEY, 50 + TAP_TIMEOUT), release(SINGLE_TAP_KEY, 0)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(DOUBLE_TAP_KEY, 50), td_release(DOUBLE_TAP_KEY, 100),
+        td_press(SINGLE_TAP_KEY, 400), td_release(SINGLE_TAP_KEY, 400)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 

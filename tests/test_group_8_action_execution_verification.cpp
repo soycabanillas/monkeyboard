@@ -60,17 +60,21 @@ TEST_F(ActionExecutionVerificationTest, BasicSendkeyActionExecution) {
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    tap_key(TAP_DANCE_KEY, 50);      // t=0-50ms
-    wait_ms(200);          // t=250ms
+    press_key_at(TAP_DANCE_KEY, 0);      // t=0ms
+    release_key_at(TAP_DANCE_KEY, 50);   // t=50ms
+    wait_ms(200);                    // t=250ms
 
     // Expected Output: Immediate press (no hold configured), release follows input timing
-    std::vector<key_action_t> expected_keys = {
-        press(OUTPUT_KEY, 0), release(OUTPUT_KEY, 50)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 50)
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 8.2: Basic CHANGELAYERTEMPO Action Execution
@@ -89,16 +93,24 @@ TEST_F(ActionExecutionVerificationTest, BasicChangelayertempoActionExecution) {
         createbehaviouraction_tap(1, 3001),
         createbehaviouraction_hold(1, TARGET_LAYER, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key(TAP_DANCE_KEY);        // t=0ms
-    wait_ms(250);          // t=250ms (exceed hold timeout)
-    release_key(TAP_DANCE_KEY);      // t=250ms
+    press_key_at(TAP_DANCE_KEY, 0);        // t=0ms
+    wait_ms(250);                      // t=250ms (exceed hold timeout)
+    release_key_at(TAP_DANCE_KEY, 250);    // t=250ms
 
     // Expected Output: Layer activation at hold timeout, deactivation on key release
     std::vector<uint8_t> expected_layers = {TARGET_LAYER, 0};
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(TARGET_LAYER, 200), td_layer(0, 250)
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 8.8: Action Parameter Validation
@@ -114,27 +126,36 @@ TEST_F(ActionExecutionVerificationTest, ActionParameterValidation) {
         createbehaviouraction_tap(1, 0x41),  // 'A' key
         createbehaviouraction_hold(1, 3, TAP_DANCE_HOLD_PREFERRED)  // Layer 3
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
     // Test SENDKEY Parameter
-    tap_key(TAP_DANCE_KEY, 50);
+    press_key_at(TAP_DANCE_KEY, 0);
+    release_key_at(TAP_DANCE_KEY, 50);
     wait_ms(200);
 
-    std::vector<key_action_t> expected_keys = {
-        press(0x41, 200), release(0x41, 200)  // 'A' key
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(0x41, 250), td_release(0x41, 250)  // 'A' key
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 
     reset_mock_state();
 
     // Test CHANGELAYERTEMPO Parameter
-    press_key(TAP_DANCE_KEY);
+    press_key_at(TAP_DANCE_KEY, 0);
     wait_ms(250);
-    release_key(TAP_DANCE_KEY);
+    release_key_at(TAP_DANCE_KEY, 250);
 
     std::vector<uint8_t> expected_layers = {3, 0};  // Layer 3
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
+
+    std::vector<tap_dance_event_t> expected_events_2 = {
+        td_layer(3, 200), td_layer(0, 250)
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events_2));
 }
 
 // Test 8.15: Action Execution Performance - Rapid Sequences
@@ -152,22 +173,26 @@ TEST_F(ActionExecutionVerificationTest, ActionExecutionPerformanceRapidSequences
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
     // 10 rapid tap sequences
     for (int i = 0; i < 10; i++) {
-        tap_key(TAP_DANCE_KEY, 5);   // Very fast taps
-        wait_ms(10);       // Minimal gap
+        press_key_at(TAP_DANCE_KEY, i * 15);     // t = i*15ms
+        release_key_at(TAP_DANCE_KEY, i * 15 + 5); // t = i*15+5ms (Very fast taps)
+        wait_ms(10);                         // Minimal gap
     }
 
     // Expected Output: 10 pairs of press/release events at precise timing
-    std::vector<key_action_t> expected_keys;
+    std::vector<tap_dance_event_t> expected_events;
     for (int i = 0; i < 10; i++) {
-        expected_keys.push_back(press(OUTPUT_KEY, i * 15));      // t = i*15
-        expected_keys.push_back(release(OUTPUT_KEY, 5));         // 5ms gap
+        expected_events.push_back(td_press(OUTPUT_KEY, i * 15));     // t = i*15
+        expected_events.push_back(td_release(OUTPUT_KEY, i * 15 + 5)); // 5ms gap
     }
-    EXPECT_TRUE(g_mock_state.key_actions_match_with_time_gaps(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
 // Test 8.16: Action State Cleanup Verification
@@ -183,23 +208,27 @@ TEST_F(ActionExecutionVerificationTest, ActionStateCleanupVerification) {
         createbehaviouraction_tap(1, 3001),
         createbehaviouraction_hold(1, 1, TAP_DANCE_HOLD_PREFERRED)
     };
-    tap_dance_config->behaviours[tap_dance_config->length] = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
     // First sequence - hold with early termination
-    press_key(TAP_DANCE_KEY);        // t=0ms
-    wait_ms(250);          // t=250ms (layer activated)
-    release_key(TAP_DANCE_KEY);      // t=250ms (layer deactivated)
+    press_key_at(TAP_DANCE_KEY, 0);        // t=0ms
+    wait_ms(250);                      // t=250ms (layer activated)
+    release_key_at(TAP_DANCE_KEY, 250);    // t=250ms (layer deactivated)
 
     // Immediate second sequence - should start clean
-    press_key(TAP_DANCE_KEY);        // t=250ms
-    release_key(TAP_DANCE_KEY, 50);  // t=300ms (tap, not hold)
-    wait_ms(200);          // t=500ms
+    press_key_at(TAP_DANCE_KEY, 250);      // t=250ms
+    release_key_at(TAP_DANCE_KEY, 300);    // t=300ms (tap, not hold)
+    wait_ms(200);                      // t=500ms
 
-    std::vector<key_action_t> expected_keys = {
-        press(3001, 0), release(3001, 50)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_layer(1, 200), td_layer(0, 250),    // First sequence hold
+        td_press(3001, 500), td_release(3001, 500)  // Second sequence tap
     };
-    EXPECT_TRUE(g_mock_state.key_actions_match(expected_keys));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 
     std::vector<uint8_t> expected_layers = {1, 0};  // First sequence hold, second sequence tap
     EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
