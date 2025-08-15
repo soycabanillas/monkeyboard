@@ -28,8 +28,10 @@ protected:
         // Initialize with empty configuration that tests can customize
         size_t n_elements = 10;
         tap_dance_config = static_cast<pipeline_tap_dance_global_config_t*>(
-            malloc(sizeof(*tap_dance_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
+            malloc(sizeof(*tap_dance_config)));
         tap_dance_config->length = 0;
+        tap_dance_config->behaviours = static_cast<pipeline_tap_dance_behaviour_t**>(
+            malloc(n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
 
         // Create minimal pipeline executor
         pipeline_executor_create_config(1, 0);

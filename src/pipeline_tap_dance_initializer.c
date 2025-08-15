@@ -42,8 +42,9 @@ pipeline_tap_dance_behaviour_t* createbehaviour(platform_keycode_t keycodemodifi
         .hold_timeout = g_hold_timeout,
         .tap_timeout = g_tap_timeout
     };
-    pipeline_tap_dance_behaviour_config_t* allocationuserdata = (pipeline_tap_dance_behaviour_config_t*)malloc(sizeof(pipeline_tap_dance_behaviour_config_t) + actionslength * sizeof (pipeline_tap_dance_action_config_t*));
+    pipeline_tap_dance_behaviour_config_t* allocationuserdata = (pipeline_tap_dance_behaviour_config_t*)malloc(sizeof(pipeline_tap_dance_behaviour_config_t));
     memcpy(allocationuserdata, &userdata, sizeof userdata);
+    allocationuserdata->actions = (pipeline_tap_dance_action_config_t**)malloc(actionslength * sizeof(pipeline_tap_dance_action_config_t*));
     for (size_t i = 0; i < actionslength; i++)
     {
         allocationuserdata->actions[i] = actions[i];

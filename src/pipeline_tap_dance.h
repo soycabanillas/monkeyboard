@@ -69,7 +69,7 @@ typedef struct {
     uint16_t hold_timeout; // Timeout for hold action
     uint16_t tap_timeout;  // Timeout for tap action
     size_t actionslength;
-    pipeline_tap_dance_action_config_t *actions[];
+    pipeline_tap_dance_action_config_t **actions;
 } pipeline_tap_dance_behaviour_config_t;
 
 typedef struct {
@@ -84,7 +84,7 @@ typedef struct {
 
 typedef struct {
     size_t length; // Number of tap dance behaviour configurations
-    pipeline_tap_dance_behaviour_t *behaviours[]; // Array of tap dance behaviour configurations
+    pipeline_tap_dance_behaviour_t **behaviours; // Array of tap dance behaviour configurations
 } pipeline_tap_dance_global_config_t;
 
 void pipeline_tap_dance_global_state_create(void);

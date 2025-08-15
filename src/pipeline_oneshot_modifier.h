@@ -12,7 +12,7 @@ typedef struct {
 
 typedef struct {
     size_t length;
-    pipeline_oneshot_modifier_pair_t* modifier_pairs[];
+    pipeline_oneshot_modifier_pair_t** modifier_pairs;
 } pipeline_oneshot_modifier_global_config_t;
 
 typedef struct {

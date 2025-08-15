@@ -72,12 +72,17 @@
 // pipeline_oneshot_modifier_global_config_t* pipeline_oneshot_modifier_global_config_create(void) {
 //     size_t n_elements = 8;
 
-//     pipeline_oneshot_modifier_global_config_t* global_config = malloc(sizeof(pipeline_oneshot_modifier_global_config_t) + n_elements * sizeof(pipeline_oneshot_modifier_pair_t*));
+//     pipeline_oneshot_modifier_global_config_t* global_config = malloc(sizeof(pipeline_oneshot_modifier_global_config_t));
 //     if (!global_config) {
 //         return NULL;
 //     }
-
+//
 //     global_config->length = n_elements;
+//     global_config->modifier_pairs = malloc(sizeof(pipeline_oneshot_modifier_pair_t*) * n_elements);
+//     if (!global_config->modifier_pairs) {
+//         free(global_config);
+//         return NULL;
+//     }
 //     global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(CKC_ONESHOT_MODIFIER_LEFT_CTRL, MACRO_KEY_MODIFIER_LEFT_CTRL);
 //     global_config->modifier_pairs[1] = pipeline_oneshot_modifier_create_pairs(CKC_ONESHOT_MODIFIER_LEFT_ALT, MACRO_KEY_MODIFIER_LEFT_ALT);
 //     global_config->modifier_pairs[2] = pipeline_oneshot_modifier_create_pairs(CKC_ONESHOT_MODIFIER_LEFT_SHIFT, MACRO_KEY_MODIFIER_LEFT_SHIFT);
@@ -96,8 +101,9 @@
 // pipeline_tap_dance_global_config_t* pipeline_tap_dance_global_config_create(void) {
 //     size_t n_elements = 6;
 
-//     pipeline_tap_dance_global_config_t* global_config = malloc(sizeof *global_config + n_elements * sizeof (pipeline_tap_dance_behaviour_t*));
+//     pipeline_tap_dance_global_config_t* global_config = malloc(sizeof *global_config);
 //     global_config->length = n_elements;
+//     global_config->behaviours = malloc(n_elements * sizeof(pipeline_tap_dance_behaviour_t*));
 
 //     pipeline_tap_dance_action_config_t* custom_actions[] =
 //          {

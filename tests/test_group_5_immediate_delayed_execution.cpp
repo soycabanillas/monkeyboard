@@ -23,8 +23,10 @@ protected:
 
         size_t n_elements = 10;
         tap_dance_config = static_cast<pipeline_tap_dance_global_config_t*>(
-            malloc(sizeof(*tap_dance_config) + n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
+            malloc(sizeof(*tap_dance_config)));
         tap_dance_config->length = 0;
+        tap_dance_config->behaviours = static_cast<pipeline_tap_dance_behaviour_t**>(
+            malloc(n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
 
         pipeline_executor_create_config(1, 0);
         pipeline_executor_add_physical_pipeline(0, &pipeline_tap_dance_callback_process_data, &pipeline_tap_dance_callback_reset, tap_dance_config);

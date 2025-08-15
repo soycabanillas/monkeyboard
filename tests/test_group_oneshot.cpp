@@ -40,8 +40,9 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
 
     size_t number_of_pairs = 1;
     pipeline_oneshot_modifier_global_status_t* global_status = pipeline_oneshot_modifier_global_state_create();
-    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config) + sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
+    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config)));
     global_config->length = number_of_pairs;
+    global_config->modifier_pairs = static_cast<pipeline_oneshot_modifier_pair_t**>(malloc(sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
     global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_CTRL);
     pipeline_oneshot_modifier_global_t global;
     global.config = global_config;

@@ -6,6 +6,7 @@
     #if !defined(MONKEYBOARD_DEBUG)
         #define MONKEYBOARD_DEBUG
     #endif
+    #include <stdio.h>
     #define DEBUG_PRINT(fmt, ...) printf("" fmt "\n", ##__VA_ARGS__)
     #define DEBUG_PRINT_NL() printf("\n")
     #define DEBUG_PRINT_RAW(fmt, ...) printf("" fmt "", ##__VA_ARGS__)
