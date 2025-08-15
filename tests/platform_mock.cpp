@@ -442,6 +442,11 @@ platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(
     return g_mock_state.next_token;
 }
 
+// Mock timer
+platform_time_t monkeyboard_get_time_32(void) {
+    return g_mock_state.timer;
+}
+
 bool platform_cancel_deferred_exec(platform_deferred_token token) {
     printf("MOCK: Cancel deferred exec token %u\n", token);
     for (auto it = g_mock_state.deferred_calls.begin(); it != g_mock_state.deferred_calls.end(); ++it) {
