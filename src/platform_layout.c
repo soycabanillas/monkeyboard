@@ -5,7 +5,6 @@
 #include "platform_types.h"
 
 static custom_layout_t* manager = NULL;
-static matrix_pos_t* key_map = NULL;
 static uint8_t keymap_rows = 0;
 static uint8_t keymap_cols = 0;
 static uint16_t keymap_num_keys = 0;
@@ -33,26 +32,12 @@ static void init_1D_map_and_layers(platform_keycode_t **layers, uint8_t num_laye
     // Allocate array of pointers to layouts
     manager->layouts = (platform_keycode_t **)malloc(sizeof(platform_keycode_t*) * num_layers);
     if (!manager->layouts) {
-        free(manager);
         return;
     }
 
     // Reference the external layouts (no copying)
     for (uint8_t i = 0; i < num_layers; i++) {
         manager->layouts[i] = layers[i];
-    }
-
-    // Initialize the key map
-    key_map = (matrix_pos_t*)malloc(num_keys * sizeof(matrix_pos_t));
-    if (!key_map) {
-        free(manager->layouts);
-        free(manager);
-        return; // Handle allocation failure
-    }
-
-    for (uint16_t i = 0; i < num_keys; i++) {
-        key_map[i].row = key_map[i].row;
-        key_map[i].col = key_map[i].col;
     }
 
     keymap_rows = 1; // For 1D array, we consider it as a single row
@@ -85,10 +70,6 @@ static platform_keycode_t** convert_keymap_impl(const void* layers_ptr, uint8_t 
     for (uint8_t layer = 0; layer < num_layers; layer++) {
         layouts_1d[layer] = malloc(layer_size * sizeof(platform_keycode_t));
         if (!layouts_1d[layer]) {
-            for (uint8_t i = 0; i < layer; i++) {
-                free(layouts_1d[i]);
-            }
-            free(layouts_1d);
             return NULL;
         }
 
@@ -126,28 +107,12 @@ static void init_2D_map_and_layers(const uint16_t* layers, uint8_t num_layers, u
     // Allocate array of pointers to layouts
     manager->layouts = (platform_keycode_t **)malloc(sizeof(platform_keycode_t*) * num_layers);
     if (!manager->layouts) {
-        free(manager);
         return;
     }
 
     // Reference the external layouts (no copying)
     for (uint8_t i = 0; i < num_layers; i++) {
         manager->layouts[i] = layouts_1d[i];
-    }
-
-    // Initialize the key map
-    key_map = (matrix_pos_t*)malloc(rows * cols * sizeof(matrix_pos_t));
-    if (!key_map) {
-        free(manager->layouts);
-        free(manager);
-        return; // Handle allocation failure
-    }
-
-    for (uint8_t row = 0; row < rows; row++) {
-        for (uint8_t columnIndex = 0; columnIndex < cols; columnIndex++) {
-            key_map[row * cols + columnIndex].row = row;
-            key_map[row * cols + columnIndex].col = columnIndex;
-        }
     }
 
     keymap_rows = rows;
@@ -234,22 +199,4 @@ platform_keycode_t platform_layout_get_keycode_from_layer_impl(uint8_t layer, pl
     return manager->layouts[layer][position.row * keymap_cols + position.col];
 }
 #endif
-
-void platform_layout_destroy(void) {
-    if (manager) {
-        for (uint8_t i = 0; i < manager->num_layers; i++) {
-            free(manager->layouts[i]);
-        }
-        free(manager->layouts);
-        free(manager);
-        manager = NULL;
-    }
-    if (key_map) {
-        free(key_map);
-        key_map = NULL;
-    }
-    keymap_rows = 0;
-    keymap_cols = 0;
-    keymap_num_keys = 0;
-}
 
