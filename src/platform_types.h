@@ -106,12 +106,22 @@ typedef struct {
     platform_time_t time;
 } abskeyevent_t;
 
+#if defined(AGNOSTIC_USE_1D_ARRAY)
 typedef struct {
     uint8_t num_layers;
     uint32_t num_positions;
     uint8_t current_layer;
-    platform_keycode_t **layouts;  // Pointer to array of layout pointers
+    platform_keycode_t **layouts;  // Pointer to array of 1D layout pointers
 } custom_layout_t;
+#elif defined(AGNOSTIC_USE_2D_ARRAY)
+typedef struct {
+    uint8_t num_layers;
+    uint8_t rows;
+    uint8_t cols;
+    uint8_t current_layer;
+    const uint16_t *layouts;  // Pointer to flattened 2D layout data (layers * rows * cols)
+} custom_layout_t;
+#endif
 
 #ifdef __cplusplus
 }
