@@ -52,14 +52,14 @@ const uint16_t KEY_B = 3010;          // KC_B
 const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
 const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
 
-static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
+static KeyboardSimulator set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
 
 
     static const platform_keycode_t keymaps[2][1][2] = {
         {{ TAP_DANCE_KEY, KEY_B }},
         {{ 3011, 3012 }}  // Shift layer
     };
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 2, 1, 2);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 2);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY_A),
@@ -70,6 +70,8 @@ static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, t
     tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
     tap_dance_config->behaviours[0] = tap_dance_behavior;
     tap_dance_config->length++;
+    
+    return keyboard;
 }
 
 
@@ -79,12 +81,12 @@ static void set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, t
 // Expected: All flavors should produce tap (KC_A) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 199);
-    press_key_at(KEY_B, 210);
-    release_key_at(KEY_B, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(KEY_B, 210);
+    keyboard.release_key_at(KEY_B, 220);
 
     // Should produce tap (KC_A) then KC_B
     std::vector<tap_dance_event_t> expected_events = {
@@ -97,12 +99,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 199);
-    press_key_at(KEY_B, 210);
-    release_key_at(KEY_B, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(KEY_B, 210);
+    keyboard.release_key_at(KEY_B, 220);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 0),
@@ -114,12 +116,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 199);
-    press_key_at(KEY_B, 210);
-    release_key_at(KEY_B, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(KEY_B, 210);
+    keyboard.release_key_at(KEY_B, 220);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 0),
@@ -136,12 +138,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 201);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 201);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -153,12 +155,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 201);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 201);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -170,12 +172,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 201);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 201);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -192,12 +194,12 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 199),
@@ -209,12 +211,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 120),
@@ -226,12 +228,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 199);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),
@@ -247,13 +249,13 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     // Sequence: A down, B down, B up, wait for timeout, A up
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // TAP_PREFERRED: Should produce tap (KC_A) when interrupted, even with timeout after
     std::vector<tap_dance_event_t> expected_events = {
@@ -266,12 +268,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // BALANCED: Should produce hold (shift layer) when timeout is reached
     std::vector<tap_dance_event_t> expected_events = {
@@ -284,12 +286,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(KEY_B, 120);
-    release_key_at(TAP_DANCE_KEY, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(KEY_B, 120);
+    keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // HOLD_PREFERRED: Should produce hold (shift layer) when interrupted
     std::vector<tap_dance_event_t> expected_events = {
@@ -306,12 +308,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
-    release_key_at(TAP_DANCE_KEY, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
+    keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -323,12 +325,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
-    release_key_at(TAP_DANCE_KEY, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
+    keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -340,12 +342,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 205);
-    release_key_at(KEY_B, 210);
-    release_key_at(TAP_DANCE_KEY, 220);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 205);
+    keyboard.release_key_at(KEY_B, 210);
+    keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -362,12 +364,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 130);
-    release_key_at(KEY_B, 140);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 130);
+    keyboard.release_key_at(KEY_B, 140);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 130),
@@ -379,12 +381,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 130);
-    release_key_at(KEY_B, 140);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 130);
+    keyboard.release_key_at(KEY_B, 140);
 
     // PERMISSIVE_HOLD/BALANCED: Should produce "ab" - same as TAP_PREFERRED
     std::vector<tap_dance_event_t> expected_events = {
@@ -397,12 +399,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 130);
-    release_key_at(KEY_B, 140);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 130);
+    keyboard.release_key_at(KEY_B, 140);
 
     // HOLD_ON_OTHER_KEY_PRESS/HOLD_PREFERRED: Should produce "B" - hold action with B on shift layer
     std::vector<tap_dance_event_t> expected_events = {
@@ -420,12 +422,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
 // Expected: All flavors should produce "B" - hold action with B on shift layer
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -437,12 +439,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
-    set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_BALANCED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
@@ -454,12 +456,12 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
-    set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
+    KeyboardSimulator keyboard = set_scenario(tap_dance_config, TAP_DANCE_HOLD_PREFERRED);
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    press_key_at(KEY_B, 110);
-    release_key_at(TAP_DANCE_KEY, 205);
-    release_key_at(KEY_B, 210);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.press_key_at(KEY_B, 110);
+    keyboard.release_key_at(TAP_DANCE_KEY, 205);
+    keyboard.release_key_at(KEY_B, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),

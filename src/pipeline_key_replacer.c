@@ -2,6 +2,7 @@
 #include "key_virtual_buffer.h"
 #include "pipeline_executor.h"
 #include <stddef.h>
+#include <stdint.h>
 
 
 void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
@@ -13,18 +14,28 @@ void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_param
         for (size_t i = 0; i < data->length; i++)
         {
             if (data->modifier_pairs[i]->keycode == key_event->keycode) {
-                for (size_t j = 0; j < data->modifier_pairs[i]->press_event_buffer->buffer_length; j++) {
-                    actions->register_key_fn(data->modifier_pairs[i]->press_event_buffer->buffer[j].keycode);
+                uint8_t buffer_size = data->modifier_pairs[i]->press_event_buffer->buffer_length;
+                if (buffer_size > 0) {
+                    for (size_t j = 0; j < buffer_size; j++) {
+                        actions->report_press_fn(data->modifier_pairs[i]->press_event_buffer->buffer[j].keycode);
+                    }
+                    actions->report_send_fn();
                 }
+                break;
             }
         }
     } else {
         for (size_t i = 0; i < data->length; i++)
         {
             if (data->modifier_pairs[i]->keycode == key_event->keycode) {
-                for (size_t j = 0; j < data->modifier_pairs[i]->release_event_buffer->buffer_length; j++) {
-                    actions->unregister_key_fn(data->modifier_pairs[i]->release_event_buffer->buffer[j].keycode);
+                uint8_t buffer_size = data->modifier_pairs[i]->release_event_buffer->buffer_length;
+                if (buffer_size > 0) {
+                    for (size_t j = 0; j < buffer_size; j++) {
+                        actions->report_release_fn(data->modifier_pairs[i]->release_event_buffer->buffer[j].keycode);
+                    }
+                    actions->report_send_fn();
                 }
+                break;
             }
         }
     }

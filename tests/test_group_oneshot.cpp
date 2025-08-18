@@ -35,7 +35,7 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     const uint16_t OUTPUT_KEY = 101;
 
     static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY, OUTPUT_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 2);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 2);
 
 
     size_t number_of_pairs = 1;
@@ -51,10 +51,10 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     pipeline_executor_add_virtual_pipeline(0, &pipeline_oneshot_modifier_callback_process_data, &pipeline_oneshot_modifier_callback_reset, &global);
 
 
-    press_key(ONE_SHOT_KEY);
-    release_key(ONE_SHOT_KEY);
-    press_key(OUTPUT_KEY);
-    release_key(OUTPUT_KEY);
+    keyboard.press_key(ONE_SHOT_KEY);
+    keyboard.release_key(ONE_SHOT_KEY);
+    keyboard.press_key(OUTPUT_KEY);
+    keyboard.release_key(OUTPUT_KEY);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_report_press(PLATFORM_KC_LEFT_CTRL, 0),

@@ -55,7 +55,7 @@ TEST_F(MultiTapTest, BasicTwoTapSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -68,10 +68,10 @@ TEST_F(MultiTapTest, BasicTwoTapSequence) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(TAP_DANCE_KEY, 250);
-    release_key_at(TAP_DANCE_KEY, 350);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(TAP_DANCE_KEY, 250);
+    keyboard.release_key_at(TAP_DANCE_KEY, 350);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3002, 550),
@@ -89,7 +89,7 @@ TEST_F(MultiTapTest, ThreeTapSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -103,12 +103,12 @@ TEST_F(MultiTapTest, ThreeTapSequence) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(TAP_DANCE_KEY, 250);
-    release_key_at(TAP_DANCE_KEY, 350);
-    press_key_at(TAP_DANCE_KEY, 500);
-    release_key_at(TAP_DANCE_KEY, 600);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(TAP_DANCE_KEY, 250);
+    keyboard.release_key_at(TAP_DANCE_KEY, 350);
+    keyboard.press_key_at(TAP_DANCE_KEY, 500);
+    keyboard.release_key_at(TAP_DANCE_KEY, 600);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3003, 800),
@@ -124,7 +124,7 @@ TEST_F(MultiTapTest, SequenceResetTapTimeout) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -137,10 +137,10 @@ TEST_F(MultiTapTest, SequenceResetTapTimeout) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(TAP_DANCE_KEY, 350);
-    release_key_at(TAP_DANCE_KEY, 450);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(TAP_DANCE_KEY, 350);
+    keyboard.release_key_at(TAP_DANCE_KEY, 450);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3001, 300),
@@ -159,7 +159,7 @@ TEST_F(MultiTapTest, MultiTapHoldActionFirstTap) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -171,8 +171,8 @@ TEST_F(MultiTapTest, MultiTapHoldActionFirstTap) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 250);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
@@ -189,7 +189,7 @@ TEST_F(MultiTapTest, MultiTapHoldActionSecondTap) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -202,10 +202,10 @@ TEST_F(MultiTapTest, MultiTapHoldActionSecondTap) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(TAP_DANCE_KEY, 150);
-    release_key_at(TAP_DANCE_KEY, 400);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(TAP_DANCE_KEY, 150);
+    keyboard.release_key_at(TAP_DANCE_KEY, 400);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, 350),
@@ -222,7 +222,7 @@ TEST_F(MultiTapTest, HoldActionNotAvailableForTapCount) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -235,10 +235,10 @@ TEST_F(MultiTapTest, HoldActionNotAvailableForTapCount) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 50);
-    press_key_at(TAP_DANCE_KEY, 100);
-    release_key_at(TAP_DANCE_KEY, 200);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 50);
+    keyboard.press_key_at(TAP_DANCE_KEY, 100);
+    keyboard.release_key_at(TAP_DANCE_KEY, 200);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3002, 400),
@@ -254,7 +254,7 @@ TEST_F(MultiTapTest, RapidTapSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -268,8 +268,8 @@ TEST_F(MultiTapTest, RapidTapSequence) {
     tap_dance_config->length++;
 
     for (int i = 0; i < 5; i++) {
-        press_key_at(TAP_DANCE_KEY, i * 20 + 10);
-        release_key_at(TAP_DANCE_KEY, i * 20 + 20);
+        keyboard.press_key_at(TAP_DANCE_KEY, i * 20 + 10);
+        keyboard.release_key_at(TAP_DANCE_KEY, i * 20 + 20);
     }
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -287,7 +287,7 @@ TEST_F(MultiTapTest, MixedTapAndHoldInSequence) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -300,10 +300,10 @@ TEST_F(MultiTapTest, MixedTapAndHoldInSequence) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 50);
-    press_key_at(TAP_DANCE_KEY, 100);
-    release_key_at(TAP_DANCE_KEY, 350);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 50);
+    keyboard.press_key_at(TAP_DANCE_KEY, 100);
+    keyboard.release_key_at(TAP_DANCE_KEY, 350);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, 300),
@@ -319,7 +319,7 @@ TEST_F(MultiTapTest, TapCountBoundaryExactTimeoutEdge) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -331,10 +331,10 @@ TEST_F(MultiTapTest, TapCountBoundaryExactTimeoutEdge) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 200);
-    press_key_at(TAP_DANCE_KEY, 400);
-    release_key_at(TAP_DANCE_KEY, 450);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 200);
+    keyboard.press_key_at(TAP_DANCE_KEY, 400);
+    keyboard.release_key_at(TAP_DANCE_KEY, 450);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3001, 200),
@@ -352,7 +352,7 @@ TEST_F(MultiTapTest, MaximumPracticalTapCount) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -368,8 +368,8 @@ TEST_F(MultiTapTest, MaximumPracticalTapCount) {
     tap_dance_config->length++;
 
     for (int i = 0; i < 5; i++) {
-        press_key_at(TAP_DANCE_KEY, i * 40 + 20);
-        release_key_at(TAP_DANCE_KEY, i * 40 + 40);
+        keyboard.press_key_at(TAP_DANCE_KEY, i * 40 + 20);
+        keyboard.release_key_at(TAP_DANCE_KEY, i * 40 + 40);
     }
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -386,7 +386,7 @@ TEST_F(MultiTapTest, SequenceContinuationVsNewSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -400,10 +400,10 @@ TEST_F(MultiTapTest, SequenceContinuationVsNewSequence) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(TAP_DANCE_KEY, 299);
-    release_key_at(TAP_DANCE_KEY, 349);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(TAP_DANCE_KEY, 299);
+    keyboard.release_key_at(TAP_DANCE_KEY, 349);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3001, 300),
@@ -422,7 +422,7 @@ TEST_F(MultiTapTest, MultiTapWithStrategyInterruption) {
     const uint8_t TARGET_LAYER = 1;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -435,12 +435,12 @@ TEST_F(MultiTapTest, MultiTapWithStrategyInterruption) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 50);
-    press_key_at(TAP_DANCE_KEY, 100);
-    press_key_at(3003, 150);
-    release_key_at(3003, 200);
-    release_key_at(TAP_DANCE_KEY, 250);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 50);
+    keyboard.press_key_at(TAP_DANCE_KEY, 100);
+    keyboard.press_key_at(3003, 150);
+    keyboard.release_key_at(3003, 200);
+    keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_layer(TARGET_LAYER, 150),
@@ -458,7 +458,7 @@ TEST_F(MultiTapTest, TapCountResetVerification) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -471,10 +471,10 @@ TEST_F(MultiTapTest, TapCountResetVerification) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 0);
-    release_key_at(TAP_DANCE_KEY, 50);
-    press_key_at(TAP_DANCE_KEY, 100);
-    release_key_at(TAP_DANCE_KEY, 200);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);
+    keyboard.release_key_at(TAP_DANCE_KEY, 50);
+    keyboard.press_key_at(TAP_DANCE_KEY, 100);
+    keyboard.release_key_at(TAP_DANCE_KEY, 200);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3002, 400),
@@ -490,7 +490,7 @@ TEST_F(MultiTapTest, VeryFastMultiTapSequence) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -504,8 +504,8 @@ TEST_F(MultiTapTest, VeryFastMultiTapSequence) {
     tap_dance_config->length++;
 
     for (int i = 0; i < 5; i++) {
-        press_key_at(TAP_DANCE_KEY, i * 20 + 10);
-        release_key_at(TAP_DANCE_KEY, i * 20 + 20);
+        keyboard.press_key_at(TAP_DANCE_KEY, i * 20 + 10);
+        keyboard.release_key_at(TAP_DANCE_KEY, i * 20 + 20);
     }
 
     std::vector<tap_dance_event_t> expected_events = {
@@ -522,7 +522,7 @@ TEST_F(MultiTapTest, MultiTapOverflowPreview) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -535,14 +535,14 @@ TEST_F(MultiTapTest, MultiTapOverflowPreview) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    press_key_at(TAP_DANCE_KEY, 30);
-    release_key_at(TAP_DANCE_KEY, 30);
-    press_key_at(TAP_DANCE_KEY, 80);
-    release_key_at(TAP_DANCE_KEY, 110);
-    press_key_at(TAP_DANCE_KEY, 160);
-    release_key_at(TAP_DANCE_KEY, 190);
-    press_key_at(TAP_DANCE_KEY, 240);
-    release_key_at(TAP_DANCE_KEY, 270);
+    keyboard.press_key_at(TAP_DANCE_KEY, 30);
+    keyboard.release_key_at(TAP_DANCE_KEY, 30);
+    keyboard.press_key_at(TAP_DANCE_KEY, 80);
+    keyboard.release_key_at(TAP_DANCE_KEY, 110);
+    keyboard.press_key_at(TAP_DANCE_KEY, 160);
+    keyboard.release_key_at(TAP_DANCE_KEY, 190);
+    keyboard.press_key_at(TAP_DANCE_KEY, 240);
+    keyboard.release_key_at(TAP_DANCE_KEY, 270);
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(3002, 470),

@@ -54,7 +54,7 @@ TEST_F(EdgeCasesTest, RapidFireStressTest) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -69,11 +69,11 @@ TEST_F(EdgeCasesTest, RapidFireStressTest) {
 
     // Input: 50 rapid taps in 500ms (10ms per tap cycle)
     for (int i = 0; i < 50; i++) {
-        press_key_at(TAP_DANCE_KEY, i * 10);     // t=i*10ms
-        press_key_at(TAP_DANCE_KEY, i * 10 + 1); // t=i*10+1ms (1ms hold)
-        wait_ms(9);                          // 9ms gap
+        keyboard.press_key_at(TAP_DANCE_KEY, i * 10);     // t=i*10ms
+        keyboard.press_key_at(TAP_DANCE_KEY, i * 10 + 1); // t=i*10+1ms (1ms hold)
+        keyboard.wait_ms(9);                          // 9ms gap
     }
-    wait_ms(200);                            // Final timeout
+    keyboard.wait_ms(200);                            // Final timeout
 
     // Expected: Uses second action (overflow from 50 taps)
     std::vector<tap_dance_event_t> expected_events = {
@@ -89,7 +89,7 @@ TEST_F(EdgeCasesTest, ZeroDurationSingleTap) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -102,10 +102,10 @@ TEST_F(EdgeCasesTest, ZeroDurationSingleTap) {
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
 
-    // Input: tap_key(TAP_DANCE_KEY, 0); platform_wait_ms(200);
-    press_key_at(TAP_DANCE_KEY, 0);       // t=0ms (instantaneous)
-    release_key_at(TAP_DANCE_KEY, 0);     // t=0ms
-    wait_ms(200);                     // t=200ms
+    // Input: keyboard.tap_key(TAP_DANCE_KEY, 0); platform_wait_ms(200);
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);       // t=0ms (instantaneous)
+    keyboard.release_key_at(TAP_DANCE_KEY, 0);     // t=0ms
+    keyboard.wait_ms(200);                     // t=200ms
 
     // Expected: Delayed execution (hold action available)
     std::vector<tap_dance_event_t> expected_events = {
@@ -121,7 +121,7 @@ TEST_F(EdgeCasesTest, FinalSystemIntegrityCheck) {
     const uint16_t TAP_DANCE_KEY = 3000;
 
     static const platform_keycode_t keymaps[1][1][1] = {{{ TAP_DANCE_KEY }}};
-    platform_layout_init_2D_keymap((const uint16_t*)keymaps, 1, 1, 1);
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
 
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, 3001),
@@ -134,12 +134,12 @@ TEST_F(EdgeCasesTest, FinalSystemIntegrityCheck) {
     tap_dance_config->length++;
 
     // Input: Simple verification sequence
-    press_key_at(TAP_DANCE_KEY, 0);      // Basic tap
-    release_key_at(TAP_DANCE_KEY, 50);   // t=50ms
-    wait_ms(300);                    // Clean gap to t=350ms
-    press_key_at(TAP_DANCE_KEY, 350);    // Basic hold
-    wait_ms(250);                    // t=600ms
-    release_key_at(TAP_DANCE_KEY, 600);  // t=600ms
+    keyboard.press_key_at(TAP_DANCE_KEY, 0);      // Basic tap
+    keyboard.release_key_at(TAP_DANCE_KEY, 50);   // t=50ms
+    keyboard.wait_ms(300);                    // Clean gap to t=350ms
+    keyboard.press_key_at(TAP_DANCE_KEY, 350);    // Basic hold
+    keyboard.wait_ms(250);                    // t=600ms
+    keyboard.release_key_at(TAP_DANCE_KEY, 600);  // t=600ms
 
     // Expected: Perfect tap and hold
     std::vector<tap_dance_event_t> expected_events = {
