@@ -4,11 +4,6 @@
 #include <stdint.h>
 #include "platform_types.h"
 
-typedef struct {
-    int8_t col;
-    int8_t row;
-} matrix_pos_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

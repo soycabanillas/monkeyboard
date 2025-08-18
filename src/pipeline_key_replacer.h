@@ -7,9 +7,14 @@
 #include "platform_interface.h"
 
 typedef struct {
+    platform_virtual_buffer_virtual_event_t buffer[PLATFORM_KEY_VIRTUAL_BUFFER_MAX_ELEMENTS];
+    uint8_t buffer_length;
+} platform_key_replacer_event_buffer_t;
+
+typedef struct {
     platform_keycode_t keycode;
-    platform_virtual_event_buffer_t* virtual_event_buffer_press;
-    platform_virtual_event_buffer_t* virtual_event_buffer_release;
+    platform_key_replacer_event_buffer_t* press_event_buffer;
+    platform_key_replacer_event_buffer_t* release_event_buffer;
 } pipeline_key_replacer_pair_t;
 
 typedef struct {
@@ -17,9 +22,5 @@ typedef struct {
     pipeline_key_replacer_pair_t** modifier_pairs;
 } pipeline_key_replacer_global_config_t;
 
-typedef struct {
-    pipeline_key_replacer_global_config_t* config;
-} pipeline_key_replacer_global_t;
-
 void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data);
-void pipeline_key_replacer_modifier_callback_reset(void* user_data);
+void pipeline_key_replacer_callback_reset(void* user_data);
