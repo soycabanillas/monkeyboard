@@ -19,6 +19,7 @@ set(CORE_SOURCES
     src/key_press_buffer.c
     src/key_virtual_buffer.c
     src/monkeyboard_deferred_callbacks.c
+    src/monkeyboard_layer_manager.c
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
@@ -36,6 +37,7 @@ set(CORE_HEADERS
     src/key_press_buffer.h
     src/key_virtual_buffer.h
     src/monkeyboard_deferred_callbacks.h
+    src/monkeyboard_layer_manager.h
     src/pipeline_executor.h
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h

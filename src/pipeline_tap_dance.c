@@ -7,6 +7,7 @@
 #include "pipeline_executor.h"
 #include "platform_interface.h"
 #include "platform_types.h"
+#include "monkeyboard_layer_manager.h"
 
 pipeline_tap_dance_global_status_t* global_status;
 
@@ -88,18 +89,23 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
         if (last_key_event->is_press) {
             status->state = TAP_DANCE_HOLDING;
-            platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
-            actions->remove_physical_press_fn(first_key_event->press_id);
+            uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
+            actions->remove_physical_press_fn(press_id);
             if (platform_layout_is_valid_layer(hold_action->layer)) {
                 update_layer(hold_action->layer, actions);
-                platform_layout_set_layer(hold_action->layer);
+                layout_manager_add_layer(status->trigger_keypos, press_id, hold_action->layer);
             }
             return_actions->no_capture_fn();
-            return;
         } else {
+            uint8_t buffer_length = actions->get_physical_key_event_count_fn();
+            if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
+                DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
+                actions->unregister_key_fn(last_key_event->keycode);
+                actions->remove_physical_release_fn(last_key_event->press_id);
+            }
             return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
-            return;
         }
+        return;
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
         return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
         return;
@@ -121,14 +127,20 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
             }
             if (press_found_on_buffer) {
                 status->state = TAP_DANCE_HOLDING;
-                platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
-                actions->remove_physical_press_fn(first_key_event->press_id);
+                uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
+                actions->remove_physical_press_fn(press_id);
                 if (platform_layout_is_valid_layer(hold_action->layer)) {
                     update_layer(hold_action->layer, actions);
-                    platform_layout_set_layer(hold_action->layer);
+                    layout_manager_add_layer(status->trigger_keypos, press_id, hold_action->layer);
                 }
                 return_actions->no_capture_fn();
             } else {
+                if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
+                    DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
+                    actions->unregister_key_fn(last_key_event->keycode);
+                    actions->remove_physical_release_fn(last_key_event->press_id);
+                } else {
+                }
                 return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
             }
             return;
@@ -219,19 +231,19 @@ static void generic_key_release_when_holding_handler(pipeline_tap_dance_behaviou
     }
 
     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
-        platform_layout_set_layer(status->original_layer);
+        layout_manager_remove_layer_by_keypos(status->trigger_keypos);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
         return_actions->no_capture_fn();
         return;
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
-        platform_layout_set_layer(status->original_layer);
+        layout_manager_remove_layer_by_keypos(status->trigger_keypos);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
         return_actions->no_capture_fn();
         return;
     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
-        platform_layout_set_layer(status->original_layer);
+        layout_manager_remove_layer_by_keypos(status->trigger_keypos);
         actions->remove_physical_release_fn(last_key_event->press_id);
         reset_behaviour_state(status);
         return_actions->no_capture_fn();
@@ -325,11 +337,10 @@ static void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
                 if (hold_action != NULL) {
                     if (hold_action->hold_strategy == TAP_DANCE_HOLD_PREFERRED) {
                         status->state = TAP_DANCE_HOLDING;
-                        //actions->update_layer_for_physical_events_fn(hold_action->layer, 0);
                         uint8_t press_id = actions->get_physical_key_event_fn(0)->press_id;
                         actions->remove_physical_press_fn(press_id);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
-                            platform_layout_set_layer(hold_action->layer);
+                            layout_manager_add_layer(status->trigger_keypos, press_id, hold_action->layer);
                         }
                         return_actions->no_capture_fn();
                         return;
@@ -339,7 +350,7 @@ static void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
                         actions->remove_physical_press_fn(press_id);
                         update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
-                            platform_layout_set_layer(hold_action->layer);
+                            layout_manager_add_layer(status->trigger_keypos, press_id, hold_action->layer);
                         }
                         return_actions->no_capture_fn();
                         return;
@@ -349,7 +360,7 @@ static void handle_timeout(pipeline_tap_dance_behaviour_config_t *config,
                         actions->remove_physical_press_fn(press_id);
                         update_layer(hold_action->layer, actions);
                         if (platform_layout_is_valid_layer(hold_action->layer)) {
-                            platform_layout_set_layer(hold_action->layer);
+                            layout_manager_add_layer(status->trigger_keypos, press_id, hold_action->layer);
                         }
                         return_actions->no_capture_fn();
                         return;

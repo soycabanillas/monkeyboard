@@ -14,20 +14,6 @@ extern "C" {
 #define g_hold_timeout 200  // Hold timeout in milliseconds
 #define g_tap_timeout 200   // Tap timeout in milliseconds
 
-// typedef struct {
-//     platform_keypos_t keypos;
-//     uint8_t press_id; // Unique ID for the key press, used to track presses/releases
-//     uint8_t layer; // Layer associated with the key press
-//     bool ignore_release; // If true, the release of this key will be ignored
-// } pipeline_tap_dance_key_event_t;
-
-// #define MAX_NUM_EVENTS 10 // Maximum number of events in the buffer
-
-// typedef struct {
-//     pipeline_tap_dance_key_event_t press_buffer[MAX_NUM_EVENTS];
-//     uint8_t press_buffer_pos;
-// } pipeline_tap_dance_key_event_buffer_t;
-
 typedef enum {
     TDCL_TAP_KEY_SENDKEY,           // Tap Action
     TDCL_HOLD_KEY_CHANGELAYERTEMPO, // Hold layer while key pressed

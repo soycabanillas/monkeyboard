@@ -6,6 +6,7 @@
 #include "key_event_buffer.h"
 #include "platform_interface.h"
 #include "platform_types.h"
+#include "monkeyboard_layer_manager.h"
 
 #if defined(MONKEYBOARD_DEBUG)
     #include "key_press_buffer.h"
@@ -433,6 +434,8 @@ void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t vi
 
     physical_return_actions.key_capture_fn = &end_with_capture_next_keys;
     physical_return_actions.no_capture_fn = &no_capture;
+
+    layout_manager_initialize_nested_layers();
 }
 
 void pipeline_executor_add_physical_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data) {
