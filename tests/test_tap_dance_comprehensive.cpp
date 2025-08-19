@@ -1,4 +1,3 @@
-#include <sys/wait.h>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>

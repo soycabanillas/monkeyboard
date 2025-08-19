@@ -108,14 +108,29 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
             return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
             return;
         } else {
-            status->state = TAP_DANCE_HOLDING;
-            platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
-            actions->remove_physical_press_fn(first_key_event->press_id);
-            if (platform_layout_is_valid_layer(hold_action->layer)) {
-                update_layer(hold_action->layer, actions);
-                platform_layout_set_layer(hold_action->layer);
+            bool press_found_on_buffer = false;
+            uint8_t buffer_length = actions->get_physical_key_event_count_fn();
+            // for (uint8_t i = 1; i < buffer_length - 1; i++) {
+            for (uint8_t i = 1; i < buffer_length; i++) {
+                platform_key_event_t* event = actions->get_physical_key_event_fn(i);
+                DEBUG_PRINT("Buffer Event %d: %d-%d", i, event->keypos.row, event->keypos.col);
+                if (event != NULL) {
+                    press_found_on_buffer = event->is_press == true && platform_compare_keyposition(event->keypos, last_key_event->keypos);
+                    if (press_found_on_buffer) break;
+                }
             }
-            return_actions->no_capture_fn();
+            if (press_found_on_buffer) {
+                status->state = TAP_DANCE_HOLDING;
+                platform_key_event_t* first_key_event = actions->get_physical_key_event_fn(0);
+                actions->remove_physical_press_fn(first_key_event->press_id);
+                if (platform_layout_is_valid_layer(hold_action->layer)) {
+                    update_layer(hold_action->layer, actions);
+                    platform_layout_set_layer(hold_action->layer);
+                }
+                return_actions->no_capture_fn();
+            } else {
+                return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+            }
             return;
         }
     }
