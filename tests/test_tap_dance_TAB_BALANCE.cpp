@@ -51,33 +51,57 @@ protected:
     }
 };
 
-TEST_F(TapDanceTAPBALANCETest, PressAPressTDKReleaseAReleaseTDKNoHold) {
-    // Custom setup for this test
     const uint16_t PREVIOUS_KEY_A = 2000;
     const uint16_t PREVIOUS_KEY_B = 2001;
     const uint16_t TAP_DANCE_KEY = 2002;
     const uint16_t OUTPUT_KEY = 2003;
     const uint16_t INTERRUPTING_KEY = 2004;
 
-    // Begin keymap setup
+static KeyboardSimulator set_scenario_1hold(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
+
+
     static const platform_keycode_t keymaps[2][1][4] = {
         {{ PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }},
         {{ 2100, 2101, 2102, 2103 }}
     };
     KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 4);
-    // End keymap setup
 
-    // Begin tap dance config
+    pipeline_tap_dance_action_config_t* actions[] = {
+        createbehaviouraction_hold(1, 1, hold_strategy)
+    };
+    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
+    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
+    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
+    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
+    tap_dance_config->length++;
+    
+    return keyboard;
+}
+
+static KeyboardSimulator set_scenario_1tap_1hold(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
+
+
+    static const platform_keycode_t keymaps[2][1][4] = {
+        {{ PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }},
+        {{ 2100, 2101, 2102, 2103 }}
+    };
+    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 4);
+
     pipeline_tap_dance_action_config_t* actions[] = {
         createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
+        createbehaviouraction_hold(1, 1, hold_strategy)
     };
     pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
     tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
     tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
     tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
     tap_dance_config->length++;
-    // End tap dance config
+    
+    return keyboard;
+}
+
+TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHold) {
+    KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -93,33 +117,40 @@ TEST_F(TapDanceTAPBALANCETest, PressAPressTDKReleaseAReleaseTDKNoHold) {
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, PressAPressTDKReleaseAReleaseTDKHold) {
-    // Custom setup for this test
-    const uint16_t PREVIOUS_KEY_A = 2000;
-    const uint16_t PREVIOUS_KEY_B = 2001;
-    const uint16_t TAP_DANCE_KEY = 2002;
-    const uint16_t OUTPUT_KEY = 2003;
-    const uint16_t INTERRUPTING_KEY = 2004;
+TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold) {
+    KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
-    // Begin keymap setup
-    static const platform_keycode_t keymaps[2][1][4] = {
-        {{ PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }},
-        {{ 2100, 2101, 2102, 2103 }}
-    };
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 4);
-    // End keymap setup
+    keyboard.press_key_at(PREVIOUS_KEY_A, 0);
+    keyboard.press_key_at(TAP_DANCE_KEY, 10);
+    keyboard.release_key_at(PREVIOUS_KEY_A, 20);
+    keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
-    // Begin tap dance config
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, TAP_DANCE_BALANCED)
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(PREVIOUS_KEY_A, 0),
+        td_layer(1, 210),
+        td_release(PREVIOUS_KEY_A, 210),
+        td_layer(0, 0)
     };
-    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
-    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
-    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
-    tap_dance_config->length++;
-    // End tap dance config
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+}
+
+TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHold) {
+    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+
+    keyboard.press_key_at(PREVIOUS_KEY_A, 0);
+    keyboard.press_key_at(TAP_DANCE_KEY, 10);
+    keyboard.release_key_at(PREVIOUS_KEY_A, 20);
+    keyboard.release_key_at(TAP_DANCE_KEY, 30);
+
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(PREVIOUS_KEY_A, 0),
+        td_release(PREVIOUS_KEY_A, 30),
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+}
+
+TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold) {
+    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
