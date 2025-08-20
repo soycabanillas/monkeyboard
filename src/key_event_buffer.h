@@ -1,3 +1,21 @@
+// The press buffer stores the real state of the keyboard and is updated in real-time as keys are pressed and released, while the event buffer stores the history of key events and is used for processing key events in order.
+// Only one press buffer with the same key position can exist at a time on the press buffer, while several presses and several releases can exist in the event buffer with the same key position.
+//
+// The event buffer allows to replay key events several times by the pipelines, so it can check the sequence of events against several patterns (hold-tap, combo).
+// The press buffer is used to:
+// - Ignoring misfires (two key presses without a key release in between, two key releases without a key press in between or a release without a previous press).
+// - To relate the key press and the key release events of the event buffer through a press id.
+//
+// A press can exist in the press buffer without a corresponding press in the event buffer (same press id) when the event press has been processed. Storing the press_id on the press buffer too allows to assign the same press_id to the corresponding release event even if the press event has been removed from the event buffer.
+// A press can not exist in the press buffer at the same time than its corresponding (same press id) release in the event buffer.
+// 
+// When a press is triggered, it looks at the press buffer to see if the key is already pressed (same key position):
+// - If found: it ignores it.
+// - If not found: it adds a new press event to the event buffer and a press to the press buffer with the same press_id.
+// When a release is triggered, it looks at the press buffer to find the corresponding press event (same key position):
+// - If found: it adds a new release event to the event buffer with the same press_id than the press from the press buffer (the press from the event buffer might already be processed and removed) and removes the press from the press buffer.
+// - If not found: it ignores it.
+
 #pragma once
 
 #include <stdint.h>

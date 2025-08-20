@@ -16,11 +16,29 @@ static uint8_t get_keypress_id(platform_key_event_buffer_t* event_buffer, platfo
 
     // Find a unique keypress ID that is not already in use
 
+    // Check the press buffer for the same keypress ID
+    // A press can exist without an event buffer when the event press has been processed
+    // A press can not exist at the same time than its event release.
+    bool already_in_press_buffer;
+    do {
+        already_in_press_buffer = false;
+        keypress_id = (keypress_id % 255) + 1;
+
+        uint8_t press_buffer_pos = press_buffer->press_buffer_pos;
+        uint8_t i;
+        for (i = 0; i < press_buffer_pos; i++) {
+            uint8_t index = press_buffer_pos - 1 - i;
+            if (press_buffer->press_buffer[index].press_id == keypress_id) {
+                already_in_press_buffer = true;
+                break;
+            }
+        }
+    } while (already_in_press_buffer);
+
     // Check the event buffer for the same keypress ID
     bool already_in_event_buffer;
     do {
         already_in_event_buffer = false;
-        keypress_id = (keypress_id % 255) + 1;
 
         uint8_t event_buffer_pos = event_buffer->event_buffer_pos;
         uint8_t i;
@@ -31,7 +49,11 @@ static uint8_t get_keypress_id(platform_key_event_buffer_t* event_buffer, platfo
                 break;
             }
         }
-    } while (already_in_event_buffer == true);
+
+        if (already_in_event_buffer) {
+            keypress_id = (keypress_id % 255) + 1; // Wrap around if necessary
+        }
+    } while (already_in_event_buffer);
 
     return keypress_id;
 }
