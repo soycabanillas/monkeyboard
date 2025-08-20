@@ -97,13 +97,13 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
             }
             return_actions->no_capture_fn();
         } else {
-            uint8_t buffer_length = actions->get_physical_key_event_count_fn();
-            if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
-                DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
-                actions->unregister_key_fn(last_key_event->keycode);
-                actions->remove_physical_release_fn(last_key_event->press_id);
-            }
-            return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+            // uint8_t buffer_length = actions->get_physical_key_event_count_fn();
+            // if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
+            //     DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
+            //     actions->unregister_key_fn(last_key_event->keycode);
+            //     actions->remove_physical_release_fn(last_key_event->press_id);
+            // }
+            // return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
         }
         return;
     } else if (hold_action->hold_strategy == TAP_DANCE_TAP_PREFERRED) {
@@ -135,13 +135,13 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
                 }
                 return_actions->no_capture_fn();
             } else {
-                if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
-                    DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
-                    actions->unregister_key_fn(last_key_event->keycode);
-                    actions->remove_physical_release_fn(last_key_event->press_id);
-                } else {
-                }
-                return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+                // if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
+                //     DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
+                //     actions->unregister_key_fn(last_key_event->keycode);
+                //     actions->remove_physical_release_fn(last_key_event->press_id);
+                // } else {
+                // }
+                // return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
             }
             return;
         }

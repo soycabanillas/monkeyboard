@@ -11,10 +11,28 @@
 // This function is used to get a unique keypress ID for each key event
 // It ensures that the ID is always between 1 and 255, wrapping around if necessary
 // This is useful for identifying key events in the buffer
-static uint8_t get_keypress_id(void) {
+static uint8_t get_keypress_id(platform_key_event_buffer_t* event_buffer, platform_key_press_buffer_t* press_buffer) {
     static uint8_t keypress_id = 0;
-    // Use 255 so the ID wraps from 1 to 255; 0 is reserved and never returned as a keypress ID
-    keypress_id = (keypress_id % 255) + 1;
+
+    // Find a unique keypress ID that is not already in use
+
+    // Check the event buffer for the same keypress ID
+    bool already_in_event_buffer;
+    do {
+        already_in_event_buffer = false;
+        keypress_id = (keypress_id % 255) + 1;
+
+        uint8_t event_buffer_pos = event_buffer->event_buffer_pos;
+        uint8_t i;
+        for (i = 0; i < event_buffer_pos; i++) {
+            uint8_t index = event_buffer_pos - 1 - i;
+            if (event_buffer->event_buffer[index].press_id == keypress_id) {
+                already_in_event_buffer = true;
+                break;
+            }
+        }
+    } while (already_in_event_buffer == true);
+
     return keypress_id;
 }
 
@@ -64,7 +82,7 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
 }
 
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
-    uint8_t press_id = get_keypress_id();
+    uint8_t press_id = get_keypress_id(event_buffer, event_buffer->key_press_buffer);
     uint8_t layer = platform_layout_get_current_layer();
     platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
 
@@ -105,8 +123,8 @@ bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_
         return false; // Ignore the release event
     }
     platform_keycode_t keycode = key_press->keycode; // Use the keycode from the key press;
-    bool press_added = platform_key_event_add_event_internal(event_buffer, time, key_press->keypos, keycode, false, key_press->press_id, buffer_full);
-    if (!press_added) {
+    bool release_added = platform_key_event_add_event_internal(event_buffer, time, key_press->keypos, keycode, false, key_press->press_id, buffer_full);
+    if (!release_added) {
         #if defined(AGNOSTIC_USE_1D_ARRAY)
             DEBUG_PRINT_ERROR("Failed to add release event for keypos: %d", keypos);
         #elif defined(AGNOSTIC_USE_2D_ARRAY)

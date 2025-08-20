@@ -15,7 +15,7 @@ extern "C" {
 #include "pipeline_executor.h"
 }
 
-class TapDanceTAPBALANCETest : public ::testing::Test {
+class TapDanceRollOverPreviousPress : public ::testing::Test {
 protected:
     pipeline_tap_dance_global_config_t* tap_dance_config;
 
@@ -100,7 +100,7 @@ static KeyboardSimulator set_scenario_1tap_1hold(pipeline_tap_dance_global_confi
     return keyboard;
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
@@ -110,14 +110,14 @@ TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHo
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
+        td_release(PREVIOUS_KEY_A, 20),
         td_press(OUTPUT_KEY, 30),
-        td_release(PREVIOUS_KEY_A, 30),
         td_release(OUTPUT_KEY, 30),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
@@ -127,14 +127,14 @@ TEST_F(TapDanceTAPBALANCETest, 1Tap1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
+        td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),
-        td_release(PREVIOUS_KEY_A, 210),
         td_layer(0, 210)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
@@ -144,12 +144,29 @@ TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKNoHold) 
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
-        td_release(PREVIOUS_KEY_A, 30),
+        td_release(PREVIOUS_KEY_A, 20),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
+    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+
+    keyboard.press_key_at(PREVIOUS_KEY_A, 0);
+    keyboard.press_key_at(TAP_DANCE_KEY, 10);
+    keyboard.release_key_at(PREVIOUS_KEY_A, 210);
+    keyboard.release_key_at(TAP_DANCE_KEY, 220);
+
+    std::vector<tap_dance_event_t> expected_events = {
+        td_press(PREVIOUS_KEY_A, 0),
+        td_layer(1, 210),
+        td_release(PREVIOUS_KEY_A, 210),
+        td_layer(0, 220)
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+}
+
+TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
@@ -159,34 +176,44 @@ TEST_F(TapDanceTAPBALANCETest, 1Hold_PressA_PressTDK_ReleaseA_ReleaseTDKHold) {
 
     std::vector<tap_dance_event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
+        td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),
-        td_release(PREVIOUS_KEY_A, 210),
         td_layer(0, 210)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Hold_PressTDK_ReleaseTDKNoHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
+    keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
-    keyboard.release_key_at(TAP_DANCE_KEY, 30);
+    keyboard.press_key_at(INTERRUPTING_KEY, 20);
+    keyboard.release_key_at(PREVIOUS_KEY_A, 30);
+    keyboard.release_key_at(TAP_DANCE_KEY, 40);
 
     std::vector<tap_dance_event_t> expected_events = {
-        td_press(PREVIOUS_KEY_A, 10),
+        td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 30),
+        td_press(INTERRUPTING_KEY, 40),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceTAPBALANCETest, 1Hold_PressTDK_ReleaseTDKHold) {
+TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED) {
     KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
 
+    keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
+    keyboard.release_key_at(PREVIOUS_KEY_A, 20);
+    keyboard.press_key_at(INTERRUPTING_KEY, 30);
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     std::vector<tap_dance_event_t> expected_events = {
+        td_press(PREVIOUS_KEY_A, 0),
+        td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),
+        td_press(2103, 210),
         td_layer(0, 210)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));

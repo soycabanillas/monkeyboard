@@ -296,6 +296,26 @@ static void process_key_pool(void) {
     capture_pipeline_t last_execution = pipeline_executor_state.return_data;
     platform_key_event_t* key_event = &pipeline_executor_state.key_event_buffer->event_buffer[pipeline_executor_state.key_event_buffer->event_buffer_pos - 1];
 
+    DEBUG_EXECUTOR("Capture key events %d", last_execution.capture_key_events);
+
+    if (last_execution.capture_key_events == true && key_event->is_press == false) {
+        uint8_t event_size = pipeline_executor_state.key_event_buffer->event_buffer_pos;
+        bool found_previous_press = false;
+        for (uint8_t i = 0; i < event_size - 1; i++) {
+            platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[i];
+            if (event->is_press && event->press_id == key_event->press_id) {
+                found_previous_press = true;
+                break;
+            }
+        }
+        if (found_previous_press == false){
+            DEBUG_EXECUTOR("Skipping release for press_id %d", key_event->press_id);
+            platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, key_event->keycode);
+            platform_key_event_remove_physical_release_by_press_id(pipeline_executor_state.key_event_buffer, key_event->press_id);
+            pipeline_executor_state.event_length--;
+        }
+    }
+
     size_t pipeline_index = 0;
     if (last_execution.capture_key_events == true) {
         pipeline_index = pipeline_executor_state.physical_pipeline_index;
