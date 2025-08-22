@@ -32,6 +32,7 @@ typedef struct {
     pipeline_callback_type_t callback_type;
     platform_key_event_t* key_event; // Only used for PIPELINE_CALLBACK_KEY_EVENT
     bool is_capturing_keys; // Indicates if the pipeline is capturing key events
+    platform_time_t timespan;
 } pipeline_physical_callback_params_t;
 
 typedef struct {

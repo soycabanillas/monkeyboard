@@ -117,10 +117,6 @@ platform_key_press_key_press_t* platform_key_press_get_press_from_press_id(platf
     platform_key_press_key_press_t* only_press_buffer = press_buffer->press_buffer;
     uint8_t only_press_buffer_pos = press_buffer->press_buffer_pos;
 
-    if (only_press_buffer_pos == 0) {
-        DEBUG_PRINT("Key press buffer is empty, cannot find press ID %d", press_id);
-        return NULL; // Buffer is empty
-    }
     for (size_t i = 0; i < only_press_buffer_pos; i++) {
         if (only_press_buffer[i].press_id == press_id) {
             return &only_press_buffer[i];

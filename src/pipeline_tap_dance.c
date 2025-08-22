@@ -9,6 +9,12 @@
 #include "platform_types.h"
 #include "monkeyboard_layer_manager.h"
 
+#if defined(MONKEYBOARD_DEBUG)
+    #define PREFIX_DEBUG "TAP_DANCE: "
+    #define DEBUG_TAP_DANCE(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+    #define DEBUG_TAP_DANCE_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#endif
+
 pipeline_tap_dance_global_status_t* global_status;
 
 typedef enum {
@@ -99,7 +105,7 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
         } else {
             // uint8_t buffer_length = actions->get_physical_key_event_count_fn();
             // if (buffer_length == 2 && has_subsequent_actions(config, status->tap_count) == false) {
-            //     DEBUG_PRINT("----- Unregistering key: %d ------", last_key_event->keycode);
+            //     DEBUG_EXECUTOR("----- Unregistering key: %d ------", last_key_event->keycode);
             //     actions->unregister_key_fn(last_key_event->keycode);
             //     actions->remove_physical_release_fn(last_key_event->press_id);
             // }
@@ -119,7 +125,7 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
             // for (uint8_t i = 1; i < buffer_length - 1; i++) {
             for (uint8_t i = 1; i < buffer_length; i++) {
                 platform_key_event_t* event = actions->get_physical_key_event_fn(i);
-                DEBUG_PRINT("Buffer Event %d: %d-%d", i, event->keypos.row, event->keypos.col);
+                DEBUG_TAP_DANCE("Buffer Event %d: %d-%d", i, event->keypos.row, event->keypos.col);
                 if (event != NULL) {
                     press_found_on_buffer = event->is_press == true && platform_compare_keyposition(event->keypos, last_key_event->keypos);
                     if (press_found_on_buffer) break;
@@ -428,7 +434,7 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
         return;
     }
 
-    DEBUG_PRINT_RAW("# %zu", global_config->length);
+    DEBUG_TAP_DANCE_RAW("# %zu", global_config->length);
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
         #if defined(AGNOSTIC_USE_1D_ARRAY)
@@ -448,11 +454,10 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
 #endif
 
 #if defined(MONKEYBOARD_DEBUG)
-    #define DEBUG_STATE(caption) \
-        DEBUG_PRINT_RAW("%s\n", caption); \
+    #define DEBUG_STATE() \
         print_tap_dance_status(global_config);
 #else
-    #define DEBUG_STATE(caption) ((void)0)
+    #define DEBUG_STATE() ((void)0)
 #endif
 
 static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, pipeline_tap_dance_global_config_t* global_config) {
@@ -514,7 +519,7 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
             }
         }
     }
-    DEBUG_STATE("Finished processing tap dance event:");
+    DEBUG_STATE();
 }
 
 void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
