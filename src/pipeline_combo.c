@@ -350,7 +350,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
                 actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j].press_id);
 
                 for (size_t k = 0; k < global_config->length; k++) {
-                    if (&global_config->combos[k] != first_combo_all_keys_pressed) {
+                    if (global_config->combos[k].combo_status != COMBO_ACTIVE) {
                         pipeline_combo_config_t* other_combo = &global_config->combos[k];
                         for (size_t l = 0; l < other_combo->keys_length; l++) {
                             if (platform_compare_keyposition(other_combo->keys[l].keypos, first_combo_all_keys_pressed->keys[j].keypos)) {
