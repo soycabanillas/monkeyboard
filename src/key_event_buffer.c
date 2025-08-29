@@ -203,8 +203,8 @@ platform_key_event_position_t platform_key_event_remove_physical_release_by_pres
         internal_platform_key_event_remove_event(event_buffer, position);
         return (platform_key_event_position_t){ .position = position, .found = true };
     } else {
-        platform_key_press_ignore_release_by_press_id(event_buffer->key_press_buffer, press_id);
-        return (platform_key_event_position_t){ .found = false };
+        bool found = platform_key_press_ignore_release_by_press_id(event_buffer->key_press_buffer, press_id);
+        return (platform_key_event_position_t){ .found = found };
     }
 }
 

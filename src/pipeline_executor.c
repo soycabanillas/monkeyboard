@@ -7,6 +7,7 @@
 #include "platform_interface.h"
 #include "platform_types.h"
 #include "monkeyboard_layer_manager.h"
+#include "monkeyboard_time_manager.h"
 
 #if defined(MONKEYBOARD_DEBUG)
     #define PREFIX_DEBUG "EXECUTOR: "
@@ -188,16 +189,6 @@ static void reset_return_data(capture_pipeline_t* return_data) {
     return_data->capture_key_events = false;
 }
 
-static platform_time_t calculate_time_span(platform_time_t previous_time, platform_time_t next_time) {
-    // Handle overflow case where timer wraps around
-    if (next_time >= previous_time) {
-        return next_time - previous_time;
-    } else {
-        // Timer overflow occurred: calculate span across the wrap-around
-        return (PLATFORM_TIME_MAX - previous_time) + next_time + 1;
-    }
-}
-
 static void physical_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_key_event_t* key_event, bool is_capturing_keys, platform_time_t timespan) {
     reset_return_data(&pipeline_executor_state->return_data);
 
@@ -281,7 +272,7 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
 
     last_execution = pipeline_executor_state.return_data;
 
-    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW && last_execution.callback_time > 0) {
+    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW) {
         DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", last_execution.callback_time);
         pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(last_execution.callback_time, physical_event_deferred_exec_callback, NULL);
         pipeline_executor_state.is_callback_set = true; // Set the callback set flag
@@ -395,13 +386,13 @@ static void process_key_pool(void) {
                     bool execute_deferred_call = false;
                     platform_time_t time_span;
 
-                    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW && last_execution.callback_time > 0) {
+                    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW) {
                         replay_callback_delay_ms = last_execution.callback_time;
                         time_span = time_between_key_events(&pipeline_executor_state.key_event_buffer->event_buffer[capture_event_index], &pipeline_executor_state.key_event_buffer->event_buffer[capture_event_index + 1]);
                         if (time_span >= replay_callback_delay_ms) {
                             execute_deferred_call = true;
                         }
-                    } else if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS && last_execution.callback_time > 0) {
+                    } else if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS) {
                         time_span = replay_callback_delay_ms + time_between_key_events(&pipeline_executor_state.key_event_buffer->event_buffer[capture_event_index], &pipeline_executor_state.key_event_buffer->event_buffer[capture_event_index + 1]);
                         if (time_span >= replay_callback_delay_ms) {
                             execute_deferred_call = true;
@@ -475,7 +466,7 @@ static void process_key_pool(void) {
             pipeline_executor_state.is_callback_set = false; // Reset the callback set flag
         }
     }
-    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW && last_execution.callback_time > 0) {
+    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW) {
         DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", pipeline_executor_state.return_data.callback_time);
         pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(pipeline_executor_state.return_data.callback_time, physical_event_deferred_exec_callback, NULL);
         pipeline_executor_state.is_callback_set = true; // Set the callback set flag
