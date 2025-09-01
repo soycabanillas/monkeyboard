@@ -438,15 +438,15 @@ void print_tap_dance_status(pipeline_tap_dance_global_config_t* global_config) {
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
         #if defined(AGNOSTIC_USE_1D_ARRAY)
-                    DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, KP %d",
-                    i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
-                    behaviour->status->tap_count, behaviour->status->selected_layer,
-                    behaviour->status->trigger_keypos);
+            DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, KP %d",
+                i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
+                behaviour->status->tap_count, behaviour->status->selected_layer,
+                behaviour->status->trigger_keypos);
         #elif defined(AGNOSTIC_USE_2D_ARRAY)
             DEBUG_PRINT_RAW(" # Behaviour %zu: Keycode %d, State %s, Tap Count %d, Layer %d, Col %d, Row %d",
-                        i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
-                        behaviour->status->tap_count, behaviour->status->selected_layer,
-                        behaviour->status->trigger_keypos.row, behaviour->status->trigger_keypos.col);
+                i, behaviour->config->keycodemodifier, tap_dance_state_to_string(behaviour->status->state),
+                behaviour->status->tap_count, behaviour->status->selected_layer,
+                behaviour->status->trigger_keypos.row, behaviour->status->trigger_keypos.col);
         #endif
     }
     DEBUG_PRINT_NL();

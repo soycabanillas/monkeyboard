@@ -53,8 +53,6 @@ const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
 const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
 
 static KeyboardSimulator set_scenario(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
-
-
     static const platform_keycode_t keymaps[2][1][2] = {
         {{ TAP_DANCE_KEY, KEY_B }},
         {{ 3011, 3012 }}  // Shift layer

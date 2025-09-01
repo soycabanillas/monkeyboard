@@ -69,8 +69,6 @@ const uint16_t KEY_G = 3016;
 const uint16_t KEY_H = 3017;
 
 static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_config) {
-
-
     static const platform_keycode_t keymaps[1][1][4] = {
         {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
     };

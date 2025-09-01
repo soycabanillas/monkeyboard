@@ -1,10 +1,17 @@
 #include "pipeline_combo.h"
+#include "monkeyboard_debug.h"
 #include "pipeline_executor.h"
 #include "platform_interface.h"
 #include "platform_types.h"
 #include "monkeyboard_time_manager.h"
 #include <stdint.h>
 #include <string.h>
+
+#if defined(MONKEYBOARD_DEBUG)
+    #define PREFIX_DEBUG "COMBO: "
+    #define DEBUG_COMBO(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+    #define DEBUG_COMBO_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#endif
 
 #define g_interval_timeout 50
 
@@ -265,8 +272,49 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
     return result;
 }
 
+ 
+#ifdef MONKEYBOARD_DEBUG
+static const char* tap_combo_state_to_string(pipeline_combo_state_t state) {
+    switch (state) {
+        case COMBO_IDLE: return "IDLE";
+        case COMBO_IDLE_WAITING_FOR_PRESSES: return "WAITING_FOR_PRESSES";
+        case COMBO_IDLE_ALL_KEYS_PRESSED: return "ALL_KEYS_PRESSED";
+        case COMBO_ACTIVE: return "ACTIVE";
+        default: return "UNKNOWN";
+    }
+}
 
+void print_combo_status(pipeline_combo_global_config_t* global_config) {
+    if (global_config == NULL) {
+        DEBUG_PRINT_ERROR("@ Combo: Global config is NULL");
+        return;
+    }
 
+    DEBUG_COMBO_RAW("# %zu", global_config->length);
+    for (size_t i = 0; i < global_config->length; i++) {
+        pipeline_combo_config_t *combo = global_config->combos[i];
+            DEBUG_PRINT_RAW(" # ACTIVE %zu: Status:%s First %d, Time %u",
+                            i, tap_combo_state_to_string(combo->combo_status), combo->first_key_event, combo->time_from_first_key_event);
+            for (size_t j = 0; j < combo->keys_length; j++) {
+            #if defined(AGNOSTIC_USE_1D_ARRAY)
+                DEBUG_PRINT_RAW(" # ACTIVE %zu: Keypos %d, IsPressed %d, PressId %d",
+                    i, combo->keys[j]->keypos, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+            #elif defined(AGNOSTIC_USE_2D_ARRAY)
+                DEBUG_PRINT_RAW(" # ACTIVE %zu: Col %d, Row %d, IsPressed %d, PressId %d",
+                    i, combo->keys[j]->keypos.col, combo->keys[j]->keypos.row, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+            #endif
+            }
+    }
+    DEBUG_PRINT_NL();
+}
+#endif
+
+#if defined(MONKEYBOARD_DEBUG)
+    #define DEBUG_STATE() \
+        print_combo_status(global_config);
+#else
+    #define DEBUG_STATE() ((void)0)
+#endif
 
 void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
     pipeline_combo_global_config_t* global_config = (pipeline_combo_global_config_t*)user_data;
@@ -321,6 +369,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
                 }
                 if (is_time_pending == false) return_actions->no_capture_fn();
                 else return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+                DEBUG_STATE();
                 return;
             }
         }
@@ -367,21 +416,25 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
         if (next_time_span.combos_on_timer) {
             if (is_time_pending == true && next_callback_timestamp == next_time_span.timestamp) {
                 return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
+                DEBUG_STATE();
                 return;
             } else {
                 is_time_pending = true;
                 next_callback_timestamp = next_time_span.timestamp;
                 return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, next_time_span.timespan);
+                DEBUG_STATE();
                 return;
             }
         } else {
             is_time_pending = false;
             return_actions->no_capture_fn();
+            DEBUG_STATE();
             return;
         }
     } else if (params->callback_type == PIPELINE_CALLBACK_TIMER) {
         // Handle hold events
     }
+    DEBUG_STATE();
 }
 
 void pipeline_combo_callback_reset(void* user_data) {
@@ -393,4 +446,3 @@ void pipeline_combo_global_state_create(void) {
     is_time_pending = false;
     next_callback_timestamp = 0;
 }
-
