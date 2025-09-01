@@ -76,7 +76,7 @@ static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_conf
     keys[1] = create_combo_key(platform_keypos_t{0,2}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0));
 
 
-    combo_config->combos[0] = create_combo(2, keys, create_combo_key_action(COMBO_KEY_ACTION_NONE, KEY_A), create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A));
+    combo_config->combos[0] = create_combo(2, keys, create_combo_key_action(COMBO_KEY_ACTION_REGISTER, KEY_A), create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A));
     combo_config->length++;
 
     return keyboard;
@@ -92,14 +92,14 @@ TEST_F(Combo_Basic_Test, FirstTest) {
     KeyboardSimulator keyboard = set_scenario(combo_config);
 
     keyboard.press_key_at(COMBO_KEY_A, 0);
-    keyboard.press_key_at(COMBO_KEY_B, 0);
-    keyboard.release_key_at(COMBO_KEY_A, 1);
-    keyboard.release_key_at(COMBO_KEY_B, 1);
+    keyboard.press_key_at(COMBO_KEY_B, 10);
+    keyboard.release_key_at(COMBO_KEY_A, 20);
+    keyboard.release_key_at(COMBO_KEY_B, 30);
 
     // Should produce tap (KC_A) then KC_B
     std::vector<tap_dance_event_t> expected_events = {
-        td_press(KEY_A, 0),
-        td_release(KEY_A, 199),
+        td_press(KEY_A, 10),
+        td_release(KEY_A, 30),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }

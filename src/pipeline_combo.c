@@ -73,8 +73,9 @@ static bool all_keys_will_be_released(pipeline_combo_config_t* combo, platform_k
     for (size_t i = 0; i < combo->keys_length; i++) {
         pipeline_combo_key_t* key = combo->keys[i];
         if ((platform_compare_keyposition(key->keypos, keypos))) {
-            if (is_pressed == false) return false;
-            if (key->is_pressed == false) return false;
+            if (is_pressed == true) return false;
+        } else {
+            if (key->is_pressed == true) return false;
         }
     }
     return true;
@@ -293,18 +294,18 @@ void print_combo_status(pipeline_combo_global_config_t* global_config) {
     DEBUG_COMBO_RAW("# %zu", global_config->length);
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_combo_config_t *combo = global_config->combos[i];
-            DEBUG_PRINT(" # %zu: Status %s First %d, Time %u",
-                            i, tap_combo_state_to_string(combo->combo_status), combo->first_key_event, combo->time_from_first_key_event);
-            for (size_t j = 0; j < combo->keys_length; j++) {
-            #if defined(AGNOSTIC_USE_1D_ARRAY)
-                DEBUG_PRINT_RAW(" # %zu: Keypos %d, IsPressed %d, PressId %d",
-                    j, combo->keys[j]->keypos, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
-            #elif defined(AGNOSTIC_USE_2D_ARRAY)
-                DEBUG_PRINT_RAW(" # %zu: Col %d, Row %d, IsPressed %d, PressId %d",
-                    j, combo->keys[j]->keypos.col, combo->keys[j]->keypos.row, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
-            #endif
-            }
-            DEBUG_PRINT_NL();
+        DEBUG_PRINT(" # %zu: Status %s First %d, Time %u",
+                        i, tap_combo_state_to_string(combo->combo_status), combo->first_key_event, combo->time_from_first_key_event);
+        for (size_t j = 0; j < combo->keys_length; j++) {
+        #if defined(AGNOSTIC_USE_1D_ARRAY)
+            DEBUG_PRINT_RAW(" # %zu: Keypos %d, IsPressed %d, PressId %d",
+                j, combo->keys[j]->keypos, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+        #elif defined(AGNOSTIC_USE_2D_ARRAY)
+            DEBUG_PRINT_RAW(" # %zu: Col %d, Row %d, IsPressed %d, PressId %d",
+                j, combo->keys[j]->keypos.col, combo->keys[j]->keypos.row, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+        #endif
+        }
+        DEBUG_PRINT_NL();
     }
 
 }
@@ -328,6 +329,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
             pipeline_combo_config_t* combo = global_config->combos[i];
             if (combo->combo_status == COMBO_ACTIVE) {
                 add_key_to_active_return_t when_active_result = add_key_to_active_combo(combo, params->key_event->keypos, params->key_event->is_press);
+                DEBUG_COMBO("Add key to active combo result: status=%d", when_active_result.status);
                 switch (when_active_result.status) {
                     case ADD_KEY_ACTIVE_WRONG_STATUS:
                         break;
@@ -382,17 +384,21 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
             pipeline_combo_config_t* combo = global_config->combos[i];
 
             add_key_to_idle_return_t result = add_key_to_idle_combo(combo, params->key_event->keypos, params->key_event->press_id, params->key_event->is_press, params->timespan);
+            DEBUG_COMBO("Add key to idle combo result: status=%d timespan=%u", result.status, result.timespan);
             switch (result.status) {
                 case ADD_KEY_IDLE_WRONG_STATUS:
                 case ADD_KEY_IDLE_NOT_FOUND:
                 case ADD_KEY_IDLE_RESETED:
                 case ADD_KEY_IDLE_INITIALIZED:
                 case ADD_KEY_IDLE_PRESSED:
+                    break;
                 case ADD_KEY_IDLE_ALL_KEYS_PRESSED:
                     first_combo_all_keys_pressed = combo;
-
+                    
+                    process_key_translation(&combo->key_on_press_combo, actions);
                     combo->combo_status = COMBO_ACTIVE;
                     combo->first_key_event = false;
+                    break;
             }
         }
         if (first_combo_all_keys_pressed != NULL) {
