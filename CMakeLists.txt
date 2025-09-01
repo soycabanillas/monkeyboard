@@ -21,6 +21,8 @@ set(CORE_SOURCES
     src/monkeyboard_deferred_callbacks.c
     src/monkeyboard_layer_manager.c
     src/monkeyboard_time_manager.c
+    src/pipeline_combo.c
+    src/pipeline_combo_initializer.c
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
@@ -40,6 +42,8 @@ set(CORE_HEADERS
     src/monkeyboard_deferred_callbacks.h
     src/monkeyboard_layer_manager.h
     src/monkeyboard_time_manager.h
+    src/pipeline_combo.h
+    src/pipeline_combo_initializer.h
     src/pipeline_executor.h
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h

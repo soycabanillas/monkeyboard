@@ -37,7 +37,7 @@ static pipeline_combo_element_found_t find_key_in_combo(pipeline_combo_config_t*
     result.found = false;
     result.index = 0;
     for (size_t i = 0; i < combo->keys_length; i++) {
-        pipeline_combo_key_t* key = &combo->keys[i];
+        pipeline_combo_key_t* key = combo->keys[i];
         if (platform_compare_keyposition(key->keypos, keypos)) {
             result.found = true;
             result.index = i;
@@ -64,7 +64,7 @@ typedef struct {
 
 static bool all_keys_will_be_released(pipeline_combo_config_t* combo, platform_keypos_t keypos, bool is_pressed) {
     for (size_t i = 0; i < combo->keys_length; i++) {
-        pipeline_combo_key_t* key = &combo->keys[i];
+        pipeline_combo_key_t* key = combo->keys[i];
         if ((platform_compare_keyposition(key->keypos, keypos))) {
             if (is_pressed == false) return false;
             if (key->is_pressed == false) return false;
@@ -83,7 +83,7 @@ static add_key_to_active_return_t add_key_to_active_combo(pipeline_combo_config_
     }
     pipeline_combo_element_found_t key_info = find_key_in_combo(combo, keypos);
     if (key_info.found) {
-        pipeline_combo_key_t* combo_key = &combo->keys[key_info.index];
+        pipeline_combo_key_t* combo_key = combo->keys[key_info.index];
         if (all_keys_will_be_released(combo, keypos, is_press)) {
             combo_key->is_pressed = false;
 
@@ -139,8 +139,8 @@ static add_key_to_idle_return_t add_key_to_idle_combo(pipeline_combo_config_t* c
         if (combo->combo_status == COMBO_IDLE && is_press == true) {
             combo->combo_status = COMBO_IDLE_WAITING_FOR_PRESSES;
             combo->time_from_first_key_event = current_time;
-            combo->keys[key_info.index].is_pressed = true;
-            combo->keys[key_info.index].press_id = press_id;
+            combo->keys[key_info.index]->is_pressed = true;
+            combo->keys[key_info.index]->press_id = press_id;
 
             result.status = ADD_KEY_IDLE_INITIALIZED;
             result.timespan = 0;
@@ -149,7 +149,7 @@ static add_key_to_idle_return_t add_key_to_idle_combo(pipeline_combo_config_t* c
             if (is_press == false) {
                 combo->combo_status = COMBO_IDLE;
                 for (size_t i = 0; i < combo->keys_length; i++) {
-                    combo->keys[i].is_pressed = false;
+                    combo->keys[i]->is_pressed = false;
                 }
 
                 result.status = ADD_KEY_IDLE_RESETED;
@@ -158,11 +158,11 @@ static add_key_to_idle_return_t add_key_to_idle_combo(pipeline_combo_config_t* c
             } else {
                 platform_time_t timespan = calculate_time_span(combo->time_from_first_key_event, current_time);
                 if (timespan <= g_interval_timeout) {
-                    combo->keys[key_info.index].is_pressed = is_press;
-                    combo->keys[key_info.index].press_id = press_id;
+                    combo->keys[key_info.index]->is_pressed = is_press;
+                    combo->keys[key_info.index]->press_id = press_id;
                     bool all_pressed = true;
                     for (size_t i = 0; i < combo->keys_length; i++) {
-                        if (!combo->keys[i].is_pressed) {
+                        if (!combo->keys[i]->is_pressed) {
                             all_pressed = false;
                             break;
                         }
@@ -225,7 +225,7 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
     platform_time_t minimal_time = 0;
     
     for (size_t i = 0; i < global_config->length; i++) {
-        pipeline_combo_config_t* combo = &global_config->combos[i];
+        pipeline_combo_config_t* combo = global_config->combos[i];
         if (combo->combo_status == COMBO_IDLE_WAITING_FOR_PRESSES) {
             if (!found) {
                 found = true;
@@ -275,7 +275,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
 
         // Check if the key event is part of any active combo
         for (size_t i = 0; i < global_config->length; i++) {
-            pipeline_combo_config_t* combo = &global_config->combos[i];
+            pipeline_combo_config_t* combo = global_config->combos[i];
             if (combo->combo_status == COMBO_ACTIVE) {
                 add_key_to_active_return_t when_active_result = add_key_to_active_combo(combo, params->key_event->keypos, params->key_event->is_press);
                 switch (when_active_result.status) {
@@ -285,19 +285,19 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
                         break;
                     case ADD_KEY_ACTIVE_PRESSED:
                     {
-                        pipeline_combo_key_t* combo_key = &combo->keys[when_active_result.key_info.index];
+                        pipeline_combo_key_t* combo_key = combo->keys[when_active_result.key_info.index];
                         process_key_translation(&combo_key->key_on_press, actions);
                         break;
                     }
                     case ADD_KEY_ACTIVE_RELEASED:
                     {
-                        pipeline_combo_key_t* combo_key = &combo->keys[when_active_result.key_info.index];
+                        pipeline_combo_key_t* combo_key = combo->keys[when_active_result.key_info.index];
                         process_key_translation(&combo_key->key_on_release, actions);
                         break;
                     }
                     case ADD_KEY_ACTIVE_ALL_KEYS_RELEASED:
                     {
-                        pipeline_combo_key_t* combo_key = &combo->keys[when_active_result.key_info.index];
+                        pipeline_combo_key_t* combo_key = combo->keys[when_active_result.key_info.index];
                         process_key_translation(&combo_key->key_on_release, actions);
                         process_key_translation(&combo->key_on_release_combo, actions);
                         combo->combo_status = COMBO_IDLE;
@@ -328,7 +328,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
         pipeline_combo_config_t* first_combo_all_keys_pressed = NULL;
  
         for (size_t i = 0; i < global_config->length; i++) {
-            pipeline_combo_config_t* combo = &global_config->combos[i];
+            pipeline_combo_config_t* combo = global_config->combos[i];
 
             add_key_to_idle_return_t result = add_key_to_idle_combo(combo, params->key_event->keypos, params->key_event->press_id, params->key_event->is_press, params->timespan);
             switch (result.status) {
@@ -347,14 +347,14 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
         if (first_combo_all_keys_pressed != NULL) {
             // Remove the keys from the physical event buffer and from other idle combos
             for (uint8_t j = 0; j < first_combo_all_keys_pressed->keys_length; j++) {
-                actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j].press_id);
+                actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j]->press_id);
 
                 for (size_t k = 0; k < global_config->length; k++) {
-                    if (global_config->combos[k].combo_status != COMBO_ACTIVE) {
-                        pipeline_combo_config_t* other_combo = &global_config->combos[k];
+                    if (global_config->combos[k]->combo_status != COMBO_ACTIVE) {
+                        pipeline_combo_config_t* other_combo = global_config->combos[k];
                         for (size_t l = 0; l < other_combo->keys_length; l++) {
-                            if (platform_compare_keyposition(other_combo->keys[l].keypos, first_combo_all_keys_pressed->keys[j].keypos)) {
-                                other_combo->keys[l].is_pressed = false;
+                            if (platform_compare_keyposition(other_combo->keys[l]->keypos, first_combo_all_keys_pressed->keys[j]->keypos)) {
+                                other_combo->keys[l]->is_pressed = false;
                                 other_combo->combo_status = COMBO_IDLE;
                                 other_combo->first_key_event = false;
                             }
