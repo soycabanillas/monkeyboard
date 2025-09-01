@@ -33,9 +33,6 @@ protected:
 
         pipeline_executor_create_config(1, 0);
         pipeline_executor_add_physical_pipeline(0, &pipeline_combo_callback_process_data, &pipeline_combo_callback_reset, combo_config);
-
-
-
     }
 
     void TearDown() override {
@@ -74,14 +71,14 @@ static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_conf
     };
     KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 4);
 
-    pipeline_combo_key_t* keys[] = { 
-         create_combo_key(platform_keypos_t{0,1}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0)),
-         create_combo_key(platform_keypos_t{0,2}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0))
-    };
+    pipeline_combo_key_t** keys = (pipeline_combo_key_t**)malloc(2 * sizeof(pipeline_combo_key_t*));
+    keys[0] = create_combo_key(platform_keypos_t{0,1}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0));
+    keys[1] = create_combo_key(platform_keypos_t{0,2}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0));
+
 
     combo_config->combos[0] = create_combo(2, keys, create_combo_key_action(COMBO_KEY_ACTION_NONE, KEY_A), create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A));
     combo_config->length++;
-    
+
     return keyboard;
 }
 

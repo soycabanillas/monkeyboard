@@ -293,19 +293,20 @@ void print_combo_status(pipeline_combo_global_config_t* global_config) {
     DEBUG_COMBO_RAW("# %zu", global_config->length);
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_combo_config_t *combo = global_config->combos[i];
-            DEBUG_PRINT_RAW(" # ACTIVE %zu: Status:%s First %d, Time %u",
+            DEBUG_PRINT(" # %zu: Status %s First %d, Time %u",
                             i, tap_combo_state_to_string(combo->combo_status), combo->first_key_event, combo->time_from_first_key_event);
             for (size_t j = 0; j < combo->keys_length; j++) {
             #if defined(AGNOSTIC_USE_1D_ARRAY)
-                DEBUG_PRINT_RAW(" # ACTIVE %zu: Keypos %d, IsPressed %d, PressId %d",
-                    i, combo->keys[j]->keypos, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+                DEBUG_PRINT_RAW(" # %zu: Keypos %d, IsPressed %d, PressId %d",
+                    j, combo->keys[j]->keypos, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
             #elif defined(AGNOSTIC_USE_2D_ARRAY)
-                DEBUG_PRINT_RAW(" # ACTIVE %zu: Col %d, Row %d, IsPressed %d, PressId %d",
-                    i, combo->keys[j]->keypos.col, combo->keys[j]->keypos.row, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
+                DEBUG_PRINT_RAW(" # %zu: Col %d, Row %d, IsPressed %d, PressId %d",
+                    j, combo->keys[j]->keypos.col, combo->keys[j]->keypos.row, combo->keys[j]->is_pressed, combo->keys[j]->press_id);
             #endif
             }
+            DEBUG_PRINT_NL();
     }
-    DEBUG_PRINT_NL();
+
 }
 #endif
 
@@ -319,6 +320,7 @@ void print_combo_status(pipeline_combo_global_config_t* global_config) {
 void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
     pipeline_combo_global_config_t* global_config = (pipeline_combo_global_config_t*)user_data;
 
+    DEBUG_STATE();
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
 
         // Check if the key event is part of any active combo

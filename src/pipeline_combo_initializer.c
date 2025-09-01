@@ -6,7 +6,7 @@
 #include "platform_types.h"
 
 pipeline_combo_config_t* create_combo(uint8_t length, pipeline_combo_key_t** keys, pipeline_combo_key_translation_t key_on_press_combo, pipeline_combo_key_translation_t key_on_release_combo) {
-    pipeline_combo_config_t* combo = (pipeline_combo_config_t*)malloc(sizeof(pipeline_combo_config_t));
+    pipeline_combo_config_t* combo = (pipeline_combo_config_t*)malloc(sizeof(*combo));
     if (!combo) return NULL;
 
     combo->keys_length = length;
@@ -20,7 +20,7 @@ pipeline_combo_config_t* create_combo(uint8_t length, pipeline_combo_key_t** key
 }
 
 pipeline_combo_key_t* create_combo_key(platform_keypos_t keypos, pipeline_combo_key_translation_t key_on_press, pipeline_combo_key_translation_t key_on_release) {
-    pipeline_combo_key_t* key = (pipeline_combo_key_t*)malloc(sizeof(pipeline_combo_key_t));
+    pipeline_combo_key_t* key = (pipeline_combo_key_t*)malloc(sizeof(*key));
     if (!key) return NULL;
 
     key->keypos = keypos;
