@@ -131,7 +131,6 @@ typedef struct {
 } add_key_to_idle_return_t;
 
 // Idle combo state machine
-// It only deals with keys, not any other state of the combo
 static add_key_to_idle_return_t add_key_to_idle_combo(pipeline_combo_config_t* combo, platform_keypos_t keypos, uint8_t press_id, bool is_press, platform_time_t current_time) {
     add_key_to_idle_return_t result;
 
@@ -190,9 +189,22 @@ static add_key_to_idle_return_t add_key_to_idle_combo(pipeline_combo_config_t* c
                 }
             }
         } else if (combo->combo_status == COMBO_IDLE_ALL_KEYS_PRESSED) {
-            result.status = ADD_KEY_IDLE_ALL_KEYS_PRESSED;
-            result.timespan = 0;
-            return result;
+            if (is_press == false) {
+                combo->combo_status = COMBO_IDLE;
+                for (size_t i = 0; i < combo->keys_length; i++) {
+                    combo->keys[i]->is_pressed = false;
+                }
+
+                result.status = ADD_KEY_IDLE_RESETED;
+                result.timespan = 0;
+                return result;
+            } else {
+                combo->combo_status = COMBO_ACTIVE;
+                combo->first_key_event = false;
+                result.status = ADD_KEY_IDLE_ALL_KEYS_PRESSED;
+                result.timespan = 0;
+                return result;
+            }
         }
     }
     result.status = ADD_KEY_IDLE_WRONG_STATUS;
@@ -234,7 +246,7 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
     
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_combo_config_t* combo = global_config->combos[i];
-        if (combo->combo_status == COMBO_IDLE_WAITING_FOR_PRESSES) {
+        if (combo->combo_status == COMBO_IDLE_WAITING_FOR_PRESSES || combo->combo_status == COMBO_IDLE_ALL_KEYS_PRESSED) {
             if (!found) {
                 found = true;
                 minimal_time = combo->time_from_first_key_event;
@@ -273,7 +285,162 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
     return result;
 }
 
- 
+
+
+// Check if any combo with all keys pressed is a candidate to activate
+// Two strategies to discard combos with all keys pressed:
+// COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON: Discard combo with all keys pressed if there is a previous combo (all keys pressed or waiting for presses) that have at least one common key from the current combo pressed.
+// COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON: Discard combo with all keys pressed if there is a previous combo (all keys pressed or waiting for presses) that have all keys from the current combo pressed.
+// Both options give a chance to previous combos to complete if they are in progress, being the second more restrictive (only if they share all the active keys).
+//
+// Example (X: pressed, O: not pressed):
+// QWERTY  <- keys
+//  OXX    <- combo A (waiting for presses)
+//    XX   <- combo B (all keys pressed)
+// COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON: The combo A shares at least one key pressed with combo B. Don't activate combo B.
+// COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON: The combo A does not share all keys pressed with combo B. Activate combo B.
+//
+// Example (X: pressed, O: not pressed):
+// QWERTY  <- keys
+//  OXX    <- combo A (waiting for presses)
+//   XX    <- combo B (all keys pressed)
+// COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON: The combo A shares at least one key pressed with combo B. Don't activate combo B.
+// COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON: The combo A shares all keys pressed with combo B. Don't activate combo B.
+//
+// Example (X: pressed, O: not pressed):
+// QWERTY  <- keys
+//  OX     <- combo A (waiting for presses)
+//    XO   <- combo B (waiting for presses)
+//   XX    <- combo C (all keys pressed)
+// COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON: The combo C shares at least one key pressed with combo B. Don't activate combo C.
+// COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON: The combo C does not share all keys pressed neither with combo A nor with combo B. Don't activate combo C.
+//
+// Example (X: pressed, O: not pressed):
+// QWERTY  <- keys
+//  OOX    <- combo A (waiting for presses) - Depending on the combo timout and presses, some combos may have pressed or not the same key, in this case the key E is pressed for combo B but not for combo A
+//   XX    <- combo B (all keys pressed)      This series of presses and releases could bring this scenario: Press E, Press W, Release W (combo B is reset), Press R.
+// COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON: The combo A shares at least one key pressed with combo B. Don't activate combo B.
+// COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON: The combo A shares all keys pressed with combo B. Activate combo B.
+
+typedef enum {
+    RESOLVE_ALL_KEYS_PREVIOUS_ACTIVATED,
+    RESOLVE_ALL_KEYS_PREVIOUS_IDLE_SHARE_KEYS,
+    RESOLVE_ALL_KEYS_CAN_BE_ACTIVATED
+} resolve_all_keys_pressed_combo_status_t;
+
+static resolve_all_keys_pressed_combo_status_t resolve_all_keys_pressed_combo(pipeline_combo_global_config_t* config, uint8_t current_combo_index) {
+    pipeline_combo_config_t* combo_i = config->combos[current_combo_index];
+    if (combo_i->combo_status == COMBO_IDLE_ALL_KEYS_PRESSED) {
+        for (size_t j = 0; j < current_combo_index; j++) {
+            if (current_combo_index == j) continue;
+            pipeline_combo_config_t* combo_j = config->combos[j];
+            if (combo_j->combo_status == COMBO_ACTIVE) {
+                for (size_t k = 0; k < combo_j->keys_length; k++) {
+                    pipeline_combo_key_t* key_j = combo_j->keys[k];
+                    pipeline_combo_element_found_t found_in_i = find_key_in_combo(combo_i, key_j->keypos);
+                    if (found_in_i.found == true) {
+                        return RESOLVE_ALL_KEYS_PREVIOUS_ACTIVATED;
+                    }
+                }
+                return RESOLVE_ALL_KEYS_PREVIOUS_ACTIVATED;
+            }
+            if (combo_j->combo_status == COMBO_IDLE_WAITING_FOR_PRESSES || combo_j->combo_status == COMBO_IDLE_ALL_KEYS_PRESSED) {
+                // Check for shared pressed keys
+                bool shared_pressed_key = false;
+                bool all_pressed_shared = true;
+                for (size_t k = 0; k < combo_i->keys_length; k++) {
+                    pipeline_combo_key_t* key_i = combo_i->keys[k];
+                    if (key_i->is_pressed) {
+                        pipeline_combo_element_found_t found_in_j = find_key_in_combo(combo_j, key_i->keypos);
+                        if (found_in_j.found == true && (combo_j->keys[found_in_j.index]->is_pressed == true)) {
+                            shared_pressed_key = true;
+                        } else if (!found_in_j.found == false || combo_j->keys[found_in_j.index]->is_pressed == false) {
+                            all_pressed_shared = false;
+                        }
+                    }
+                }
+                if (shared_pressed_key == true && config->strategy == COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON) {
+                    return RESOLVE_ALL_KEYS_PREVIOUS_IDLE_SHARE_KEYS;
+                }
+                if (all_pressed_shared == true && config->strategy == COMBO_STRATEGY_DISCARD_WHEN_ALL_PRESSED_IN_COMMON) {
+                    return RESOLVE_ALL_KEYS_PREVIOUS_IDLE_SHARE_KEYS;
+                }
+            }
+        }
+    }
+    return RESOLVE_ALL_KEYS_CAN_BE_ACTIVATED;
+}
+
+// Reset the non active combos with a certain keypos. This is used after activating a combo as the rest of the combos sharing a key must be discarded
+static void reset_combos_not_selected(pipeline_combo_global_config_t* global_config, platform_keypos_t keypos) {
+    for (size_t k = 0; k < global_config->length; k++) {
+        if (global_config->combos[k]->combo_status != COMBO_ACTIVE) {
+            pipeline_combo_config_t* other_combo = global_config->combos[k];
+            for (size_t l = 0; l < other_combo->keys_length; l++) {
+                if (platform_compare_keyposition(other_combo->keys[l]->keypos, keypos)) {
+                    other_combo->keys[l]->is_pressed = false;
+                    other_combo->combo_status = COMBO_IDLE;
+                    other_combo->first_key_event = false;
+                }
+            }
+        }
+    }
+}
+
+static void activate_combos(pipeline_combo_global_config_t* config, pipeline_physical_actions_t* actions) {
+    // Check combos with all keys pressed are candidates to activate once the staled combos have been reset
+    // Combos with all keys pressed does not need to check for them to be stale. They are in a pending state depending on other combos that when stale can make them active even if the timespan has expired, because when they were set on all keys pressed state they were under the timespan.
+    // The state "all keys pressed" means that the combo depends on other combos to activate
+    for (size_t i = 0; i < config->length; i++) {
+        // Filter combos that have all keys pressed
+        if (config->combos[i]->combo_status != COMBO_IDLE_ALL_KEYS_PRESSED) {
+            continue;
+        }
+        resolve_all_keys_pressed_combo_status_t status = resolve_all_keys_pressed_combo(config, i);
+        switch (status) {
+            case RESOLVE_ALL_KEYS_PREVIOUS_ACTIVATED:
+                DEBUG_COMBO("Combo %zu cannot be activated because a previous combo is active", i);
+                break;
+            case RESOLVE_ALL_KEYS_PREVIOUS_IDLE_SHARE_KEYS:
+                DEBUG_COMBO("Combo %zu cannot be activated because a previous combo is waiting for presses and shares keys", i);
+                config->combos[i]->combo_status = COMBO_IDLE;
+                config->combos[i]->first_key_event = false;
+                for (uint8_t j = 0; j < config->combos[i]->keys_length; j++) {
+                    config->combos[i]->keys[j]->is_pressed = false;
+                }
+                break;
+            case RESOLVE_ALL_KEYS_CAN_BE_ACTIVATED:
+                DEBUG_COMBO("Combo %zu can be activated", i);
+                pipeline_combo_config_t* combo = config->combos[i];
+                process_key_translation(&combo->key_on_press_combo, actions);
+                combo->combo_status = COMBO_ACTIVE;
+                combo->first_key_event = false;
+                for (uint8_t j = 0; j < combo->keys_length; j++) {
+                    actions->remove_physical_press_fn(combo->keys[j]->press_id);
+                    reset_combos_not_selected(config, combo->keys[j]->keypos);
+                }
+                break;
+        }
+    }
+}
+
+// Reset the waiting for presses combos. This is used when checking the timeout of the combos to discard the ones that are stale
+void reset_stale_combos(pipeline_combo_global_config_t* global_config, pipeline_combo_state_t status, platform_time_t timestamp_to_compare) {
+    for (size_t i = 0; i < global_config->length; i++) {
+        pipeline_combo_config_t* combo = global_config->combos[i];
+        if (combo->combo_status == status) {
+            platform_time_t timespan = calculate_time_span(combo->time_from_first_key_event, timestamp_to_compare);
+            if (timespan >= g_interval_timeout) {
+                for (size_t j = 0; j < combo->keys_length; j++) {
+                    combo->keys[j]->is_pressed = false;
+                }
+                combo->combo_status = COMBO_IDLE;
+                combo->first_key_event = false;
+            }
+        }
+    }
+}
+
 #ifdef MONKEYBOARD_DEBUG
 static const char* tap_combo_state_to_string(pipeline_combo_state_t state) {
     switch (state) {
@@ -313,20 +480,19 @@ void print_combo_status(pipeline_combo_global_config_t* global_config) {
 
 #if defined(MONKEYBOARD_DEBUG)
     #define DEBUG_STATE() \
-        print_combo_status(global_config);
+        print_combo_status(config);
 #else
     #define DEBUG_STATE() ((void)0)
 #endif
 
-void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
-    pipeline_combo_global_config_t* global_config = (pipeline_combo_global_config_t*)user_data;
+void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, pipeline_combo_global_config_t* config) {
 
     DEBUG_STATE();
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
 
         // Check if the key event is part of any active combo
-        for (size_t i = 0; i < global_config->length; i++) {
-            pipeline_combo_config_t* combo = global_config->combos[i];
+        for (size_t i = 0; i < config->length; i++) {
+            pipeline_combo_config_t* combo = config->combos[i];
             if (combo->combo_status == COMBO_ACTIVE) {
                 add_key_to_active_return_t when_active_result = add_key_to_active_combo(combo, params->key_event->keypos, params->key_event->is_press);
                 DEBUG_COMBO("Add key to active combo result: status=%d", when_active_result.status);
@@ -378,10 +544,12 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
             }
         }
 
-        pipeline_combo_config_t* first_combo_all_keys_pressed = NULL;
+        // pipeline_combo_config_t* first_combo_all_keys_pressed = NULL;
+        // uint8_t num_combos_pressed = 0;
+        // bool first_combo_is_first = true;
  
-        for (size_t i = 0; i < global_config->length; i++) {
-            pipeline_combo_config_t* combo = global_config->combos[i];
+        for (size_t i = 0; i < config->length; i++) {
+            pipeline_combo_config_t* combo = config->combos[i];
 
             add_key_to_idle_return_t result = add_key_to_idle_combo(combo, params->key_event->keypos, params->key_event->press_id, params->key_event->is_press, params->timespan);
             DEBUG_COMBO("Add key to idle combo result: status=%d timespan=%u", result.status, result.timespan);
@@ -389,38 +557,36 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
                 case ADD_KEY_IDLE_WRONG_STATUS:
                 case ADD_KEY_IDLE_NOT_FOUND:
                 case ADD_KEY_IDLE_RESETED:
+                    break;
                 case ADD_KEY_IDLE_INITIALIZED:
+                    // if (first_combo_all_keys_pressed == NULL) first_combo_is_first = false;
+                    // num_combos_pressed++;
+                    break;
                 case ADD_KEY_IDLE_PRESSED:
+                    // if (first_combo_all_keys_pressed == NULL) first_combo_is_first = false;
+                    // num_combos_pressed++;
                     break;
                 case ADD_KEY_IDLE_ALL_KEYS_PRESSED:
-                    first_combo_all_keys_pressed = combo;
-                    
-                    process_key_translation(&combo->key_on_press_combo, actions);
-                    combo->combo_status = COMBO_ACTIVE;
-                    combo->first_key_event = false;
+                    // num_combos_pressed++;
+                    // if (first_combo_all_keys_pressed == NULL) {
+                    //     first_combo_all_keys_pressed = combo;
+                        // process_key_translation(&combo->key_on_press_combo, actions);
                     break;
-            }
-        }
-        if (first_combo_all_keys_pressed != NULL) {
-            // Remove the keys from the physical event buffer and from other idle combos
-            for (uint8_t j = 0; j < first_combo_all_keys_pressed->keys_length; j++) {
-                actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j]->press_id);
 
-                for (size_t k = 0; k < global_config->length; k++) {
-                    if (global_config->combos[k]->combo_status != COMBO_ACTIVE) {
-                        pipeline_combo_config_t* other_combo = global_config->combos[k];
-                        for (size_t l = 0; l < other_combo->keys_length; l++) {
-                            if (platform_compare_keyposition(other_combo->keys[l]->keypos, first_combo_all_keys_pressed->keys[j]->keypos)) {
-                                other_combo->keys[l]->is_pressed = false;
-                                other_combo->combo_status = COMBO_IDLE;
-                                other_combo->first_key_event = false;
-                            }
-                        }
-                    }
-                }
             }
         }
-        calculate_next_time_span_t next_time_span = calculate_minimum_time_span(global_config, params->timespan);
+
+        // Check combos with all keys pressed are candidates to activate
+        activate_combos(config, actions);
+        // if (first_combo_all_keys_pressed != NULL && first_combo_is_first == true) {
+        //     // Remove the keys from the physical event buffer and from other idle combos
+            
+        //     for (uint8_t j = 0; j < first_combo_all_keys_pressed->keys_length; j++) {
+        //         actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j]->press_id);
+        //         reset_combos_not_selected(config, first_combo_all_keys_pressed->keys[j]->keypos);
+        //     }
+        // }
+        calculate_next_time_span_t next_time_span = calculate_minimum_time_span(config, params->timespan);
         if (next_time_span.combos_on_timer) {
             if (is_time_pending == true && next_callback_timestamp == next_time_span.timestamp) {
                 return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
@@ -440,14 +606,39 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
             return;
         }
     } else if (params->callback_type == PIPELINE_CALLBACK_TIMER) {
-        // Handle hold events
+        // Reset the combos waiting for presses whose time has passed
+        reset_stale_combos(config, COMBO_IDLE_WAITING_FOR_PRESSES, next_callback_timestamp);
+        // Check combos with all keys pressed are candidates to activate once the staled combos have been reset
+        activate_combos(config, actions);
+
+        calculate_next_time_span_t next_time_span = calculate_minimum_time_span(config, params->timespan);
+        if (next_time_span.combos_on_timer) {
+            is_time_pending = true;
+            next_callback_timestamp = next_time_span.timestamp;
+            return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_NEW, next_time_span.timespan);
+            DEBUG_STATE();
+            return;
+        } else {
+            is_time_pending = false;
+            return_actions->no_capture_fn();
+            DEBUG_STATE();
+            return;
+        }
     }
     DEBUG_STATE();
 }
 
-void pipeline_combo_callback_reset(void* user_data) {
+void pipeline_combo_callback_process_data_executor(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* config) {
+    pipeline_combo_callback_process_data(params, actions, return_actions, config);
+}
+
+void pipeline_combo_callback_reset(pipeline_combo_global_config_t* config) {
     is_time_pending = false;
     next_callback_timestamp = 0;
+}
+
+void pipeline_combo_callback_reset_executor(void* config) {
+    pipeline_combo_callback_reset(config);
 }
 
 void pipeline_combo_global_state_create(void) {

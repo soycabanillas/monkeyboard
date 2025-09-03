@@ -5,19 +5,18 @@
 #include <stdint.h>
 
 
-void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
+void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, pipeline_key_replacer_global_config_t* config) {
     //platform_log_debug("pipeline_key_replacer_callback || up: %u || press: %u", params->up, params->callback_type);
     platform_virtual_buffer_virtual_event_t* key_event = params->key_event;
 
-    pipeline_key_replacer_global_config_t* data = (pipeline_key_replacer_global_config_t*)user_data;
     if (key_event->is_press) {
-        for (size_t i = 0; i < data->length; i++)
+        for (size_t i = 0; i < config->length; i++)
         {
-            if (data->modifier_pairs[i]->keycode == key_event->keycode) {
-                uint8_t buffer_size = data->modifier_pairs[i]->press_event_buffer->buffer_length;
+            if (config->modifier_pairs[i]->keycode == key_event->keycode) {
+                uint8_t buffer_size = config->modifier_pairs[i]->press_event_buffer->buffer_length;
                 if (buffer_size > 0) {
                     for (size_t j = 0; j < buffer_size; j++) {
-                        actions->report_press_fn(data->modifier_pairs[i]->press_event_buffer->buffer[j].keycode);
+                        actions->report_press_fn(config->modifier_pairs[i]->press_event_buffer->buffer[j].keycode);
                     }
                     actions->report_send_fn();
                 }
@@ -25,13 +24,13 @@ void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_param
             }
         }
     } else {
-        for (size_t i = 0; i < data->length; i++)
+        for (size_t i = 0; i < config->length; i++)
         {
-            if (data->modifier_pairs[i]->keycode == key_event->keycode) {
-                uint8_t buffer_size = data->modifier_pairs[i]->release_event_buffer->buffer_length;
+            if (config->modifier_pairs[i]->keycode == key_event->keycode) {
+                uint8_t buffer_size = config->modifier_pairs[i]->release_event_buffer->buffer_length;
                 if (buffer_size > 0) {
                     for (size_t j = 0; j < buffer_size; j++) {
-                        actions->report_release_fn(data->modifier_pairs[i]->release_event_buffer->buffer[j].keycode);
+                        actions->report_release_fn(config->modifier_pairs[i]->release_event_buffer->buffer[j].keycode);
                     }
                     actions->report_send_fn();
                 }
@@ -41,6 +40,14 @@ void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_param
     }
 }
 
-void pipeline_key_replacer_callback_reset(void* user_data) {
+void pipeline_key_replacer_callback_process_data_executor(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* config) {
+    pipeline_key_replacer_callback_process_data(params, actions, config);
+}
 
+void pipeline_key_replacer_callback_reset(pipeline_key_replacer_global_config_t* config) {
+
+}
+
+void pipeline_key_replacer_callback_reset_executor(void* config) {
+    pipeline_key_replacer_callback_reset(config);
 }

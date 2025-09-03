@@ -22,5 +22,8 @@ typedef struct {
     pipeline_key_replacer_pair_t** modifier_pairs;
 } pipeline_key_replacer_global_config_t;
 
-void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data);
-void pipeline_key_replacer_callback_reset(void* user_data);
+void pipeline_key_replacer_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, pipeline_key_replacer_global_config_t* config);
+void pipeline_key_replacer_callback_process_data_executor(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* config);
+void pipeline_key_replacer_callback_reset(pipeline_key_replacer_global_config_t* config);
+void pipeline_key_replacer_callback_reset_executor(void* config);
+

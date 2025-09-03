@@ -522,24 +522,29 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
     DEBUG_STATE();
 }
 
-void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data) {
-    pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
-
-    if (global_config == NULL) {
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, pipeline_tap_dance_global_config_t* config) {
+    if (config == NULL) {
         DEBUG_PRINT_ERROR("Tap Dance: Global config is NULL");
         return;
     }
-    pipeline_tap_dance_process(params, actions, return_actions, global_config);
+    pipeline_tap_dance_process(params, actions, return_actions, config);
 }
 
-void pipeline_tap_dance_callback_reset(void* user_data) {
-    pipeline_tap_dance_global_config_t* global_config = (pipeline_tap_dance_global_config_t*)user_data;
+void pipeline_tap_dance_callback_process_data_executor(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* config) {
+    pipeline_tap_dance_callback_process_data(params, actions, return_actions, config);
+}
 
-    if (global_config == NULL) {
+void pipeline_tap_dance_callback_reset(pipeline_tap_dance_global_config_t* config) {
+
+    if (config == NULL) {
         DEBUG_PRINT_ERROR("Tap Dance: Global config is NULL on reset");
         return;
     }
     DEBUG_TAP_DANCE("Resetting all behaviours");
 
-    pipeline_tap_dance_global_state_reset(global_config);
+    pipeline_tap_dance_global_state_reset(config);
+}
+
+void pipeline_tap_dance_callback_reset_executor(void* config) {
+
 }

@@ -51,7 +51,7 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithSingleOutput) {
     release_event_buffer->buffer[0].keycode = OUTPUT_KEY2;
     global_config.modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
     pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data, &pipeline_key_replacer_callback_reset, &global_config);
+    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data_executor, &pipeline_key_replacer_callback_reset_executor, &global_config);
 
 
     keyboard.press_key(ONE_SHOT_KEY);
@@ -93,7 +93,7 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithMultipleOutputs) {
     release_event_buffer->buffer[1].keycode = OUTPUT_KEY4;
     global_config.modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
     pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data, &pipeline_key_replacer_callback_reset, &global_config);
+    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data_executor, &pipeline_key_replacer_callback_reset_executor, &global_config);
 
 
     keyboard.press_key(ONE_SHOT_KEY);

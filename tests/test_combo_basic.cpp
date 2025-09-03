@@ -29,10 +29,11 @@ protected:
             malloc(sizeof(*combo_config)));
         combo_config->length = 0;
         combo_config->combos = static_cast<pipeline_combo_config_t**>(
-            malloc( n_elements * sizeof(pipeline_combo_config_t*)));
+            malloc(n_elements * sizeof(pipeline_combo_config_t*)));
+        combo_config->strategy = COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON;
 
         pipeline_executor_create_config(1, 0);
-        pipeline_executor_add_physical_pipeline(0, &pipeline_combo_callback_process_data, &pipeline_combo_callback_reset, combo_config);
+        pipeline_executor_add_physical_pipeline(0, &pipeline_combo_callback_process_data_executor, &pipeline_combo_callback_reset_executor, combo_config);
     }
 
     void TearDown() override {
@@ -65,7 +66,7 @@ const uint16_t KEY_F = 3015;
 const uint16_t KEY_G = 3016;
 const uint16_t KEY_H = 3017;
 
-static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_config) {
+static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_config, combo_activate_strategy_t strategy) {
     static const platform_keycode_t keymaps[1][1][4] = {
         {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
     };
@@ -77,7 +78,7 @@ static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_conf
 
 
     combo_config->combos[0] = create_combo(2, keys, create_combo_key_action(COMBO_KEY_ACTION_REGISTER, KEY_A), create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A));
-    combo_config->length++;
+    combo_config->length = 1;
 
     return keyboard;
 }
@@ -89,7 +90,7 @@ static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_conf
 // Expected: All flavors should produce tap (KC_A) then KC_B
 
 TEST_F(Combo_Basic_Test, FirstTest) {
-    KeyboardSimulator keyboard = set_scenario(combo_config);
+    KeyboardSimulator keyboard = set_scenario(combo_config, COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON);
 
     keyboard.press_key_at(COMBO_KEY_A, 0);
     keyboard.press_key_at(COMBO_KEY_B, 10);
@@ -102,4 +103,5 @@ TEST_F(Combo_Basic_Test, FirstTest) {
         td_release(KEY_A, 30),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    //EXPECT_FALSE(keyboard.has_keys_to_process());
 }

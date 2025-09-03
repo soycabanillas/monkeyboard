@@ -48,7 +48,7 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     global.config = global_config;
     global.status = global_status;
     pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_oneshot_modifier_callback_process_data, &pipeline_oneshot_modifier_callback_reset, &global);
+    pipeline_executor_add_virtual_pipeline(0, &pipeline_oneshot_modifier_callback_process_data_executor, &pipeline_oneshot_modifier_callback_reset_executor, &global);
 
 
     keyboard.press_key(ONE_SHOT_KEY);

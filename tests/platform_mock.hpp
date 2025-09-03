@@ -97,23 +97,13 @@ struct MockPlatformState {
     void reset();
 
     // New comparison methods with Google Test integration
-    ::testing::AssertionResult key_actions_match(const std::vector<key_action_t>& expected) const;
-    ::testing::AssertionResult key_actions_match_with_time(const std::vector<key_action_t>& expected) const;
-    ::testing::AssertionResult key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t start_time = 0) const;
     ::testing::AssertionResult tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const;
     ::testing::AssertionResult tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
     bool layer_history_matches(const std::vector<uint8_t>& expected) const;
-    std::vector<key_action_t> get_key_actions_since(size_t start_index) const;
-    std::vector<uint8_t> get_layer_history_since(size_t start_index) const;
 };
 
 // External declaration of the global mock state
 extern MockPlatformState g_mock_state;
-
-// Helper functions for creating expected sequences
-key_action_t press(platform_keycode_t keycode, platform_time_t time = 0);
-key_action_t release(platform_keycode_t keycode, platform_time_t time = 0);
-std::vector<key_action_t> tap_sequence(platform_keycode_t keycode);
 
 // Helper functions for creating tap dance event sequences
 tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time = 0);

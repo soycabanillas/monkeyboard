@@ -125,6 +125,7 @@ typedef struct {
 extern pipeline_executor_config_t *pipeline_executor_config;
 
 void pipeline_executor_reset_state(void);
+void pipeline_executor_create_config_with_event_buffer(platform_key_event_buffer_t* event_buffer, uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count);
 void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count);
 void pipeline_executor_add_physical_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data);
 void pipeline_executor_add_virtual_pipeline(uint8_t pipeline_position, pipeline_virtual_callback callback, pipeline_callback_reset callback_reset, void* user_data);

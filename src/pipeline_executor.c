@@ -476,8 +476,8 @@ static void process_key_pool(void) {
     process_virtual_event_buffer();
 }
 
-static void pipeline_executor_create_state(void) {
-    pipeline_executor_state.key_event_buffer = platform_key_event_create();
+static void pipeline_executor_create_state(platform_key_event_buffer_t* event_buffer) {
+    pipeline_executor_state.key_event_buffer = event_buffer;
     pipeline_executor_state.virtual_event_buffer = platform_virtual_event_create();
     pipeline_executor_state.return_data.processed = false;
     pipeline_executor_state.return_data.timer_behavior = PIPELINE_EXECUTOR_TIMEOUT_NONE;
@@ -517,9 +517,9 @@ void pipeline_executor_reset_state(void) {
 
 }
 
-void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count) {
+void pipeline_executor_create_config_with_event_buffer(platform_key_event_buffer_t* event_buffer, uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count) {
     DEBUG_PRINT_NL();
-    pipeline_executor_create_state();
+    pipeline_executor_create_state(event_buffer);
     pipeline_executor_config = malloc(sizeof(pipeline_executor_config_t));
     pipeline_executor_config->physical_pipelines_length = physical_pipeline_count;
     pipeline_executor_config->virtual_pipelines_length = virtual_pipeline_count;
@@ -549,6 +549,10 @@ void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t vi
 
     physical_return_actions.key_capture_fn = &end_with_capture_next_keys;
     physical_return_actions.no_capture_fn = &no_capture;
+}
+
+void pipeline_executor_create_config(uint8_t physical_pipeline_count, uint8_t virtual_pipeline_count) {
+    pipeline_executor_create_config_with_event_buffer(platform_key_event_create(), physical_pipeline_count, virtual_pipeline_count);
 }
 
 void pipeline_executor_add_physical_pipeline(uint8_t pipeline_position, pipeline_physical_callback callback, pipeline_callback_reset callback_reset, void* user_data) {
