@@ -118,7 +118,8 @@ public:
                                        const std::map<uint8_t, platform_keycode_t>& taps = {},
                                        const std::map<uint8_t, uint8_t>& holds = {},
                                        uint32_t hold_timeout = g_hold_timeout,
-                                       uint32_t tap_timeout = g_tap_timeout) {
+                                       uint32_t tap_timeout = g_tap_timeout,
+                                       tap_dance_hold_strategy_t hold_strategy = TAP_DANCE_HOLD_PREFERRED) {
         TapDanceBehaviorBuilder behavior(trigger_key);
         
         // Add tap actions
@@ -128,7 +129,7 @@ public:
         
         // Add hold actions
         for (const auto& hold_pair : holds) {
-            behavior.add_hold(hold_pair.first, hold_pair.second);
+            behavior.add_hold(hold_pair.first, hold_pair.second, hold_strategy);
         }
         
         behavior.with_hold_timeout(hold_timeout).with_tap_timeout(tap_timeout);

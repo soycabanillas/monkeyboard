@@ -8,6 +8,8 @@
 #include "platform_mock.hpp"
 #include "platform_types.h"
 #include "common_functions.hpp"
+#include "test_scenario.hpp"
+#include "tap_dance_test_helpers.hpp"
 
 extern "C" {
 #include "pipeline_tap_dance.h"
@@ -17,91 +19,36 @@ extern "C" {
 
 class TapDanceRollOverPreviousPress : public ::testing::Test {
 protected:
-    pipeline_tap_dance_global_config_t* tap_dance_config;
-
     void SetUp() override {
-        reset_mock_state();
-
-        // Minimal setup - just initialize the global state
-        pipeline_tap_dance_global_state_create();
-
-        // Initialize with empty configuration that tests can customize
-        size_t n_elements = 10;
-        tap_dance_config = static_cast<pipeline_tap_dance_global_config_t*>(
-            malloc(sizeof(*tap_dance_config)));
-        tap_dance_config->length = 0;
-        tap_dance_config->behaviours = static_cast<pipeline_tap_dance_behaviour_t**>(
-            malloc(n_elements * sizeof(pipeline_tap_dance_behaviour_t*)));
-
-        // Create minimal pipeline executor
-        pipeline_executor_create_config(1, 0);
-        pipeline_executor_add_physical_pipeline(0, &pipeline_tap_dance_callback_process_data_executor, &pipeline_tap_dance_callback_reset_executor, tap_dance_config);
+        // Setup is now handled by TestScenario class
     }
 
     void TearDown() override {
-        // Cleanup allocated memory
-        if (pipeline_executor_config) {
-            free(pipeline_executor_config);
-            pipeline_executor_config = nullptr;
-        }
-        if (tap_dance_config) {
-            free(tap_dance_config);
-            tap_dance_config = nullptr;
-        }
+        // Cleanup is now handled by TestScenario destructor
     }
 };
 
-    const uint16_t PREVIOUS_KEY_A = 2000;
-    const uint16_t PREVIOUS_KEY_B = 2001;
-    const uint16_t TAP_DANCE_KEY = 2002;
-    const uint16_t OUTPUT_KEY = 2003;
-    const uint16_t INTERRUPTING_KEY = 2004;
-
-static KeyboardSimulator set_scenario_1hold(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
-
-
-    static const platform_keycode_t keymaps[2][1][4] = {
-        {{ PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }},
-        {{ 2100, 2101, 2102, 2103 }}
-    };
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 4);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_hold(1, 1, hold_strategy)
-    };
-    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 1);
-    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
-    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
-    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
-    tap_dance_config->length++;
-    
-    return keyboard;
-}
-
-static KeyboardSimulator set_scenario_1tap_1hold(pipeline_tap_dance_global_config_t* tap_dance_config, tap_dance_hold_strategy_t hold_strategy) {
-
-
-    static const platform_keycode_t keymaps[2][1][4] = {
-        {{ PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }},
-        {{ 2100, 2101, 2102, 2103 }}
-    };
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 2, 1, 4);
-
-    pipeline_tap_dance_action_config_t* actions[] = {
-        createbehaviouraction_tap(1, OUTPUT_KEY),
-        createbehaviouraction_hold(1, 1, hold_strategy)
-    };
-    pipeline_tap_dance_behaviour_t* tap_dance_behavior = createbehaviour(TAP_DANCE_KEY, actions, 2);
-    tap_dance_behavior->config->hold_timeout = 200; // Set hold timeout to 200ms
-    tap_dance_behavior->config->tap_timeout = 200; // Set tap timeout to 200ms
-    tap_dance_config->behaviours[tap_dance_config->length] = tap_dance_behavior;
-    tap_dance_config->length++;
-    
-    return keyboard;
-}
+const uint16_t PREVIOUS_KEY_A = 2000;
+const uint16_t PREVIOUS_KEY_B = 2001;
+const uint16_t TAP_DANCE_KEY = 2002;
+const uint16_t OUTPUT_KEY = 2003;
+const uint16_t INTERRUPTING_KEY = 2004;
 
 TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -118,7 +65,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1tap_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -135,7 +95,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) 
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -150,7 +123,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -167,7 +153,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -184,7 +183,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
@@ -201,7 +213,20 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED)
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED) {
-    KeyboardSimulator keyboard = set_scenario_1hold(tap_dance_config, TAP_DANCE_TAP_PREFERRED);
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
+    }, {
+        { 2100, 2101, 2102, 2103 }
+    }};
+
+    TestScenario scenario(keymap);
+    TapDanceConfigBuilder config_builder;
+    config_builder
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(PREVIOUS_KEY_A, 0);
     keyboard.press_key_at(TAP_DANCE_KEY, 10);
