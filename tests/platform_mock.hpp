@@ -94,8 +94,8 @@ struct MockPlatformState {
     void reset();
 
     // New comparison methods with Google Test integration
-    ::testing::AssertionResult tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const;
-    ::testing::AssertionResult tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
+    ::testing::AssertionResult event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const;
+    ::testing::AssertionResult event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
 };
 
 // External declaration of the global mock state

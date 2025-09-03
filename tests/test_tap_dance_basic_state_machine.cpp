@@ -71,7 +71,7 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
         td_press(OUTPUT_KEY, 150),
         td_release(OUTPUT_KEY, 150)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Simple Hold
@@ -105,7 +105,7 @@ TEST_F(BasicStateMachineTest, SimpleHold) {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 250)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Hold Timeout Boundary - Just Before
@@ -138,7 +138,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
         td_press(OUTPUT_KEY, 199),
         td_release(OUTPUT_KEY, 199)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Hold Timeout Boundary - Exactly At
@@ -172,7 +172,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 200)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Hold Timeout Boundary - Just After
@@ -206,7 +206,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 201)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // No Hold Action Configured - Immediate Execution
@@ -239,7 +239,7 @@ TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
         td_press(OUTPUT_KEY, 0),
         td_release(OUTPUT_KEY, 150)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Only Hold Action Configured - Timeout Not Reached
@@ -269,7 +269,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutNotReached) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Only Hold Action - Timeout Reached
@@ -301,7 +301,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 250)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // State Machine Reset Verification - Tap -> Reset -> Hold
@@ -348,7 +348,7 @@ TEST_F(BasicStateMachineTest, TapResetHold) {
         td_layer(TARGET_LAYER_1, 600),
         td_layer(0, 650)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // State Machine Reset Verification - Tap -> Reset -> Tap
@@ -396,7 +396,7 @@ TEST_F(BasicStateMachineTest, TapResetTap) {
         td_press(OUTPUT_KEY_1, 750),
         td_release(OUTPUT_KEY_1, 750)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // State Machine Reset Verification - Hold -> Reset -> Tap
@@ -444,7 +444,7 @@ TEST_F(BasicStateMachineTest, HoldResetTap) {
         td_press(OUTPUT_KEY_1, 650),
         td_release(OUTPUT_KEY_1, 650)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // State Machine Reset Verification - Hold -> Reset -> Hold
@@ -491,7 +491,7 @@ TEST_F(BasicStateMachineTest, HoldResetHold) {
         td_layer(TARGET_LAYER_1, 500),
         td_layer(0, 550)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Hold with no actions configured
@@ -514,7 +514,7 @@ TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Tap with no actions configured
@@ -537,5 +537,5 @@ TEST_F(BasicStateMachineTest, TapWithNoActionsConfigured) {
 
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }

@@ -59,7 +59,7 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithSingleOutput) {
         td_report_release(OUTPUT_KEY2, 0),
         td_report_send(0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_relative(expected_events));
 }
 
 // Simple Key Replacer
@@ -95,6 +95,6 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithMultipleOutputs) {
         td_report_release(OUTPUT_KEY4, 0),
         td_report_send(0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_relative(expected_events));
 }
 

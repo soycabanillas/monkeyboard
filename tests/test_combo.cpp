@@ -80,5 +80,5 @@ TEST_F(Combo_Basic_Test, FirstTest) {
         td_press(KEY_A, 10),
         td_release(KEY_A, 30),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }

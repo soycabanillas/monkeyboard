@@ -67,6 +67,6 @@ TEST_F(TapDanceNestedTest, SimpleNestingABBA) {
         td_layer(1, 400),
         td_layer(0, 400)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 

@@ -52,7 +52,7 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
@@ -92,7 +92,7 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
         td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100),
         td_press(OUTPUT_KEY, 200), td_release(OUTPUT_KEY, 200)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
@@ -118,7 +118,7 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(NORMAL_KEY, 0), td_release(NORMAL_KEY, 0)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // ==================== BASIC HOLD FUNCTIONALITY ====================
@@ -153,7 +153,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
         td_layer(TARGET_LAYER, 200),
         td_layer(BASE_LAYER, 250)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
@@ -182,7 +182,7 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100)         // Tap output
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // ==================== MULTI-TAP SEQUENCES ====================
@@ -213,7 +213,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     // Should wait for potential second tap, no tap output yet
     std::vector<tap_dance_event_t> expected_events = {
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 
     // Second tap
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
@@ -223,7 +223,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     expected_events = {
         td_press(DOUBLE_TAP_KEY, 0), td_release(DOUBLE_TAP_KEY, 50)   // Double tap output
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
@@ -258,7 +258,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     std::vector<tap_dance_event_t> expected_events = {
         td_press(TRIPLE_TAP_KEY, 150), td_release(TRIPLE_TAP_KEY, 200)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
@@ -295,5 +295,5 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
         td_press(DOUBLE_TAP_KEY, 50), td_release(DOUBLE_TAP_KEY, 100),
         td_press(SINGLE_TAP_KEY, 400), td_release(SINGLE_TAP_KEY, 400)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }

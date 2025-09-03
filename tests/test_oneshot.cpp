@@ -61,7 +61,7 @@ TEST_F(OneShotModifier, OneShotWithOneModifier) {
         td_report_send(0),
         td_release(OUTPUT_KEY),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_relative(expected_events));
 }
 
 // Test multiple modifiers on a single oneshot key
@@ -97,5 +97,5 @@ TEST_F(OneShotModifier, OneShotWithMultipleModifiers) {
         td_report_send(0),
         td_release(OUTPUT_KEY),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_relative(expected_events));
 }

@@ -103,7 +103,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const {
+::testing::AssertionResult MockPlatformState::event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const {
     // Generate detailed comparison table
     std::stringstream debug_table;
     debug_table << "\nTap dance event comparison (absolute time):\n";
@@ -164,7 +164,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
+::testing::AssertionResult MockPlatformState::event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
     // Generate detailed comparison table
     std::stringstream debug_table;
     debug_table << "\nTap dance event comparison (relative time, start: " << start_time << "):\n";

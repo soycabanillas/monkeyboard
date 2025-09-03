@@ -61,7 +61,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
         td_press(OUTPUT_KEY, 30),
         td_release(OUTPUT_KEY, 30),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
@@ -91,7 +91,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) 
         td_layer(1, 210),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
@@ -119,7 +119,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
@@ -149,7 +149,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
         td_release(PREVIOUS_KEY_A, 210),
         td_layer(0, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
@@ -179,7 +179,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
         td_layer(1, 210),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED) {
@@ -209,7 +209,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED)
         td_release(PREVIOUS_KEY_A, 30),
         td_press(INTERRUPTING_KEY, 40),
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED) {
@@ -241,5 +241,5 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED)
         td_press(2103, 210),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }

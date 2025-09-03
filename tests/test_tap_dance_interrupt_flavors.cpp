@@ -66,7 +66,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
@@ -96,7 +96,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
@@ -126,7 +126,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 2: AABB sequence - Hold A past timeout, then press B
@@ -160,7 +160,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
         td_press(KEY_B, 205),
         td_release(KEY_B, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
@@ -190,7 +190,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
         td_press(KEY_B, 205),
         td_release(KEY_B, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
@@ -220,7 +220,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
         td_press(KEY_B, 205),
         td_release(KEY_B, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 3: ABBA sequence - Press A, press B, release B, release A (all before hold timeout)
@@ -255,7 +255,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
         td_release(KEY_B, 199),
         td_release(OUTPUT_KEY_A, 199)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
@@ -285,7 +285,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
         td_release(3012, 120),
         td_layer(0, 199)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
@@ -315,7 +315,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
         td_release(3012, 120),
         td_layer(0, 199)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 4: ABBA sequence - Press A, press B, release B, wait for timeout, release A
@@ -350,7 +350,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
         td_release(3012, 200),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
@@ -381,7 +381,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
         td_release(3012, 120),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
@@ -412,7 +412,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
         td_release(3012, 120),
         td_layer(0, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 5: ABBA sequence - Press A, reach hold timeout, press B, release B, release A
@@ -446,7 +446,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
         td_release(3012, 210),
         td_layer(0, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
@@ -476,7 +476,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
         td_release(3012, 210),
         td_layer(0, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
@@ -506,7 +506,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
         td_release(3012, 210),
         td_layer(0, 220)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 6: ABAB sequence - Press A, press B, release A, release B (before hold timeout)
@@ -541,7 +541,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
         td_release(OUTPUT_KEY_A, 130),
         td_release(KEY_B, 140)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
@@ -571,7 +571,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
         td_release(OUTPUT_KEY_A, 130),
         td_release(KEY_B, 140)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
@@ -601,7 +601,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
         td_layer(0, 130),
         td_release(3012, 140)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 // Test Case 7: ABAB sequence - Press A, press B, hold timeout reached, release A, release B
@@ -636,7 +636,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
         td_layer(0, 205),
         td_release(3012, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
@@ -666,7 +666,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
         td_layer(0, 205),
         td_release(3012, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
@@ -696,5 +696,5 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
         td_layer(0, 205),
         td_release(3012, 210)
     };
-    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
