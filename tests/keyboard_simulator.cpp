@@ -4,7 +4,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
-#include "common_functions.hpp"
+#include "keyboard_simulator.hpp"
 
 // KeyboardSimulator class implementation
 KeyboardSimulator::KeyboardSimulator(uint8_t rows, uint8_t cols) : rows(rows), cols(cols) {

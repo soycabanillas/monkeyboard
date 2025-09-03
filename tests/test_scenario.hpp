@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
-#include "common_functions.hpp"
+#include "keyboard_simulator.hpp"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"

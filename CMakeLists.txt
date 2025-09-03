@@ -96,13 +96,13 @@ if(BUILD_TESTS)
     # Create platform mock library
     # Testing
     set(TEST_SOURCES
-        tests/common_functions.cpp
+        tests/keyboard_simulator.cpp
         tests/platform_mock.cpp
     )
 
     # Create core headers list
     set(TEST_HEADERS
-        tests/common_functions.hpp
+        tests/keyboard_simulator.hpp
     )
     add_library(platform_mock ${TEST_SOURCES} ${TEST_HEADERS})
     target_include_directories(platform_mock

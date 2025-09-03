@@ -6,7 +6,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
-#include "common_functions.hpp"
+#include "keyboard_simulator.hpp"
 #include "test_scenario.hpp"
 #include "tap_dance_test_helpers.hpp"
 

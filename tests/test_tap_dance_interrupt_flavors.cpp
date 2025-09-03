@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
-#include "common_functions.hpp"
+#include "keyboard_simulator.hpp"
 #include "gtest/gtest.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
