@@ -7,6 +7,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
+#include "test_scenario.hpp"
 
 extern "C" {
 #include "pipeline_key_replacer.h"
@@ -35,24 +36,35 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithSingleOutput) {
     const uint16_t OUTPUT_KEY1 = 101;
     const uint16_t OUTPUT_KEY2 = 102;
 
-    static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY }}};
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
-
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { ONE_SHOT_KEY }
+    }};
 
     size_t number_of_pairs = 1;
-    pipeline_key_replacer_global_config_t global_config = {};
-    global_config.length = number_of_pairs;
-    global_config.modifier_pairs = static_cast<pipeline_key_replacer_pair_t**>(malloc(sizeof(pipeline_key_replacer_pair_t*) * number_of_pairs));
-    platform_key_replacer_event_buffer_t* press_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(malloc(sizeof(platform_key_replacer_event_buffer_t)));
+    pipeline_key_replacer_global_config_t* global_config = static_cast<pipeline_key_replacer_global_config_t*>(
+        malloc(sizeof(*global_config)));
+    global_config->length = number_of_pairs;
+    global_config->modifier_pairs = static_cast<pipeline_key_replacer_pair_t**>(
+        malloc(sizeof(pipeline_key_replacer_pair_t*) * number_of_pairs));
+    
+    platform_key_replacer_event_buffer_t* press_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(
+        malloc(sizeof(platform_key_replacer_event_buffer_t)));
     press_event_buffer->buffer_length = 1;
     press_event_buffer->buffer[0].keycode = OUTPUT_KEY1;
-    platform_key_replacer_event_buffer_t* release_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(malloc(sizeof(platform_key_replacer_event_buffer_t)));
+    
+    platform_key_replacer_event_buffer_t* release_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(
+        malloc(sizeof(platform_key_replacer_event_buffer_t)));
     release_event_buffer->buffer_length = 1;
     release_event_buffer->buffer[0].keycode = OUTPUT_KEY2;
-    global_config.modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
-    pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data_executor, &pipeline_key_replacer_callback_reset_executor, &global_config);
+    
+    global_config->modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
 
+    TestScenario scenario(keymap);
+    scenario.add_virtual_pipeline(&pipeline_key_replacer_callback_process_data_executor,
+                                 &pipeline_key_replacer_callback_reset_executor,
+                                 global_config);
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key(ONE_SHOT_KEY);
     keyboard.release_key(ONE_SHOT_KEY);
@@ -75,26 +87,36 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithMultipleOutputs) {
     const uint16_t OUTPUT_KEY3 = 103;
     const uint16_t OUTPUT_KEY4 = 104;
 
-    static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY }}};
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 1);
-
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        { ONE_SHOT_KEY }
+    }};
 
     size_t number_of_pairs = 1;
-    pipeline_key_replacer_global_config_t global_config = {};
-    global_config.length = number_of_pairs;
-    global_config.modifier_pairs = static_cast<pipeline_key_replacer_pair_t**>(malloc(sizeof(pipeline_key_replacer_pair_t*) * number_of_pairs));
-    platform_key_replacer_event_buffer_t* press_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(malloc(sizeof(platform_key_replacer_event_buffer_t)));
+    pipeline_key_replacer_global_config_t* global_config = static_cast<pipeline_key_replacer_global_config_t*>(
+        malloc(sizeof(*global_config)));
+    global_config->length = number_of_pairs;
+    global_config->modifier_pairs = static_cast<pipeline_key_replacer_pair_t**>(
+        malloc(sizeof(pipeline_key_replacer_pair_t*) * number_of_pairs));
+    
+    platform_key_replacer_event_buffer_t* press_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(
+        malloc(sizeof(platform_key_replacer_event_buffer_t)));
     press_event_buffer->buffer_length = 2;
     press_event_buffer->buffer[0].keycode = OUTPUT_KEY1;
     press_event_buffer->buffer[1].keycode = OUTPUT_KEY2;
-    platform_key_replacer_event_buffer_t* release_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(malloc(sizeof(platform_key_replacer_event_buffer_t)));
+    
+    platform_key_replacer_event_buffer_t* release_event_buffer = static_cast<platform_key_replacer_event_buffer_t*>(
+        malloc(sizeof(platform_key_replacer_event_buffer_t)));
     release_event_buffer->buffer_length = 2;
     release_event_buffer->buffer[0].keycode = OUTPUT_KEY3;
     release_event_buffer->buffer[1].keycode = OUTPUT_KEY4;
-    global_config.modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
-    pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_key_replacer_callback_process_data_executor, &pipeline_key_replacer_callback_reset_executor, &global_config);
+    global_config->modifier_pairs[0] = pipeline_key_replacer_create_pairs(ONE_SHOT_KEY, press_event_buffer, release_event_buffer);
 
+    TestScenario scenario(keymap);
+    scenario.add_virtual_pipeline(&pipeline_key_replacer_callback_process_data_executor,
+                                 &pipeline_key_replacer_callback_reset_executor,
+                                 global_config);
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key(ONE_SHOT_KEY);
     keyboard.release_key(ONE_SHOT_KEY);

@@ -7,6 +7,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
+#include "test_scenario.hpp"
 
 extern "C" {
 #include "pipeline_oneshot_modifier.h"
@@ -34,22 +35,30 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
     const uint16_t ONE_SHOT_KEY = 100;
     const uint16_t OUTPUT_KEY = 101;
 
-    static const platform_keycode_t keymaps[1][1][2] = {{{ ONE_SHOT_KEY, OUTPUT_KEY }}};
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 2);
-
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        {{ ONE_SHOT_KEY, OUTPUT_KEY }}
+    }};
 
     size_t number_of_pairs = 1;
     pipeline_oneshot_modifier_global_status_t* global_status = pipeline_oneshot_modifier_global_state_create();
-    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(malloc(sizeof(*global_config)));
+    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(
+        malloc(sizeof(*global_config)));
     global_config->length = number_of_pairs;
-    global_config->modifier_pairs = static_cast<pipeline_oneshot_modifier_pair_t**>(malloc(sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
+    global_config->modifier_pairs = static_cast<pipeline_oneshot_modifier_pair_t**>(
+        malloc(sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
     global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_CTRL);
-    pipeline_oneshot_modifier_global_t global;
-    global.config = global_config;
-    global.status = global_status;
-    pipeline_executor_create_config(0, 1);
-    pipeline_executor_add_virtual_pipeline(0, &pipeline_oneshot_modifier_callback_process_data_executor, &pipeline_oneshot_modifier_callback_reset_executor, &global);
+    
+    pipeline_oneshot_modifier_global_t* global = static_cast<pipeline_oneshot_modifier_global_t*>(
+        malloc(sizeof(*global)));
+    global->config = global_config;
+    global->status = global_status;
 
+    TestScenario scenario(keymap);
+    scenario.add_virtual_pipeline(&pipeline_oneshot_modifier_callback_process_data_executor,
+                                 &pipeline_oneshot_modifier_callback_reset_executor,
+                                 global);
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key(ONE_SHOT_KEY);
     keyboard.release_key(ONE_SHOT_KEY);

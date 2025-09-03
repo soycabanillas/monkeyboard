@@ -147,7 +147,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
                    << std::setw(21) << std::left << expected_event_str << " | "
                    << std::setw(8) << std::right << (has_expected ? std::to_string(expected_time) : "-") << " | "
                    << std::setw(21) << std::left << actual_event_str << " | "
-                   << std::setw(8) << std::right << (has_actual ? std::to_string(actual_time) : "-") << "\n";
+                   << std::setw(9) << std::right << (has_actual ? std::to_string(actual_time) : "-") << "\n";
     }
 
     if (tap_dance_events.size() != expected.size()) {
@@ -219,7 +219,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
                    << std::setw(8) << std::right << (has_expected ? std::to_string(expected_absolute) : "-") << " | "
                    << std::setw(21) << std::left << actual_event_str << " | "
                    << std::setw(8) << std::right << (has_actual ? std::to_string(actual_gap) : "-") << " | "
-                   << std::setw(8) << std::right << (has_actual ? std::to_string(actual_absolute) : "-") << "\n";
+                   << std::setw(9) << std::right << (has_actual ? std::to_string(actual_absolute) : "-") << "\n";
         
         if (has_actual) {
             previous_actual_time = tap_dance_events[i].time;

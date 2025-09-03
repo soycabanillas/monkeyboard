@@ -9,6 +9,8 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
+#include "test_scenario.hpp"
+#include "combo_test_helpers.hpp"
 
 extern "C" {
 #include "pipeline_combo.h"
@@ -18,33 +20,12 @@ extern "C" {
 
 class Combo_Basic_Test : public ::testing::Test {
 protected:
-    pipeline_combo_global_config_t* combo_config;
-
     void SetUp() override {
-        reset_mock_state();
-        pipeline_combo_global_state_create();
-
-        size_t n_elements = 10;
-        combo_config = static_cast<pipeline_combo_global_config_t*>(
-            malloc(sizeof(*combo_config)));
-        combo_config->length = 0;
-        combo_config->combos = static_cast<pipeline_combo_config_t**>(
-            malloc(n_elements * sizeof(pipeline_combo_config_t*)));
-        combo_config->strategy = COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON;
-
-        pipeline_executor_create_config(1, 0);
-        pipeline_executor_add_physical_pipeline(0, &pipeline_combo_callback_process_data_executor, &pipeline_combo_callback_reset_executor, combo_config);
+        // Setup is now handled by TestScenario class
     }
 
     void TearDown() override {
-        if (pipeline_executor_config) {
-            free(pipeline_executor_config);
-            pipeline_executor_config = nullptr;
-        }
-        if (combo_config) {
-            free(combo_config);
-            combo_config = nullptr;
-        }
+        // Cleanup is now handled by TestScenario destructor
     }
 };
 
@@ -66,31 +47,28 @@ const uint16_t KEY_F = 3015;
 const uint16_t KEY_G = 3016;
 const uint16_t KEY_H = 3017;
 
-static KeyboardSimulator set_scenario(pipeline_combo_global_config_t* combo_config, combo_activate_strategy_t strategy) {
-    static const platform_keycode_t keymaps[1][1][4] = {
-        {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
-    };
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 4);
-
-    pipeline_combo_key_t** keys = (pipeline_combo_key_t**)malloc(2 * sizeof(pipeline_combo_key_t*));
-    keys[0] = create_combo_key(platform_keypos_t{0,1}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0));
-    keys[1] = create_combo_key(platform_keypos_t{0,2}, create_combo_key_action(COMBO_KEY_ACTION_NONE, 0), create_combo_key_action(COMBO_KEY_ACTION_NONE, 0));
-
-
-    combo_config->combos[0] = create_combo(2, keys, create_combo_key_action(COMBO_KEY_ACTION_REGISTER, KEY_A), create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A));
-    combo_config->length = 1;
-
-    return keyboard;
-}
-
-
 // Test Case 1: AABB sequence - Press A, release A, press B, release B
 // Sequence: LSFT_T(KC_A) down, LSFT_T(KC_A) up, KC_B down, KC_B up
 // All actions happen before hold timeout
 // Expected: All flavors should produce tap (KC_A) then KC_B
 
 TEST_F(Combo_Basic_Test, FirstTest) {
-    KeyboardSimulator keyboard = set_scenario(combo_config, COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON);
+    // Define keymap using vectors
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
+    }};
+
+    // Create test scenario and build combo configuration
+    TestScenario scenario(keymap);
+    
+    ComboConfigBuilder config_builder;
+    config_builder
+        .with_strategy(COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON)
+        .add_simple_combo({{0,1}, {0,2}}, KEY_A)
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(COMBO_KEY_A, 0);
     keyboard.press_key_at(COMBO_KEY_B, 10);
@@ -103,5 +81,4 @@ TEST_F(Combo_Basic_Test, FirstTest) {
         td_release(KEY_A, 30),
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
-    //EXPECT_FALSE(keyboard.has_keys_to_process());
 }
