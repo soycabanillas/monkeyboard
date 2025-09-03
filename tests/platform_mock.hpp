@@ -84,9 +84,6 @@ struct MockPlatformState {
     platform_time_t timer;
     platform_deferred_token next_token;
 
-    std::vector<deferred_call_t> deferred_calls;
-    std::vector<key_action_t> key_actions; // Combined press/release history
-    std::vector<uint8_t> layer_history;    // Layer change history
     std::vector<tap_dance_event_t> tap_dance_events;
 
     // Constructor and method declarations
@@ -99,7 +96,6 @@ struct MockPlatformState {
     // New comparison methods with Google Test integration
     ::testing::AssertionResult tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const;
     ::testing::AssertionResult tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time = 0) const;
-    bool layer_history_matches(const std::vector<uint8_t>& expected) const;
 };
 
 // External declaration of the global mock state

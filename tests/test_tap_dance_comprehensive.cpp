@@ -119,9 +119,6 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
         td_press(NORMAL_KEY, 0), td_release(NORMAL_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
-
-    std::vector<uint8_t> expected_layers = {}; // No layer changes
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
 // ==================== BASIC HOLD FUNCTIONALITY ====================
@@ -157,9 +154,6 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
         td_layer(BASE_LAYER, 250)
     };
     EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
-
-    std::vector<uint8_t> expected_layers = {TARGET_LAYER, BASE_LAYER};
-    EXPECT_TRUE(g_mock_state.layer_history_matches(expected_layers));
 }
 
 TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {

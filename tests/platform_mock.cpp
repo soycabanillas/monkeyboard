@@ -68,8 +68,6 @@ void MockPlatformState::reset() {
     timer = 0;
     next_token = 1;
 
-    key_actions.clear();
-    layer_history.clear();
     tap_dance_events.clear();
 }
 
@@ -242,10 +240,6 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     return ::testing::AssertionSuccess();
 }
 
-bool MockPlatformState::layer_history_matches(const std::vector<uint8_t>& expected) const {
-    return layer_history == expected;
-}
-
 // Global mock state
 MockPlatformState g_mock_state;
 
@@ -259,25 +253,21 @@ void platform_tap_keycode(platform_keycode_t keycode) {
 
 void platform_register_keycode(platform_keycode_t keycode) {
     printf("MOCK: Register key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
     tap_dance_add_key_event(keycode, true);
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
     printf("MOCK: Unregister key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
     tap_dance_add_key_event(keycode, false);
 }
 
 void platform_add_key(platform_keycode_t keycode) {
     printf("MOCK: Add key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
     tap_dance_add_report_event(keycode, true);
 }
 
 void platform_del_key(platform_keycode_t keycode) {
     printf("MOCK: Del key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
     tap_dance_add_report_event(keycode, false);
 }
 
@@ -317,7 +307,6 @@ bool platform_layout_is_valid_layer(uint8_t layer) {
 
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
-    g_mock_state.layer_history.push_back(layer);
     tap_dance_add_layer_event(layer);
 
     platform_layout_set_layer_impl(layer);
