@@ -44,7 +44,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -74,7 +74,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) 
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -104,7 +104,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)  // Only hold action
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -132,7 +132,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)  // Only hold action
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -162,7 +162,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)  // Only hold action
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -192,7 +192,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED)
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)  // Only hold action
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -222,7 +222,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED)
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, g_hold_timeout, g_tap_timeout, TAP_DANCE_TAP_PREFERRED)  // Only hold action
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, 1}}, 200, 200, TAP_DANCE_TAP_PREFERRED)  // Only hold action
         .add_to_scenario(scenario);
     
     scenario.build();

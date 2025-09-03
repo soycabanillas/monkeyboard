@@ -69,7 +69,7 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, TARGET_LAYER}})
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, TARGET_LAYER}}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -142,7 +142,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
     
     // Only hold action on position 1, no tap action
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, TARGET_LAYER}})
+        .add_tap_hold(TAP_DANCE_KEY, {}, {{1, TARGET_LAYER}}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -176,7 +176,7 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, TARGET_LAYER}})
+        .add_tap_hold(TAP_DANCE_KEY, {{1, OUTPUT_KEY}}, {{1, TARGET_LAYER}}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -207,7 +207,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}})
+        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}}, {}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -247,7 +247,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}, {3, TRIPLE_TAP_KEY}})
+        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}, {3, TRIPLE_TAP_KEY}}, {}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -281,7 +281,7 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     config_builder
-        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}})
+        .add_tap_hold(TAP_DANCE_KEY, {{1, SINGLE_TAP_KEY}, {2, DOUBLE_TAP_KEY}}, {}, 200, 200, TAP_DANCE_HOLD_PREFERRED)
         .add_to_scenario(scenario);
     
     scenario.build();
