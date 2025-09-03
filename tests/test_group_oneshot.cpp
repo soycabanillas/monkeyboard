@@ -8,6 +8,7 @@
 #include "platform_mock.hpp"
 #include "platform_types.h"
 #include "test_scenario.hpp"
+#include "oneshot_test_helpers.hpp"
 
 extern "C" {
 #include "pipeline_oneshot_modifier.h"
@@ -29,9 +30,8 @@ protected:
     }
 };
 
-// Simple One-Shot Modifier
-// Objective: Verify basic one-shot modifier functionality
-TEST_F(OneShotModifier, SimpleOneShotModifier) {
+// Test one modifier on a single oneshot key
+TEST_F(OneShotModifier, OneShotWithOneModifier) {
     const uint16_t ONE_SHOT_KEY = 100;
     const uint16_t OUTPUT_KEY = 101;
 
@@ -39,24 +39,12 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
         {{ ONE_SHOT_KEY, OUTPUT_KEY }}
     }};
 
-    size_t number_of_pairs = 1;
-    pipeline_oneshot_modifier_global_status_t* global_status = pipeline_oneshot_modifier_global_state_create();
-    pipeline_oneshot_modifier_global_config_t* global_config = static_cast<pipeline_oneshot_modifier_global_config_t*>(
-        malloc(sizeof(*global_config)));
-    global_config->length = number_of_pairs;
-    global_config->modifier_pairs = static_cast<pipeline_oneshot_modifier_pair_t**>(
-        malloc(sizeof(pipeline_oneshot_modifier_pair_t*) * number_of_pairs));
-    global_config->modifier_pairs[0] = pipeline_oneshot_modifier_create_pairs(ONE_SHOT_KEY, MACRO_KEY_MODIFIER_LEFT_CTRL);
-    
-    pipeline_oneshot_modifier_global_t* global = static_cast<pipeline_oneshot_modifier_global_t*>(
-        malloc(sizeof(*global)));
-    global->config = global_config;
-    global->status = global_status;
-
     TestScenario scenario(keymap);
-    scenario.add_virtual_pipeline(&pipeline_oneshot_modifier_callback_process_data_executor,
-                                 &pipeline_oneshot_modifier_callback_reset_executor,
-                                 global);
+    OneShotConfigBuilder config_builder;
+    config_builder
+        .add_modifiers(ONE_SHOT_KEY, {MACRO_KEY_MODIFIER_LEFT_CTRL})
+        .add_to_scenario(scenario);
+    
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
@@ -69,6 +57,42 @@ TEST_F(OneShotModifier, SimpleOneShotModifier) {
         td_report_press(PLATFORM_KC_LEFT_CTRL, 0),
         td_report_press(OUTPUT_KEY, 0),
         td_report_send(0),
+        td_report_release(PLATFORM_KC_LEFT_CTRL, 0),
+        td_report_send(0),
+        td_release(OUTPUT_KEY),
+    };
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_relative(expected_events));
+}
+
+// Test multiple modifiers on a single oneshot key
+TEST_F(OneShotModifier, OneShotWithMultipleModifiers) {
+    const uint16_t ONE_SHOT_KEY = 200;
+    const uint16_t OUTPUT_KEY = 201;
+
+    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+        {{ ONE_SHOT_KEY, OUTPUT_KEY }}
+    }};
+
+    TestScenario scenario(keymap);
+    OneShotConfigBuilder config_builder;
+    config_builder
+        .add_modifiers(ONE_SHOT_KEY, {MACRO_KEY_MODIFIER_LEFT_CTRL, MACRO_KEY_MODIFIER_LEFT_SHIFT})
+        .add_to_scenario(scenario);
+    
+    scenario.build();
+    KeyboardSimulator& keyboard = scenario.keyboard();
+
+    keyboard.press_key(ONE_SHOT_KEY);
+    keyboard.release_key(ONE_SHOT_KEY);
+    keyboard.press_key(OUTPUT_KEY);
+    keyboard.release_key(OUTPUT_KEY);
+
+    std::vector<tap_dance_event_t> expected_events = {
+        td_report_press(PLATFORM_KC_LEFT_SHIFT, 0),
+        td_report_press(PLATFORM_KC_LEFT_CTRL, 0),
+        td_report_press(OUTPUT_KEY, 0),
+        td_report_send(0),
+        td_report_release(PLATFORM_KC_LEFT_SHIFT, 0),
         td_report_release(PLATFORM_KC_LEFT_CTRL, 0),
         td_report_send(0),
         td_release(OUTPUT_KEY),
