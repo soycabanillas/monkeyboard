@@ -7,6 +7,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
+#include "event_buffer_test_helpers.hpp"
 
 extern "C" {
 #include "pipeline_executor.h"
@@ -60,11 +61,40 @@ private:
     std::vector<std::unique_ptr<PipelineConfig>> physical_pipelines_;
     std::vector<std::unique_ptr<PipelineConfig>> virtual_pipelines_;
     KeyboardSimulator keyboard_;
+    std::unique_ptr<EventBufferManager> event_buffer_manager_;
+    bool uses_custom_event_buffer_;
 
 public:
-    TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap) {
+    TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap) 
+        : uses_custom_event_buffer_(false) {
        
         g_mock_state.reset();
+        event_buffer_manager_ = std::make_unique<EventBufferManager>();
+
+        // Convert vector keymap to C array format
+        size_t layers = keymap.size();
+        size_t rows = keymap[0].size();
+        size_t cols = keymap[0][0].size();
+        
+        uint16_t* flat_keymap = static_cast<uint16_t*>(malloc(layers * rows * cols * sizeof(uint16_t)));
+        for (size_t l = 0; l < layers; ++l) {
+            for (size_t r = 0; r < rows; ++r) {
+                for (size_t c = 0; c < cols; ++c) {
+                    flat_keymap[l * rows * cols + r * cols + c] = keymap[l][r][c];
+                }
+            }
+        }
+
+        keyboard_ = create_layout(flat_keymap, layers, rows, cols);
+        // Note: keeping flat_keymap allocated as keyboard might reference it
+    }
+
+    TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap, 
+                 EventBufferManager& custom_event_buffer) 
+        : uses_custom_event_buffer_(true) {
+       
+        g_mock_state.reset();
+        event_buffer_manager_ = std::make_unique<EventBufferManager>(custom_event_buffer.get());
 
         // Convert vector keymap to C array format
         size_t layers = keymap.size();
@@ -101,7 +131,15 @@ public:
     }
 
     void build() {
-        pipeline_executor_create_config(physical_pipelines_.size(), virtual_pipelines_.size());
+        if (uses_custom_event_buffer_) {
+            pipeline_executor_create_config_with_event_buffer(
+                event_buffer_manager_->get(),
+                physical_pipelines_.size(), 
+                virtual_pipelines_.size()
+            );
+        } else {
+            pipeline_executor_create_config(physical_pipelines_.size(), virtual_pipelines_.size());
+        }
         
         // Add physical pipelines
         for (size_t i = 0; i < physical_pipelines_.size(); ++i) {
@@ -115,6 +153,14 @@ public:
     }
 
     KeyboardSimulator& keyboard() { return keyboard_; }
+
+    EventBufferManager& event_buffer_manager() {
+        return *event_buffer_manager_;
+    }
+
+    const EventBufferManager& event_buffer_manager() const {
+        return *event_buffer_manager_;
+    }
 
     ~TestScenario() {
         // Note: In a real implementation, you'd want proper cleanup here
