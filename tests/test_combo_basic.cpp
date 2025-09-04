@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
-#include "keyboard_simulator.hpp"
+#include "common_functions.hpp"
 #include "gtest/gtest.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
@@ -38,14 +38,14 @@ const uint16_t COMBO_KEY_E = 3004;
 const uint16_t COMBO_KEY_F = 3005;
 const uint16_t COMBO_KEY_G = 3006;
 const uint16_t COMBO_KEY_H = 3007;
-const uint16_t KEY_A = 4;
-const uint16_t KEY_B = 5;
-const uint16_t KEY_C = 6;
-const uint16_t KEY_D = 7;
-const uint16_t KEY_E = 8;
-const uint16_t KEY_F = 9;
-const uint16_t KEY_G = 10;
-const uint16_t KEY_H = 11;
+const uint16_t KEY_A = 3010;
+const uint16_t KEY_B = 3011;
+const uint16_t KEY_C = 3012;
+const uint16_t KEY_D = 3013;
+const uint16_t KEY_E = 3014;
+const uint16_t KEY_F = 3015;
+const uint16_t KEY_G = 3016;
+const uint16_t KEY_H = 3017;
 
 // Test Case 1: AABB sequence - Press A, release A, press B, release B
 // Sequence: LSFT_T(KC_A) down, LSFT_T(KC_A) up, KC_B down, KC_B up
@@ -80,5 +80,5 @@ TEST_F(Combo_Basic_Test, FirstTest) {
         td_press(KEY_A, 10),
         td_release(KEY_A, 30),
     };
-    EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
+    EXPECT_TRUE(g_mock_state.tap_dance_event_actions_match_absolute(expected_events));
 }

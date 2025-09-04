@@ -67,7 +67,7 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 150),
         td_release(OUTPUT_KEY, 150)
     };
@@ -101,7 +101,7 @@ TEST_F(BasicStateMachineTest, SimpleHold) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 250)
     };
@@ -134,7 +134,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 199),
         td_release(OUTPUT_KEY, 199)
     };
@@ -168,7 +168,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 200);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 200)
     };
@@ -202,7 +202,7 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 201);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 201)
     };
@@ -235,7 +235,7 @@ TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 0),
         td_release(OUTPUT_KEY, 150)
     };
@@ -267,7 +267,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutNotReached) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
@@ -297,7 +297,7 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
         td_layer(0, 250)
     };
@@ -342,7 +342,7 @@ TEST_F(BasicStateMachineTest, TapResetHold) {
     keyboard.press_key_at(TAP_DANCE_KEY, 400);
     keyboard.release_key_at(TAP_DANCE_KEY, 650);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_1, 350),
         td_release(OUTPUT_KEY_1, 350),
         td_layer(TARGET_LAYER_1, 600),
@@ -390,7 +390,7 @@ TEST_F(BasicStateMachineTest, TapResetTap) {
     keyboard.release_key_at(TAP_DANCE_KEY, 550);
     keyboard.wait_ms(200); // Ensure tap timeout is reached
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_1, 350),
         td_release(OUTPUT_KEY_1, 350),
         td_press(OUTPUT_KEY_1, 750),
@@ -438,7 +438,7 @@ TEST_F(BasicStateMachineTest, HoldResetTap) {
     keyboard.release_key_at(TAP_DANCE_KEY, 450);
     keyboard.wait_ms(200); // Ensure tap timeout is reached
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_1, 200),
         td_layer(0, 250),
         td_press(OUTPUT_KEY_1, 650),
@@ -485,7 +485,7 @@ TEST_F(BasicStateMachineTest, HoldResetHold) {
     keyboard.press_key_at(TAP_DANCE_KEY, 300);
     keyboard.release_key_at(TAP_DANCE_KEY, 550);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_1, 200),
         td_layer(0, 250),
         td_layer(TARGET_LAYER_1, 500),
@@ -512,7 +512,7 @@ TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
@@ -535,7 +535,7 @@ TEST_F(BasicStateMachineTest, TapWithNoActionsConfigured) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 150);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }

@@ -49,7 +49,7 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 0);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
@@ -87,7 +87,7 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
     keyboard.press_key_at(TAP_DANCE_KEY, 200);
     keyboard.release_key_at(TAP_DANCE_KEY, 200);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 0), td_release(OUTPUT_KEY, 0),
         td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100),
         td_press(OUTPUT_KEY, 200), td_release(OUTPUT_KEY, 200)
@@ -115,7 +115,7 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
     keyboard.wait_ms(250);
 
     // Should only have the original key press/release, no tap dance actions
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(NORMAL_KEY, 0), td_release(NORMAL_KEY, 0)
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
@@ -149,7 +149,7 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
     keyboard.wait_ms(250);  // Wait for hold timeout
     keyboard.release_key_at(TAP_DANCE_KEY, 250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER, 200),
         td_layer(BASE_LAYER, 250)
     };
@@ -179,7 +179,7 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);   // Press key
     keyboard.release_key_at(TAP_DANCE_KEY, 100); // Release before timeout
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY, 100), td_release(OUTPUT_KEY, 100)         // Tap output
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
@@ -211,7 +211,7 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
     keyboard.press_key_at(TAP_DANCE_KEY, 0);
     keyboard.release_key_at(TAP_DANCE_KEY, 0);
     // Should wait for potential second tap, no tap output yet
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 
@@ -255,7 +255,7 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
     keyboard.release_key_at(TAP_DANCE_KEY, 200);
     keyboard.wait_ms(250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(TRIPLE_TAP_KEY, 150), td_release(TRIPLE_TAP_KEY, 200)
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
@@ -291,7 +291,7 @@ TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
 
     keyboard.wait_ms(250);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(DOUBLE_TAP_KEY, 50), td_release(DOUBLE_TAP_KEY, 100),
         td_press(SINGLE_TAP_KEY, 400), td_release(SINGLE_TAP_KEY, 400)
     };

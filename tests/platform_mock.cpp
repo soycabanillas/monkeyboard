@@ -13,32 +13,32 @@
 
 
 static void add_layer_event(uint8_t layer) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+    event_t event;
+    event.type = event_type_t::LAYER_CHANGE;
     event.layer = layer;
     event.time = g_mock_state.timer; // Use current timer for the event
     g_mock_state.events.push_back(event);
 }
 
 static void add_key_event(platform_keycode_t keycode, bool pressed) {
-    tap_dance_event_t event;
-    event.type = pressed ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
+    event_t event;
+    event.type = pressed ? event_type_t::KEY_PRESS : event_type_t::KEY_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
     g_mock_state.events.push_back(event);
 }
 
 static void add_report_event(platform_keycode_t keycode, bool pressed) {
-    tap_dance_event_t event;
-    event.type = pressed ? tap_dance_event_type_t::REPORT_PRESS : tap_dance_event_type_t::REPORT_RELEASE;
+    event_t event;
+    event.type = pressed ? event_type_t::REPORT_PRESS : event_type_t::REPORT_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
     g_mock_state.events.push_back(event);
 }
 
 static void add_report_send(void) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_SEND;
+    event_t event;
+    event.type = event_type_t::REPORT_SEND;
     event.time = g_mock_state.timer; // Use current timer for the event
     g_mock_state.events.push_back(event);
 }
@@ -73,26 +73,26 @@ void MockPlatformState::reset() {
 // New comparison methods with Google Test integration
 
 // Helper function to format an event into a compact string
-static std::string format_event_compact(const tap_dance_event_t& event) {
+static std::string format_event_compact(const event_t& event) {
     switch (event.type) {
-        case tap_dance_event_type_t::KEY_PRESS:
+        case event_type_t::KEY_PRESS:
             return "KEY_PRESS(" + std::to_string(event.keycode) + ")";
-        case tap_dance_event_type_t::KEY_RELEASE:
+        case event_type_t::KEY_RELEASE:
             return "KEY_RELEASE(" + std::to_string(event.keycode) + ")";
-        case tap_dance_event_type_t::LAYER_CHANGE:
+        case event_type_t::LAYER_CHANGE:
             return "LAYER_CHANGE(" + std::to_string(event.layer) + ")";
-        case tap_dance_event_type_t::REPORT_PRESS:
+        case event_type_t::REPORT_PRESS:
             return "REPORT_PRESS(" + std::to_string(event.keycode) + ")";
-        case tap_dance_event_type_t::REPORT_RELEASE:
+        case event_type_t::REPORT_RELEASE:
             return "REPORT_RELEASE(" + std::to_string(event.keycode) + ")";
-        case tap_dance_event_type_t::REPORT_SEND:
+        case event_type_t::REPORT_SEND:
             return "REPORT_SEND";
     }
     return "UNKNOWN";
 }
 
 // Helper function to compare event content (shared between relative and absolute time functions)
-::testing::AssertionResult compare_event_content(const tap_dance_event_t& actual, const tap_dance_event_t& expected, size_t position) {
+::testing::AssertionResult compare_event_content(const event_t& actual, const event_t& expected, size_t position) {
     if (!(actual == expected)) {
         return ::testing::AssertionFailure()
             << "Event mismatch at position " << position
@@ -102,7 +102,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const {
+::testing::AssertionResult MockPlatformState::event_actions_match_absolute(const std::vector<event_t>& expected) const {
     // Generate detailed comparison table
     std::stringstream debug_table;
     debug_table << "\nTap dance event comparison (absolute time):\n";
@@ -163,7 +163,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
+::testing::AssertionResult MockPlatformState::event_actions_match_relative(const std::vector<event_t>& expected, platform_time_t start_time) const {
     // Generate detailed comparison table
     std::stringstream debug_table;
     debug_table << "\nTap dance event comparison (relative time, start: " << start_time << "):\n";
@@ -341,49 +341,49 @@ platform_time_t monkeyboard_get_time_32(void) {
 }
 
 // Helper functions for creating tap dance event sequences
-tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::KEY_PRESS;
+event_t td_press(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::KEY_PRESS;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_release(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::KEY_RELEASE;
+event_t td_release(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::KEY_RELEASE;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_layer(uint8_t layer, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+event_t td_layer(uint8_t layer, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::LAYER_CHANGE;
     event.layer = layer;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_press(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_PRESS;
+event_t td_report_press(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_PRESS;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_release(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_RELEASE;
+event_t td_report_release(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_RELEASE;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_send(platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_SEND;
+event_t td_report_send(platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_SEND;
     event.time = time;
     return event;
 }

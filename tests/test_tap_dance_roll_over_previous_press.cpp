@@ -55,7 +55,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     keyboard.release_key_at(PREVIOUS_KEY_A, 20);
     keyboard.release_key_at(TAP_DANCE_KEY, 30);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
         td_press(OUTPUT_KEY, 30),
@@ -85,7 +85,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Tap1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) 
     keyboard.release_key_at(PREVIOUS_KEY_A, 20);
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),
@@ -115,7 +115,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_TDK_TAP_PREFERRED) {
     keyboard.release_key_at(PREVIOUS_KEY_A, 20);
     keyboard.release_key_at(TAP_DANCE_KEY, 30);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
     };
@@ -143,7 +143,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_HOLD_A_TDK_TAP_PREFERRED) {
     keyboard.release_key_at(PREVIOUS_KEY_A, 210);
     keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_layer(1, 210),
         td_release(PREVIOUS_KEY_A, 210),
@@ -173,7 +173,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_HOLD_TDK_TAP_PREFERRED) {
     keyboard.release_key_at(PREVIOUS_KEY_A, 20);
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),
@@ -204,7 +204,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_Interrupt_A_TDK_TAP_PREFERRED)
     keyboard.release_key_at(PREVIOUS_KEY_A, 30);
     keyboard.release_key_at(TAP_DANCE_KEY, 40);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 30),
         td_press(INTERRUPTING_KEY, 40),
@@ -234,7 +234,7 @@ TEST_F(TapDanceRollOverPreviousPress, 1Hold_A_TDK_A_Interrupt_TDK_TAP_PREFERRED)
     keyboard.press_key_at(INTERRUPTING_KEY, 30);
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(PREVIOUS_KEY_A, 0),
         td_release(PREVIOUS_KEY_A, 20),
         td_layer(1, 210),

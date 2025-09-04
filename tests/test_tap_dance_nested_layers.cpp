@@ -61,7 +61,7 @@ TEST_F(TapDanceNestedTest, SimpleNestingABBA) {
     keyboard.release_key_at(2051, 400);
     keyboard.release_key_at(TAP_DANCE_KEY_1, 400);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(1, 200),
         td_layer(2, 400),
         td_layer(1, 400),

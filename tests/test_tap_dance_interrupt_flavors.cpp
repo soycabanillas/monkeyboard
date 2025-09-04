@@ -60,7 +60,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
     keyboard.release_key_at(KEY_B, 220);
 
     // Should produce tap (KC_A) then KC_B
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 0),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
@@ -90,7 +90,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
     keyboard.press_key_at(KEY_B, 210);
     keyboard.release_key_at(KEY_B, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 0),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
@@ -120,7 +120,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
     keyboard.press_key_at(KEY_B, 210);
     keyboard.release_key_at(KEY_B, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 0),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
@@ -154,7 +154,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
     keyboard.press_key_at(KEY_B, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_layer(0, 201),
         td_press(KEY_B, 205),
@@ -184,7 +184,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
     keyboard.press_key_at(KEY_B, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_layer(0, 201),
         td_press(KEY_B, 205),
@@ -214,7 +214,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
     keyboard.press_key_at(KEY_B, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_layer(0, 201),
         td_press(KEY_B, 205),
@@ -249,7 +249,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
     keyboard.release_key_at(KEY_B, 120);
     keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 199),
         td_release(KEY_B, 199),
@@ -279,7 +279,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
     keyboard.release_key_at(KEY_B, 120);
     keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 120),
         td_press(3012, 120),
         td_release(3012, 120),
@@ -309,7 +309,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
     keyboard.release_key_at(KEY_B, 120);
     keyboard.release_key_at(TAP_DANCE_KEY, 199);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),
         td_press(3012, 110),
         td_release(3012, 120),
@@ -344,7 +344,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // TAP_PREFERRED: Should produce tap (KC_A) when interrupted, even with timeout after
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 200),
         td_release(3012, 200),
@@ -375,7 +375,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // BALANCED: Should produce hold (shift layer) when timeout is reached
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 120),
         td_press(3012, 120),
         td_release(3012, 120),
@@ -406,7 +406,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 210);
 
     // HOLD_PREFERRED: Should produce hold (shift layer) when interrupted
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),
         td_press(3012, 110),
         td_release(3012, 120),
@@ -440,7 +440,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
     keyboard.release_key_at(KEY_B, 210);
     keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 205),
         td_release(3012, 210),
@@ -470,7 +470,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
     keyboard.release_key_at(KEY_B, 210);
     keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 205),
         td_release(3012, 210),
@@ -500,7 +500,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
     keyboard.release_key_at(KEY_B, 210);
     keyboard.release_key_at(TAP_DANCE_KEY, 220);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 205),
         td_release(3012, 210),
@@ -535,7 +535,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 130);
     keyboard.release_key_at(KEY_B, 140);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 130),
         td_press(KEY_B, 130),
         td_release(OUTPUT_KEY_A, 130),
@@ -565,7 +565,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
     keyboard.release_key_at(TAP_DANCE_KEY, 130);
     keyboard.release_key_at(KEY_B, 140);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_press(OUTPUT_KEY_A, 130),
         td_press(KEY_B, 130),
         td_release(OUTPUT_KEY_A, 130),
@@ -595,7 +595,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 130);
     keyboard.release_key_at(KEY_B, 140);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),
         td_press(3012, 110),
         td_layer(0, 130),
@@ -630,7 +630,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 200),
         td_layer(0, 205),
@@ -660,7 +660,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
     keyboard.release_key_at(TAP_DANCE_KEY, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 200),
         td_press(3012, 200),
         td_layer(0, 205),
@@ -690,7 +690,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
     keyboard.release_key_at(TAP_DANCE_KEY, 205);
     keyboard.release_key_at(KEY_B, 210);
 
-    std::vector<tap_dance_event_t> expected_events = {
+    std::vector<event_t> expected_events = {
         td_layer(TARGET_LAYER_SHIFT, 110),
         td_press(3012, 110),
         td_layer(0, 205),
