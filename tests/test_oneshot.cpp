@@ -19,14 +19,11 @@ extern "C" {
 class OneShotModifier : public ::testing::Test {
 protected:
     void SetUp() override {
-        reset_mock_state();
+        // Setup is now handled by TestScenario class
     }
 
     void TearDown() override {
-        if (pipeline_executor_config) {
-            free(pipeline_executor_config);
-            pipeline_executor_config = nullptr;
-        }
+        // Cleanup is now handled by TestScenario destructor
     }
 };
 

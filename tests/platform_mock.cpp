@@ -12,41 +12,41 @@
 #include <vector>
 
 
-static void tap_dance_add_layer_event(uint8_t layer) {
+static void add_layer_event(uint8_t layer) {
     tap_dance_event_t event;
     event.type = tap_dance_event_type_t::LAYER_CHANGE;
     event.layer = layer;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_key_event(platform_keycode_t keycode, bool pressed) {
+static void add_key_event(platform_keycode_t keycode, bool pressed) {
     tap_dance_event_t event;
     event.type = pressed ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_report_event(platform_keycode_t keycode, bool pressed) {
+static void add_report_event(platform_keycode_t keycode, bool pressed) {
     tap_dance_event_t event;
     event.type = pressed ? tap_dance_event_type_t::REPORT_PRESS : tap_dance_event_type_t::REPORT_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_report_send(void) {
+static void add_report_send(void) {
     tap_dance_event_t event;
     event.type = tap_dance_event_type_t::REPORT_SEND;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
 // Mock implementation of platform interface for testing
 
 // MockPlatformState method implementations
-MockPlatformState::MockPlatformState() : timer(0), next_token(1) {}
+MockPlatformState::MockPlatformState() : timer(0) {}
 
 void MockPlatformState::set_timer(platform_time_t time) {
     execute_deferred_executions();
@@ -66,9 +66,8 @@ void MockPlatformState::advance_timer(platform_time_t ms) {
 
 void MockPlatformState::reset() {
     timer = 0;
-    next_token = 1;
 
-    tap_dance_events.clear();
+    events.clear();
 }
 
 // New comparison methods with Google Test integration
@@ -110,21 +109,21 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     debug_table << "Pos | Error | Expected Event        | Exp Time | Actual Event          | Act Time\n";
     debug_table << "----|-------|-----------------------|----------|-----------------------|----------\n";
     
-    size_t max_size = std::max(tap_dance_events.size(), expected.size());
+    size_t max_size = std::max(events.size(), expected.size());
     bool has_mismatch = false;
     size_t first_mismatch_pos = 0;
     
     for (size_t i = 0; i < max_size; i++) {
         bool has_expected = i < expected.size();
-        bool has_actual = i < tap_dance_events.size();
+        bool has_actual = i < events.size();
         
         std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
-        std::string actual_event_str = has_actual ? format_event_compact(tap_dance_events[i]) : "MISSING";
+        std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
         
         platform_time_t expected_time = has_expected ? expected[i].time : 0;
-        platform_time_t actual_time = has_actual ? tap_dance_events[i].time : 0;
+        platform_time_t actual_time = has_actual ? events[i].time : 0;
         
-        bool content_match = has_expected && has_actual && (tap_dance_events[i] == expected[i]);
+        bool content_match = has_expected && has_actual && (events[i] == expected[i]);
         bool time_match = !has_expected || expected_time == 0 || expected_time == actual_time;
         bool row_match = content_match && time_match && has_expected && has_actual;
         
@@ -148,9 +147,9 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
                    << std::setw(9) << std::right << (has_actual ? std::to_string(actual_time) : "-") << "\n";
     }
 
-    if (tap_dance_events.size() != expected.size()) {
+    if (events.size() != expected.size()) {
         return ::testing::AssertionFailure()
-            << "Event count mismatch: actual=" << tap_dance_events.size()
+            << "Event count mismatch: actual=" << events.size()
             << ", expected=" << expected.size()
             << debug_table.str();
     }
@@ -171,7 +170,7 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     debug_table << "Pos | Error | Expected Event        | Exp Gap  | Exp Abs  | Actual Event          | Act Gap  | Act Abs\n";
     debug_table << "----|-------|-----------------------|----------|----------|-----------------------|----------|----------\n";
     
-    size_t max_size = std::max(tap_dance_events.size(), expected.size());
+    size_t max_size = std::max(events.size(), expected.size());
     bool has_mismatch = false;
     size_t first_mismatch_pos = 0;
     
@@ -180,21 +179,21 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
     
     for (size_t i = 0; i < max_size; i++) {
         bool has_expected = i < expected.size();
-        bool has_actual = i < tap_dance_events.size();
+        bool has_actual = i < events.size();
         
         std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
-        std::string actual_event_str = has_actual ? format_event_compact(tap_dance_events[i]) : "MISSING";
+        std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
         
         platform_time_t expected_gap = has_expected ? expected[i].time : 0;
-        platform_time_t actual_gap = has_actual ? tap_dance_events[i].time - previous_actual_time : 0;
+        platform_time_t actual_gap = has_actual ? events[i].time - previous_actual_time : 0;
         
         if (has_expected) {
             expected_cumulative_time += expected_gap;
         }
         platform_time_t expected_absolute = start_time + expected_cumulative_time;
-        platform_time_t actual_absolute = has_actual ? tap_dance_events[i].time : 0;
+        platform_time_t actual_absolute = has_actual ? events[i].time : 0;
         
-        bool content_match = has_expected && has_actual && (tap_dance_events[i] == expected[i]);
+        bool content_match = has_expected && has_actual && (events[i] == expected[i]);
         bool time_match = !has_expected || expected_gap == 0 || expected_absolute == actual_absolute;
         bool row_match = content_match && time_match && has_expected && has_actual;
         
@@ -220,13 +219,13 @@ static std::string format_event_compact(const tap_dance_event_t& event) {
                    << std::setw(9) << std::right << (has_actual ? std::to_string(actual_absolute) : "-") << "\n";
         
         if (has_actual) {
-            previous_actual_time = tap_dance_events[i].time;
+            previous_actual_time = events[i].time;
         }
     }
 
-    if (tap_dance_events.size() != expected.size()) {
+    if (events.size() != expected.size()) {
         return ::testing::AssertionFailure()
-            << "Event count mismatch: actual=" << tap_dance_events.size()
+            << "Event count mismatch: actual=" << events.size()
             << ", expected=" << expected.size()
             << debug_table.str();
     }
@@ -253,27 +252,27 @@ void platform_tap_keycode(platform_keycode_t keycode) {
 
 void platform_register_keycode(platform_keycode_t keycode) {
     printf("MOCK: Register key %u\n", keycode);
-    tap_dance_add_key_event(keycode, true);
+    add_key_event(keycode, true);
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
     printf("MOCK: Unregister key %u\n", keycode);
-    tap_dance_add_key_event(keycode, false);
+    add_key_event(keycode, false);
 }
 
 void platform_add_key(platform_keycode_t keycode) {
     printf("MOCK: Add key %u\n", keycode);
-    tap_dance_add_report_event(keycode, true);
+    add_report_event(keycode, true);
 }
 
 void platform_del_key(platform_keycode_t keycode) {
     printf("MOCK: Del key %u\n", keycode);
-    tap_dance_add_report_event(keycode, false);
+    add_report_event(keycode, false);
 }
 
 void platform_send_report(void) {
     printf("MOCK: Send report\n");
-    tap_dance_add_report_send();
+    add_report_send();
 }
 
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
@@ -307,7 +306,7 @@ bool platform_layout_is_valid_layer(uint8_t layer) {
 
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
-    tap_dance_add_layer_event(layer);
+    add_layer_event(layer);
 
     platform_layout_set_layer_impl(layer);
 }
@@ -326,13 +325,9 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
-    printf("MOCK: Defer exec token %u for %u ms\n", g_mock_state.next_token, delay_ms);
-    return schedule_deferred_callback(delay_ms, callback, data);
-}
-
-// Mock timer
-platform_time_t monkeyboard_get_time_32(void) {
-    return g_mock_state.timer;
+    platform_deferred_token deferred_token = schedule_deferred_callback(delay_ms, callback, data);
+    printf("MOCK: Defer exec token %u for %u ms\n", deferred_token, delay_ms);
+    return deferred_token;
 }
 
 bool platform_cancel_deferred_exec(platform_deferred_token token) {
@@ -340,25 +335,9 @@ bool platform_cancel_deferred_exec(platform_deferred_token token) {
     return cancel_deferred_callback(token);
 }
 
-// Test utilities
-void mock_set_timer(platform_time_t time) {
-    g_mock_state.set_timer(time);
-}
-
-platform_time_t mock_get_timer(void) {
+// Mock timer
+platform_time_t monkeyboard_get_time_32(void) {
     return g_mock_state.timer;
-}
-
-void mock_advance_timer(platform_time_t ms) {
-    g_mock_state.advance_timer(ms);
-}
-
-void mock_reset_timer(void) {
-    g_mock_state.timer = 0;
-}
-
-void reset_mock_state(void) {
-    g_mock_state.reset();
 }
 
 // Helper functions for creating tap dance event sequences

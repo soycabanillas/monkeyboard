@@ -19,7 +19,7 @@ protected:
     pipeline_tap_dance_global_config_t* tap_dance_config;
 
     void SetUp() override {
-        reset_mock_state();
+        g_mock_state.reset();
         pipeline_tap_dance_global_state_create();
 
         size_t n_elements = 10;

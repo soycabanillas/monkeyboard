@@ -7,12 +7,6 @@
 #include "platform_types.h"
 
 
-void reset_mock_state(void);
-void mock_set_timer(platform_time_t time);
-platform_time_t mock_get_timer(void);
-void mock_advance_timer(platform_time_t ms);
-void mock_reset_timer(void);
-
 // Key event tracking
 struct key_event_t {
     platform_keycode_t keycode;
@@ -82,9 +76,7 @@ struct tap_dance_event_t {
 // MockPlatformState class
 struct MockPlatformState {
     platform_time_t timer;
-    platform_deferred_token next_token;
-
-    std::vector<tap_dance_event_t> tap_dance_events;
+    std::vector<tap_dance_event_t> events;
 
     // Constructor and method declarations
     MockPlatformState();

@@ -63,7 +63,8 @@ private:
 
 public:
     TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap) {
-        reset_mock_state();
+       
+        g_mock_state.reset();
 
         // Convert vector keymap to C array format
         size_t layers = keymap.size();
