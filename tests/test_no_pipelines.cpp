@@ -51,5 +51,4 @@ TEST_F(NoPipelines, BasicKeyPressRelease_NoPipelines) {
         td_release(KEY_B, 30),
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
-    EXPECT_TRUE(false);
 }

@@ -116,6 +116,7 @@ static void handle_interrupting_key(pipeline_tap_dance_behaviour_config_t *confi
         return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
         return;
     } else if (hold_action->hold_strategy == TAP_DANCE_BALANCED) {
+        DEBUG_TAP_DANCE("Interrupting when TAP_DANCE_BALANCED");
         if (last_key_event->is_press) {
             return_actions->key_capture_fn(PIPELINE_EXECUTOR_TIMEOUT_PREVIOUS, 0);
             return;
@@ -466,6 +467,8 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
     if (params->callback_type == PIPELINE_CALLBACK_KEY_EVENT) {
         DEBUG_TAP_DANCE("PIPELINE_CALLBACK_KEY_EVENT: %d", last_key_event->keycode);
         if (params->is_capturing_keys) {
+            DEBUG_TAP_DANCE("IS CAPTURING");
+
             pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[global_status->last_behaviour];
             pipeline_tap_dance_behaviour_config_t *config = behaviour->config;
             pipeline_tap_dance_behaviour_status_t *status = behaviour->status;
@@ -485,6 +488,7 @@ static void pipeline_tap_dance_process(pipeline_physical_callback_params_t* para
                 }
             }
         } else {
+            DEBUG_TAP_DANCE("IS NOT CAPTURING");
             // Process all tap dance behaviors for key events
             for (size_t i = 0; i < global_config->length; i++) {
                 pipeline_tap_dance_behaviour_t *behaviour = global_config->behaviours[i];
