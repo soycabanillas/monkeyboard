@@ -288,7 +288,8 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     DEBUG_PRINT_NL();
 }
 
-static void move_to_virtual_buffer(platform_key_event_t* event) {
+static void move_to_virtual_buffer(uint8_t position) {
+    platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[position];
     DEBUG_EXECUTOR("Moving key event to virtual event buffer: K:%04u, P:%d, Id:%03u, T:%04u",
             event->keycode,
             event->is_press,
@@ -300,6 +301,7 @@ static void move_to_virtual_buffer(platform_key_event_t* event) {
         platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, event->keycode);
     }
     internal_platform_key_event_remove_event(pipeline_executor_state.key_event_buffer, 0);
+    // pipeline_executor_state.event_length--;
 }
 
 static capture_pipeline_t process_event(platform_key_event_t* key_event, size_t pipeline_index, bool is_capturing_keys) {
@@ -379,7 +381,7 @@ static capture_pipeline_t process_key_pool(capture_pipeline_t last_execution, si
                 //break;
             }
         }
-        move_to_virtual_buffer(&pipeline_executor_state.key_event_buffer->event_buffer[0]);
+        if (pipeline_executor_state.key_event_buffer->event_buffer_pos > 0) move_to_virtual_buffer(0);
 
         //if (exit_due_capture) break;
 
