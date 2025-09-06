@@ -242,52 +242,6 @@ static void process_virtual_event_buffer(void) {
     platform_virtual_event_reset(pipeline_executor_state.virtual_event_buffer);
 }
 
-// Executes the middleware when the timer callback is triggered
-static void physical_event_deferred_exec_callback(void *cb_arg) {
-    (void)cb_arg; // Unused parameter
-
-    DEBUG_EXECUTOR("=== TIMER ===");
-
-    capture_pipeline_t last_execution = pipeline_executor_state.return_data;
-
-    uint8_t pipeline_index = pipeline_executor_state.physical_pipeline_index;
-
-    physical_event_triggered_with_timer(&pipeline_executor_state, pipeline_index, last_execution.capture_key_events, monkeyboard_get_time_32());
-    last_execution = pipeline_executor_state.return_data;
-
-    bool pipeline_capturing_key_events = last_execution.capture_key_events;
-
-    // Move the physical keys to the virtual event buffer
-    if (pipeline_capturing_key_events == false && pipeline_executor_state.event_length > 0) {
-        for (size_t i = 0; i < pipeline_executor_state.event_length; i++) {
-            platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[i];
-            if (event->is_press) {
-                platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, event->keycode);
-            } else {
-                platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, event->keycode);
-            }
-        }
-        platform_key_event_remove_event_keys(pipeline_executor_state.key_event_buffer);
-    }
-
-    last_execution = pipeline_executor_state.return_data;
-
-    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW) {
-        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", last_execution.callback_time);
-        pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(last_execution.callback_time, physical_event_deferred_exec_callback, NULL);
-        pipeline_executor_state.is_callback_set = true; // Set the callback set flag
-    }
-
-    // Process the virtual pipelines
-    process_virtual_event_buffer();
-
-    DEBUG_EXECUTOR("Key event buffer after time out:");
-    DEBUG_BUFFERS(PREFIX_DEBUG);
-    DEBUG_RETURN_DATA();
-    DEBUG_EXECUTOR("=================");
-    DEBUG_PRINT_NL();
-}
-
 static void move_to_virtual_buffer(uint8_t position) {
     platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[position];
     DEBUG_EXECUTOR("Moving key event to virtual event buffer: K:%04u, P:%d, Id:%03u, T:%04u",
@@ -390,6 +344,55 @@ static capture_pipeline_t process_key_pool(capture_pipeline_t last_execution, si
     }
 
     return last_execution;
+}
+
+// Executes the middleware when the timer callback is triggered
+static void physical_event_deferred_exec_callback(void *cb_arg) {
+    (void)cb_arg; // Unused parameter
+
+    DEBUG_EXECUTOR("=== TIMER ===");
+
+    capture_pipeline_t last_execution = pipeline_executor_state.return_data;
+
+    uint8_t pipeline_index = pipeline_executor_state.physical_pipeline_index;
+
+    physical_event_triggered_with_timer(&pipeline_executor_state, pipeline_index, last_execution.capture_key_events, monkeyboard_get_time_32());
+    last_execution = pipeline_executor_state.return_data;
+
+    bool pipeline_capturing_key_events = last_execution.capture_key_events;
+
+    // Move the physical keys to the virtual event buffer
+    if (pipeline_capturing_key_events == false && pipeline_executor_state.event_length > 0) {
+        if (last_execution.capture_key_events == false) {
+            last_execution = process_key_pool(last_execution, pipeline_executor_state.physical_pipeline_index + 1);
+        }
+        // for (size_t i = 0; i < pipeline_executor_state.event_length; i++) {
+        //     platform_key_event_t* event = &pipeline_executor_state.key_event_buffer->event_buffer[i];
+        //     if (event->is_press) {
+        //         platform_virtual_event_add_press(pipeline_executor_state.virtual_event_buffer, event->keycode);
+        //     } else {
+        //         platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, event->keycode);
+        //     }
+        // }
+        // platform_key_event_remove_event_keys(pipeline_executor_state.key_event_buffer);
+    }
+
+    // last_execution = pipeline_executor_state.return_data;
+
+    if (last_execution.timer_behavior == PIPELINE_EXECUTOR_TIMEOUT_NEW) {
+        DEBUG_EXECUTOR("Scheduling deferred execution callback for time %u", last_execution.callback_time);
+        pipeline_executor_state.deferred_exec_callback_token = platform_defer_exec(last_execution.callback_time, physical_event_deferred_exec_callback, NULL);
+        pipeline_executor_state.is_callback_set = true; // Set the callback set flag
+    }
+
+    // Process the virtual pipelines
+    process_virtual_event_buffer();
+
+    DEBUG_EXECUTOR("Key event buffer after time out:");
+    DEBUG_BUFFERS(PREFIX_DEBUG);
+    DEBUG_RETURN_DATA();
+    DEBUG_EXECUTOR("=================");
+    DEBUG_PRINT_NL();
 }
 
 static void process_key(void) {
