@@ -209,10 +209,6 @@ platform_key_event_position_t platform_key_event_remove_physical_release_by_pres
 }
 
 void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode) {
-    platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
-    if (key_press != NULL) {
-        key_press->keycode = keycode; // Update the keycode in the key press buffer
-    }
     bool press_found_on_event_buffer = false;
     for (uint8_t i = 0; i < event_buffer->event_buffer_pos; i++) {
         platform_key_event_t* event = &event_buffer->event_buffer[i];
@@ -220,6 +216,11 @@ void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer
             if (event->is_press) {
                 press_found_on_event_buffer = true;
                 event->keycode = keycode; // Update the keycode for the event
+                // Also update the keycode in the key press buffer
+                platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
+                if (key_press != NULL) {
+                    key_press->keycode = keycode; // Update the keycode in the key press buffer
+                }
             } else{
                 if (press_found_on_event_buffer) {
                     event->keycode = keycode; // Update the keycode for the release event

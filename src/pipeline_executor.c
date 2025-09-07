@@ -278,7 +278,9 @@ static capture_pipeline_t process_key_pool(capture_pipeline_t last_execution, si
     // Process the physical pipelines
     // PIPELINES CAN ONLY REMOVE AND MODIFY EVENTS FROM THE EVENT BUFFER, NOT ADD THEM
     //bool exit_due_capture = false;
+    if (next_pipeline_id >= pipeline_executor_config->physical_pipelines_length) next_pipeline_id = 0;
     while (pipeline_executor_state.key_event_buffer->event_buffer_pos > 0) {
+        platform_key_event_t first_key = pipeline_executor_state.key_event_buffer->event_buffer[0];
         for (size_t i = next_pipeline_id; i < pipeline_executor_config->physical_pipelines_length; i++) {
             pipeline_executor_state.event_length = 1;
 
@@ -335,7 +337,15 @@ static capture_pipeline_t process_key_pool(capture_pipeline_t last_execution, si
                 //break;
             }
         }
-        if (pipeline_executor_state.key_event_buffer->event_buffer_pos > 0) move_to_virtual_buffer(0);
+        if (pipeline_executor_state.key_event_buffer->event_buffer_pos > 0) {
+            if (first_key.press_id == pipeline_executor_state.key_event_buffer->event_buffer[0].press_id && first_key.is_press == pipeline_executor_state.key_event_buffer->event_buffer[0].is_press) {
+                // Move the first key to the virtual buffer
+                move_to_virtual_buffer(0);
+            } else {
+                // The first key was removed, do not move it to the virtual buffer
+                DEBUG_EXECUTOR("First key was removed by the pipeline, not moving to virtual buffer");
+            }
+        }
 
         //if (exit_due_capture) break;
 
@@ -388,10 +398,11 @@ static void physical_event_deferred_exec_callback(void *cb_arg) {
     // Process the virtual pipelines
     process_virtual_event_buffer();
 
-    DEBUG_EXECUTOR("Key event buffer after time out:");
+    DEBUG_EXECUTOR(">>>>>>> Time out:");
+    DEBUG_EXECUTOR("------- Event buffer:");
     DEBUG_BUFFERS(PREFIX_DEBUG);
     DEBUG_RETURN_DATA();
-    DEBUG_EXECUTOR("=================");
+    DEBUG_EXECUTOR("<<<<<<<");
     DEBUG_PRINT_NL();
 }
 
