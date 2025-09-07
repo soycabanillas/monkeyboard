@@ -12,41 +12,41 @@
 #include <vector>
 
 
-static void tap_dance_add_layer_event(uint8_t layer) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+static void add_layer_event(uint8_t layer) {
+    event_t event;
+    event.type = event_type_t::LAYER_CHANGE;
     event.layer = layer;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_key_event(platform_keycode_t keycode, bool pressed) {
-    tap_dance_event_t event;
-    event.type = pressed ? tap_dance_event_type_t::KEY_PRESS : tap_dance_event_type_t::KEY_RELEASE;
+static void add_key_event(platform_keycode_t keycode, bool pressed) {
+    event_t event;
+    event.type = pressed ? event_type_t::KEY_PRESS : event_type_t::KEY_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_report_event(platform_keycode_t keycode, bool pressed) {
-    tap_dance_event_t event;
-    event.type = pressed ? tap_dance_event_type_t::REPORT_PRESS : tap_dance_event_type_t::REPORT_RELEASE;
+static void add_report_event(platform_keycode_t keycode, bool pressed) {
+    event_t event;
+    event.type = pressed ? event_type_t::REPORT_PRESS : event_type_t::REPORT_RELEASE;
     event.keycode = keycode;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
-static void tap_dance_add_report_send(void) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_SEND;
+static void add_report_send(void) {
+    event_t event;
+    event.type = event_type_t::REPORT_SEND;
     event.time = g_mock_state.timer; // Use current timer for the event
-    g_mock_state.tap_dance_events.push_back(event);
+    g_mock_state.events.push_back(event);
 }
 
 // Mock implementation of platform interface for testing
 
 // MockPlatformState method implementations
-MockPlatformState::MockPlatformState() : timer(0), next_token(1) {}
+MockPlatformState::MockPlatformState() : timer(0) {}
 
 void MockPlatformState::set_timer(platform_time_t time) {
     execute_deferred_executions();
@@ -66,272 +66,177 @@ void MockPlatformState::advance_timer(platform_time_t ms) {
 
 void MockPlatformState::reset() {
     timer = 0;
-    next_token = 1;
 
-    key_actions.clear();
-    layer_history.clear();
-    tap_dance_events.clear();
+    events.clear();
 }
 
 // New comparison methods with Google Test integration
-::testing::AssertionResult MockPlatformState::key_actions_match(const std::vector<key_action_t>& expected) const {
-    if (key_actions.size() != expected.size()) {
-        return ::testing::AssertionFailure()
-            << "Size mismatch: actual=" << key_actions.size()
-            << ", expected=" << expected.size();
+
+// Helper function to format an event into a compact string
+static std::string format_event_compact(const event_t& event) {
+    switch (event.type) {
+        case event_type_t::KEY_PRESS:
+            return "KEY_PRESS(" + std::to_string(event.keycode) + ")";
+        case event_type_t::KEY_RELEASE:
+            return "KEY_RELEASE(" + std::to_string(event.keycode) + ")";
+        case event_type_t::LAYER_CHANGE:
+            return "LAYER_CHANGE(" + std::to_string(event.layer) + ")";
+        case event_type_t::REPORT_PRESS:
+            return "REPORT_PRESS(" + std::to_string(event.keycode) + ")";
+        case event_type_t::REPORT_RELEASE:
+            return "REPORT_RELEASE(" + std::to_string(event.keycode) + ")";
+        case event_type_t::REPORT_SEND:
+            return "REPORT_SEND";
     }
-
-    for (size_t i = 0; i < expected.size(); i++) {
-        if (!(key_actions[i] == expected[i])) {
-            return ::testing::AssertionFailure()
-                << "Mismatch at position " << i
-                << " - actual: keycode=" << key_actions[i].keycode
-                << " action=" << static_cast<int>(key_actions[i].action)
-                << ", expected: keycode=" << expected[i].keycode
-                << " action=" << static_cast<int>(expected[i].action);
-        }
-    }
-
-    return ::testing::AssertionSuccess();
-}
-
-::testing::AssertionResult MockPlatformState::key_actions_match_with_time(const std::vector<key_action_t>& expected) const {
-    if (key_actions.size() != expected.size()) {
-        return ::testing::AssertionFailure()
-            << "Size mismatch: actual=" << key_actions.size()
-            << ", expected=" << expected.size();
-    }
-
-    for (size_t i = 0; i < expected.size(); i++) {
-        if (!key_actions[i].operator_with_time(expected[i])) {
-            return ::testing::AssertionFailure()
-                << "Mismatch at position " << i
-                << " - actual: keycode=" << key_actions[i].keycode
-                << " action=" << static_cast<int>(key_actions[i].action)
-                << " time=" << key_actions[i].time
-                << ", expected: keycode=" << expected[i].keycode
-                << " action=" << static_cast<int>(expected[i].action)
-                << " time=" << expected[i].time;
-        }
-    }
-
-    return ::testing::AssertionSuccess();
-}
-
-::testing::AssertionResult MockPlatformState::key_actions_match_with_time_gaps(const std::vector<key_action_t>& expected, platform_time_t start_time) const {
-    if (key_actions.size() != expected.size()) {
-        return ::testing::AssertionFailure()
-            << "Size mismatch: actual=" << key_actions.size()
-            << ", expected=" << expected.size();
-    }
-
-    if (expected.empty()) {
-        return ::testing::AssertionSuccess();
-    }
-
-    platform_time_t expected_cumulative_time = 0;
-    platform_time_t previous_actual_time = 0;
-    std::stringstream debug_info;
-    debug_info << "Time gap analysis (start time: " << start_time << "):\n";
-
-    for (size_t i = 0; i < expected.size(); i++) {
-        // Check keycode and action match
-        if (key_actions[i].keycode != expected[i].keycode ||
-            key_actions[i].action != expected[i].action) {
-            return ::testing::AssertionFailure()
-                << "Keycode/action mismatch at position " << i
-                << " - actual: keycode=" << key_actions[i].keycode
-                << " action=" << (key_actions[i].action == 0 ? "press" : "release")
-                << ", expected: keycode=" << expected[i].keycode
-                << " action=" << (expected[i].action == 0 ? "press" : "release");
-        }
-
-        // Add the time gap to get expected absolute time
-        expected_cumulative_time += expected[i].time;
-        platform_time_t expected_absolute_time = start_time + expected_cumulative_time;
-
-        debug_info << "  Position " << i
-                   << ": expected_gap=" << expected[i].time
-                   << ", actual_gap=" << key_actions[i].time - previous_actual_time
-                   << ", expected_absolute=" << expected_absolute_time
-                   << ", actual_absolute=" << key_actions[i].time
-                   << "\n";
-
-        if (key_actions[i].time != expected_absolute_time) {
-            return ::testing::AssertionFailure()
-                << "\n" << "Time mismatch at position " << i
-                << " - "
-                << ": expected_gap=" << expected[i].time
-                << ", actual_gap=" << key_actions[i].time - previous_actual_time
-                << ", expected_absolute=" << expected_absolute_time
-                << ", actual_absolute=" << key_actions[i].time
-                << "\n"
-                << debug_info.str();
-        }
-
-        previous_actual_time = key_actions[i].time;
-    }
-
-    return ::testing::AssertionSuccess();
+    return "UNKNOWN";
 }
 
 // Helper function to compare event content (shared between relative and absolute time functions)
-::testing::AssertionResult compare_event_content(const tap_dance_event_t& actual, const tap_dance_event_t& expected, size_t position) {
+::testing::AssertionResult compare_event_content(const event_t& actual, const event_t& expected, size_t position) {
     if (!(actual == expected)) {
-        std::string actual_desc, expected_desc;
-        switch (actual.type) {
-            case tap_dance_event_type_t::KEY_PRESS:
-                actual_desc = "KEY_PRESS(" + std::to_string(actual.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::KEY_RELEASE:
-                actual_desc = "KEY_RELEASE(" + std::to_string(actual.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::LAYER_CHANGE:
-                actual_desc = "LAYER_CHANGE(" + std::to_string(actual.layer) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_PRESS:
-                actual_desc = "REPORT_PRESS(" + std::to_string(actual.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_RELEASE:
-                actual_desc = "REPORT_RELEASE(" + std::to_string(actual.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_SEND:
-                actual_desc = "REPORT_SEND";
-                break;
-        }
-        switch (expected.type) {
-            case tap_dance_event_type_t::KEY_PRESS:
-                expected_desc = "KEY_PRESS(" + std::to_string(expected.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::KEY_RELEASE:
-                expected_desc = "KEY_RELEASE(" + std::to_string(expected.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::LAYER_CHANGE:
-                expected_desc = "LAYER_CHANGE(" + std::to_string(expected.layer) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_PRESS:
-                expected_desc = "REPORT_PRESS(" + std::to_string(expected.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_RELEASE:
-                expected_desc = "REPORT_RELEASE(" + std::to_string(expected.keycode) + ")";
-                break;
-            case tap_dance_event_type_t::REPORT_SEND:
-                expected_desc = "REPORT_SEND";
-                break;
-        }
-
         return ::testing::AssertionFailure()
             << "Event mismatch at position " << position
-            << " - actual: " << actual_desc
-            << ", expected: " << expected_desc;
+            << " - actual: " << format_event_compact(actual)
+            << ", expected: " << format_event_compact(expected);
     }
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_absolute(const std::vector<tap_dance_event_t>& expected) const {
-    if (tap_dance_events.size() != expected.size()) {
-        return ::testing::AssertionFailure()
-            << "Event count mismatch: actual=" << tap_dance_events.size()
-            << ", expected=" << expected.size();
+::testing::AssertionResult MockPlatformState::event_actions_match_absolute(const std::vector<event_t>& expected) const {
+    // Generate detailed comparison table
+    std::stringstream debug_table;
+    debug_table << "\nTap dance event comparison (absolute time):\n";
+    debug_table << "Pos | Error | Expected Event        | Exp Time | Actual Event          | Act Time\n";
+    debug_table << "----|-------|-----------------------|----------|-----------------------|----------\n";
+    
+    size_t max_size = std::max(events.size(), expected.size());
+    bool has_mismatch = false;
+    size_t first_mismatch_pos = 0;
+    
+    for (size_t i = 0; i < max_size; i++) {
+        bool has_expected = i < expected.size();
+        bool has_actual = i < events.size();
+        
+        std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
+        std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
+        
+        platform_time_t expected_time = has_expected ? expected[i].time : 0;
+        platform_time_t actual_time = has_actual ? events[i].time : 0;
+        
+        bool content_match = has_expected && has_actual && (events[i] == expected[i]);
+        bool time_match = !has_expected || expected_time == 0 || expected_time == actual_time;
+        bool row_match = content_match && time_match && has_expected && has_actual;
+        
+        if (!has_mismatch && !row_match) {
+            has_mismatch = true;
+            first_mismatch_pos = i;
+        }
+        
+        std::string error_marker = "";
+        if (!row_match && i == first_mismatch_pos) {
+            error_marker = "  -> ";
+        } else {
+            error_marker = "     ";
+        }
+        
+        debug_table << std::setw(3) << i << " | "
+                   << error_marker << " | "
+                   << std::setw(21) << std::left << expected_event_str << " | "
+                   << std::setw(8) << std::right << (has_expected ? std::to_string(expected_time) : "-") << " | "
+                   << std::setw(21) << std::left << actual_event_str << " | "
+                   << std::setw(9) << std::right << (has_actual ? std::to_string(actual_time) : "-") << "\n";
     }
 
-    std::stringstream debug_info;
-    debug_info << "Tap dance event analysis (absolute time):\n";
+    if (events.size() != expected.size()) {
+        return ::testing::AssertionFailure()
+            << "Event count mismatch: actual=" << events.size()
+            << ", expected=" << expected.size()
+            << debug_table.str();
+    }
 
-    for (size_t i = 0; i < expected.size(); i++) {
-        const auto& actual_event = tap_dance_events[i];
-        const auto& expected_event = expected[i];
-
-        // Check event type and data match using shared helper
-        auto content_result = compare_event_content(actual_event, expected_event, i);
-        if (!content_result) {
-            return content_result;
-        }
-
-        debug_info << "  Position " << i
-                   << ": expected_time=" << expected_event.time
-                   << ", actual_time=" << actual_event.time
-                   << "\n";
-
-        if (expected_event.time > 0 && actual_event.time != expected_event.time) {
-            return ::testing::AssertionFailure()
-                << "\n" << "Time mismatch at position " << i
-                << " - expected_time=" << expected_event.time
-                << ", actual_time=" << actual_event.time
-                << "\n"
-                << debug_info.str();
-        }
+    if (has_mismatch) {
+        return ::testing::AssertionFailure()
+            << "First mismatch at position " << first_mismatch_pos
+            << debug_table.str();
     }
 
     return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult MockPlatformState::tap_dance_event_actions_match_relative(const std::vector<tap_dance_event_t>& expected, platform_time_t start_time) const {
-    if (tap_dance_events.size() != expected.size()) {
-        return ::testing::AssertionFailure()
-            << "Event count mismatch: actual=" << tap_dance_events.size()
-            << ", expected=" << expected.size();
-    }
-
+::testing::AssertionResult MockPlatformState::event_actions_match_relative(const std::vector<event_t>& expected, platform_time_t start_time) const {
+    // Generate detailed comparison table
+    std::stringstream debug_table;
+    debug_table << "\nTap dance event comparison (relative time, start: " << start_time << "):\n";
+    debug_table << "Pos | Error | Expected Event        | Exp Gap  | Exp Abs  | Actual Event          | Act Gap  | Act Abs\n";
+    debug_table << "----|-------|-----------------------|----------|----------|-----------------------|----------|----------\n";
+    
+    size_t max_size = std::max(events.size(), expected.size());
+    bool has_mismatch = false;
+    size_t first_mismatch_pos = 0;
+    
     platform_time_t expected_cumulative_time = 0;
     platform_time_t previous_actual_time = start_time;
-    std::stringstream debug_info;
-    debug_info << "Tap dance event analysis (start time: " << start_time << "):\n";
-
-    for (size_t i = 0; i < expected.size(); i++) {
-        const auto& actual_event = tap_dance_events[i];
-        const auto& expected_event = expected[i];
-
-        // Check event type and data match using shared helper
-        auto content_result = compare_event_content(actual_event, expected_event, i);
-        if (!content_result) {
-            return content_result;
+    
+    for (size_t i = 0; i < max_size; i++) {
+        bool has_expected = i < expected.size();
+        bool has_actual = i < events.size();
+        
+        std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
+        std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
+        
+        platform_time_t expected_gap = has_expected ? expected[i].time : 0;
+        platform_time_t actual_gap = has_actual ? events[i].time - previous_actual_time : 0;
+        
+        if (has_expected) {
+            expected_cumulative_time += expected_gap;
         }
-
-        // Add the time gap to get expected absolute time
-        expected_cumulative_time += expected_event.time;
-        platform_time_t expected_absolute_time = start_time + expected_cumulative_time;
-
-        debug_info << "  Position " << i
-                   << ": expected_gap=" << expected_event.time
-                   << ", actual_gap=" << actual_event.time - previous_actual_time
-                   << ", expected_absolute=" << expected_absolute_time
-                   << ", actual_absolute=" << actual_event.time
-                   << "\n";
-
-        if (expected_event.time > 0 && actual_event.time != expected_absolute_time) {
-            return ::testing::AssertionFailure()
-                << "\n" << "Time mismatch at position " << i
-                << " - expected_gap=" << expected_event.time
-                << ", actual_gap=" << actual_event.time - previous_actual_time
-                << ", expected_absolute=" << expected_absolute_time
-                << ", actual_absolute=" << actual_event.time
-                << "\n"
-                << debug_info.str();
+        platform_time_t expected_absolute = start_time + expected_cumulative_time;
+        platform_time_t actual_absolute = has_actual ? events[i].time : 0;
+        
+        bool content_match = has_expected && has_actual && (events[i] == expected[i]);
+        bool time_match = !has_expected || expected_gap == 0 || expected_absolute == actual_absolute;
+        bool row_match = content_match && time_match && has_expected && has_actual;
+        
+        if (!has_mismatch && !row_match) {
+            has_mismatch = true;
+            first_mismatch_pos = i;
         }
+        
+        std::string error_marker = "";
+        if (!row_match && i == first_mismatch_pos) {
+            error_marker = "  -> ";
+        } else {
+            error_marker = "     ";
+        }
+        
+        debug_table << std::setw(3) << i << " | "
+                   << error_marker << " | "
+                   << std::setw(21) << std::left << expected_event_str << " | "
+                   << std::setw(8) << std::right << (has_expected ? std::to_string(expected_gap) : "-") << " | "
+                   << std::setw(8) << std::right << (has_expected ? std::to_string(expected_absolute) : "-") << " | "
+                   << std::setw(21) << std::left << actual_event_str << " | "
+                   << std::setw(8) << std::right << (has_actual ? std::to_string(actual_gap) : "-") << " | "
+                   << std::setw(9) << std::right << (has_actual ? std::to_string(actual_absolute) : "-") << "\n";
+        
+        if (has_actual) {
+            previous_actual_time = events[i].time;
+        }
+    }
 
-        previous_actual_time = actual_event.time;
+    if (events.size() != expected.size()) {
+        return ::testing::AssertionFailure()
+            << "Event count mismatch: actual=" << events.size()
+            << ", expected=" << expected.size()
+            << debug_table.str();
+    }
+
+    if (has_mismatch) {
+        return ::testing::AssertionFailure()
+            << "First mismatch at position " << first_mismatch_pos
+            << debug_table.str();
     }
 
     return ::testing::AssertionSuccess();
-}
-
-bool MockPlatformState::layer_history_matches(const std::vector<uint8_t>& expected) const {
-    return layer_history == expected;
-}
-
-std::vector<key_action_t> MockPlatformState::get_key_actions_since(size_t start_index) const {
-    if (start_index >= key_actions.size()) {
-        return {};
-    }
-    return std::vector<key_action_t>(key_actions.begin() + start_index, key_actions.end());
-}
-
-std::vector<uint8_t> MockPlatformState::get_layer_history_since(size_t start_index) const {
-    if (start_index >= layer_history.size()) {
-        return {};
-    }
-    return std::vector<uint8_t>(layer_history.begin() + start_index, layer_history.end());
 }
 
 // Global mock state
@@ -347,31 +252,27 @@ void platform_tap_keycode(platform_keycode_t keycode) {
 
 void platform_register_keycode(platform_keycode_t keycode) {
     printf("MOCK: Register key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
-    tap_dance_add_key_event(keycode, true);
+    add_key_event(keycode, true);
 }
 
 void platform_unregister_keycode(platform_keycode_t keycode) {
     printf("MOCK: Unregister key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
-    tap_dance_add_key_event(keycode, false);
+    add_key_event(keycode, false);
 }
 
 void platform_add_key(platform_keycode_t keycode) {
     printf("MOCK: Add key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 0, g_mock_state.timer}); // 0 = press, include timestamp
-    tap_dance_add_report_event(keycode, true);
+    add_report_event(keycode, true);
 }
 
 void platform_del_key(platform_keycode_t keycode) {
     printf("MOCK: Del key %u\n", keycode);
-    g_mock_state.key_actions.push_back({keycode, 1, g_mock_state.timer}); // 1 = release, include timestamp
-    tap_dance_add_report_event(keycode, false);
+    add_report_event(keycode, false);
 }
 
 void platform_send_report(void) {
     printf("MOCK: Send report\n");
-    tap_dance_add_report_send();
+    add_report_send();
 }
 
 bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2) {
@@ -405,8 +306,7 @@ bool platform_layout_is_valid_layer(uint8_t layer) {
 
 void platform_layout_set_layer(uint8_t layer) {
     printf("MOCK: Layer select %u\n", layer);
-    g_mock_state.layer_history.push_back(layer);
-    tap_dance_add_layer_event(layer);
+    add_layer_event(layer);
 
     platform_layout_set_layer_impl(layer);
 }
@@ -425,13 +325,9 @@ platform_keycode_t platform_layout_get_keycode_from_layer(uint8_t layer, platfor
 
 // Mock deferred execution
 platform_deferred_token platform_defer_exec(uint32_t delay_ms, void (*callback)(void*), void* data) {
-    printf("MOCK: Defer exec token %u for %u ms\n", g_mock_state.next_token, delay_ms);
-    return schedule_deferred_callback(delay_ms, callback, data);
-}
-
-// Mock timer
-platform_time_t monkeyboard_get_time_32(void) {
-    return g_mock_state.timer;
+    platform_deferred_token deferred_token = schedule_deferred_callback(delay_ms, callback, data);
+    printf("MOCK: Defer exec token %u for %u ms\n", deferred_token, delay_ms);
+    return deferred_token;
 }
 
 bool platform_cancel_deferred_exec(platform_deferred_token token) {
@@ -439,84 +335,55 @@ bool platform_cancel_deferred_exec(platform_deferred_token token) {
     return cancel_deferred_callback(token);
 }
 
-// Test utilities
-void mock_set_timer(platform_time_t time) {
-    g_mock_state.set_timer(time);
-}
-
-platform_time_t mock_get_timer(void) {
+// Mock timer
+platform_time_t monkeyboard_get_time_32(void) {
     return g_mock_state.timer;
 }
 
-void mock_advance_timer(platform_time_t ms) {
-    g_mock_state.advance_timer(ms);
-}
-
-void mock_reset_timer(void) {
-    g_mock_state.timer = 0;
-}
-
-void reset_mock_state(void) {
-    g_mock_state.reset();
-}
-
-// Helper functions for creating expected sequences
-key_action_t press(platform_keycode_t keycode, platform_time_t time) {
-    return {keycode, 0, time};
-}
-
-key_action_t release(platform_keycode_t keycode, platform_time_t time) {
-    return {keycode, 1, time};
-}
-
-std::vector<key_action_t> tap_sequence(platform_keycode_t keycode) {
-    return {press(keycode), release(keycode)};
-}
-
 // Helper functions for creating tap dance event sequences
-tap_dance_event_t td_press(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::KEY_PRESS;
+event_t td_press(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::KEY_PRESS;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_release(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::KEY_RELEASE;
+event_t td_release(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::KEY_RELEASE;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_layer(uint8_t layer, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::LAYER_CHANGE;
+event_t td_layer(uint8_t layer, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::LAYER_CHANGE;
     event.layer = layer;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_press(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_PRESS;
+event_t td_report_press(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_PRESS;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_release(platform_keycode_t keycode, platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_RELEASE;
+event_t td_report_release(platform_keycode_t keycode, platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_RELEASE;
     event.keycode = keycode;
     event.time = time;
     return event;
 }
 
-tap_dance_event_t td_report_send(platform_time_t time) {
-    tap_dance_event_t event;
-    event.type = tap_dance_event_type_t::REPORT_SEND;
+event_t td_report_send(platform_time_t time) {
+    event_t event;
+    event.type = event_type_t::REPORT_SEND;
     event.time = time;
     return event;
 }

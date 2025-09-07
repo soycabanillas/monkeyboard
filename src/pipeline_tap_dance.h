@@ -78,8 +78,10 @@ void reset_behaviour_state(pipeline_tap_dance_behaviour_status_t *behaviour_stat
 
 pipeline_tap_dance_behaviour_status_t* pipeline_tap_dance_behaviour_state_create(void);
 
-void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* user_data);
-void pipeline_tap_dance_callback_reset(void* user_data);
+void pipeline_tap_dance_callback_process_data(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, pipeline_tap_dance_global_config_t* config);
+void pipeline_tap_dance_callback_process_data_executor(pipeline_physical_callback_params_t* params, pipeline_physical_actions_t* actions, pipeline_physical_return_actions_t* return_actions, void* config);
+void pipeline_tap_dance_callback_reset(pipeline_tap_dance_global_config_t* config);
+void pipeline_tap_dance_callback_reset_executor(void* config);
 
 #ifdef __cplusplus
 }

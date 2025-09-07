@@ -75,6 +75,7 @@ typedef uint32_t platform_deferred_token;
 
 // Platform-agnostic time type (milliseconds)
 typedef uint32_t platform_time_t;
+#define PLATFORM_TIME_MAX UINT32_MAX
 
 // Platform-agnostic key position type
 

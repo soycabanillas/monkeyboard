@@ -4,7 +4,7 @@
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
-#include "common_functions.hpp"
+#include "keyboard_simulator.hpp"
 
 // KeyboardSimulator class implementation
 KeyboardSimulator::KeyboardSimulator(uint8_t rows, uint8_t cols) : rows(rows), cols(cols) {
@@ -22,19 +22,19 @@ platform_keypos_t KeyboardSimulator::find_keypos(uint16_t keycode) {
 }
 
 void KeyboardSimulator::press_key(uint16_t keycode, uint16_t delay_ms) {
-    if (delay_ms > 0) mock_advance_timer(delay_ms);
+    if (delay_ms > 0) g_mock_state.advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode);
     abskeyevent_t event;
     event.keypos = keypos;
     event.pressed = true;
-    event.time = static_cast<uint16_t>(mock_get_timer());
+    event.time = static_cast<uint16_t>(g_mock_state.timer);
 
     pipeline_process_key(event);
 }
 
 void KeyboardSimulator::press_key_at(uint16_t keycode, uint16_t time) {
-    mock_set_timer(time);
+    g_mock_state.set_timer(time);
 
     platform_keypos_t keypos = find_keypos(keycode);
     abskeyevent_t event;
@@ -46,19 +46,19 @@ void KeyboardSimulator::press_key_at(uint16_t keycode, uint16_t time) {
 }
 
 void KeyboardSimulator::release_key(uint16_t keycode, uint16_t delay_ms) {
-    if (delay_ms > 0) mock_advance_timer(delay_ms);
+    if (delay_ms > 0) g_mock_state.advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode);
     abskeyevent_t event;
     event.keypos = keypos;
     event.pressed = false;
-    event.time = static_cast<uint16_t>(mock_get_timer());
+    event.time = static_cast<uint16_t>(g_mock_state.timer);
 
     pipeline_process_key(event);
 }
 
 void KeyboardSimulator::release_key_at(uint16_t keycode, uint16_t time) {
-    mock_set_timer(time);
+    g_mock_state.set_timer(time);
 
     platform_keypos_t keypos = find_keypos(keycode);
     abskeyevent_t event;
@@ -80,7 +80,7 @@ void KeyboardSimulator::tap_key(uint16_t keycode, uint16_t delay_before_ms, uint
 }
 
 void KeyboardSimulator::wait_ms(platform_time_t ms) {
-    mock_advance_timer(ms);
+    g_mock_state.advance_timer(ms);
 }
 
 // Factory function to create a keyboard simulator with layout

@@ -31,6 +31,11 @@ extern "C" {
 #define PLATFORM_KEY_EVENT_MAX_ELEMENTS 20
 
 typedef struct {
+    uint8_t position;
+    bool found;
+} platform_key_event_position_t;
+
+typedef struct {
     platform_keypos_t keypos;
     platform_keycode_t keycode;
     bool is_press;
@@ -51,9 +56,9 @@ void platform_key_event_reset(platform_key_event_buffer_t* event_buffer);
 void platform_key_event_remove_event_keys(platform_key_event_buffer_t* event_buffer);
 uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full);
 bool platform_key_event_add_physical_release(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full);
-void platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
-void platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
-void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
+void internal_platform_key_event_remove_event(platform_key_event_buffer_t *event_buffer, uint8_t position);
+platform_key_event_position_t platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
+platform_key_event_position_t platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id);
 void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode);
 
 void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos);

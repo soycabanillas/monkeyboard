@@ -13,13 +13,12 @@ pipeline_oneshot_modifier_global_status_t* pipeline_oneshot_modifier_global_stat
     return global_status;
 }
 
-void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* user_data) {
+void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, pipeline_oneshot_modifier_global_t* config) {
     platform_virtual_buffer_virtual_event_t* key_event = params->key_event;
 
     // platform_log_debug("pipeline_oneshot_modifier_callback || up: %u || press: %u", params->up, params->callback_type);
-    pipeline_oneshot_modifier_global_t* global = (pipeline_oneshot_modifier_global_t*)user_data;
-    pipeline_oneshot_modifier_global_config_t* global_config = global->config;
-    pipeline_oneshot_modifier_global_status_t* global_status = global->status;
+    pipeline_oneshot_modifier_global_config_t* global_config = config->config;
+    pipeline_oneshot_modifier_global_status_t* global_status = config->status;
 
     for (size_t i = 0; i < global_config->length; i++)
     {
@@ -89,7 +88,14 @@ void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_p
     }
 }
 
-void pipeline_oneshot_modifier_callback_reset(void* user_data) {
-    pipeline_oneshot_modifier_global_t* global = (pipeline_oneshot_modifier_global_t*)user_data;
-    global->status->modifiers = 0;
+void pipeline_oneshot_modifier_callback_process_data_executor(pipeline_virtual_callback_params_t* params, pipeline_virtual_actions_t* actions, void* config) {
+    pipeline_oneshot_modifier_callback_process_data(params, actions, config);
+}
+
+void pipeline_oneshot_modifier_callback_reset(pipeline_oneshot_modifier_global_t* config) {
+    config->status->modifiers = 0;
+}
+
+void pipeline_oneshot_modifier_callback_reset_executor(void* config) {
+    pipeline_oneshot_modifier_callback_reset(config);
 }

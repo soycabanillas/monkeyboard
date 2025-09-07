@@ -1,4 +1,5 @@
 #include "monkeyboard_deferred_callbacks.h"
+#include "monkeyboard_time_manager.h"
 #include <stdint.h>
 #include <string.h>
 #include "platform_interface.h"
@@ -130,7 +131,7 @@ void execute_deferred_executions(void) {
 
         // Check if this callback is due
         // Handle timer wraparound by checking if difference is in valid range
-        if (((current_time) - (callback_queue[i].execute_time)) < 0x80000000UL) {
+        if (time_is_after_or_equal(current_time, callback_queue[i].execute_time)) {
             // Execute the callback with its context
             execute_callback(&callback_queue[i]);
         } else {
@@ -145,7 +146,7 @@ void execute_deferred_executions(void) {
 deferred_callback_entry_t *get_next_deferred_callback(uint32_t current_time) {
 
     for (int8_t i = 0; i < MAX_DEFERRED_CALLBACKS; i++) {
-        if (callback_queue[i].active && ((current_time) - (callback_queue[i].execute_time)) < 0x80000000UL) {
+        if (callback_queue[i].active && time_is_after_or_equal(current_time, callback_queue[i].execute_time)) {
             return &callback_queue[i];
         }
     }

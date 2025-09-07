@@ -181,39 +181,34 @@ static bool try_get_release_position_by_press_id(platform_key_event_buffer_t *ev
     return try_get_position_by_press_id(event_buffer, press_id, false, position);
 }
 
-static void remove_event(platform_key_event_buffer_t *event_buffer, uint8_t position) {
+void internal_platform_key_event_remove_event(platform_key_event_buffer_t *event_buffer, uint8_t position) {
     if (position < event_buffer->event_buffer_pos - 1) {
         memcpy(&event_buffer->event_buffer[position], &event_buffer->event_buffer[position + 1], sizeof(platform_key_event_t) * (event_buffer->event_buffer_pos - 1 - position));
     }
     event_buffer->event_buffer_pos--;
 }
 
-void platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
+platform_key_event_position_t platform_key_event_remove_physical_press_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
     uint8_t position;
     if (try_get_press_position_by_press_id(event_buffer, press_id, &position)) {
-        remove_event(event_buffer, position);
+        internal_platform_key_event_remove_event(event_buffer, position);
+        return (platform_key_event_position_t){ .position = position, .found = true };
     }
+    return (platform_key_event_position_t){ .found = false };
 }
 
-void platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
+platform_key_event_position_t platform_key_event_remove_physical_release_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
     uint8_t position;
     if (try_get_release_position_by_press_id(event_buffer, press_id, &position)) {
-        remove_event(event_buffer, position);
+        internal_platform_key_event_remove_event(event_buffer, position);
+        return (platform_key_event_position_t){ .position = position, .found = true };
     } else {
-        platform_key_press_ignore_release_by_press_id(event_buffer->key_press_buffer, press_id);
+        bool found = platform_key_press_ignore_release_by_press_id(event_buffer->key_press_buffer, press_id);
+        return (platform_key_event_position_t){ .found = found };
     }
-}
-
-void platform_key_event_remove_physical_tap_by_press_id(platform_key_event_buffer_t *event_buffer, uint8_t press_id) {
-    platform_key_event_remove_physical_press_by_press_id(event_buffer, press_id);
-    platform_key_event_remove_physical_release_by_press_id(event_buffer, press_id);
 }
 
 void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer, uint8_t press_id, platform_keycode_t keycode) {
-    platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
-    if (key_press != NULL) {
-        key_press->keycode = keycode; // Update the keycode in the key press buffer
-    }
     bool press_found_on_event_buffer = false;
     for (uint8_t i = 0; i < event_buffer->event_buffer_pos; i++) {
         platform_key_event_t* event = &event_buffer->event_buffer[i];
@@ -221,6 +216,11 @@ void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer
             if (event->is_press) {
                 press_found_on_event_buffer = true;
                 event->keycode = keycode; // Update the keycode for the event
+                // Also update the keycode in the key press buffer
+                platform_key_press_key_press_t* key_press = platform_key_press_get_press_from_press_id(event_buffer->key_press_buffer, press_id);
+                if (key_press != NULL) {
+                    key_press->keycode = keycode; // Update the keycode in the key press buffer
+                }
             } else{
                 if (press_found_on_event_buffer) {
                     event->keycode = keycode; // Update the keycode for the release event
@@ -256,7 +256,7 @@ void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {
     for (size_t i = 0; i < event_buffer->event_buffer_pos; i++) {
 
         #if defined(AGNOSTIC_USE_1D_ARRAY)
-            DEBUG_PRINT_RAW(" | %zu KP, K:%02u, P:%d, Id:%u, T:%04u",
+            DEBUG_PRINT_RAW(" | %zu KP, K:%04u, P:%d, Id:%u, T:%04u",
                i, press_buffer[i].keypos,
                press_buffer[i].keycode, press_buffer[i].is_press, press_buffer[i].press_id, press_buffer[i].time);
         #elif defined(AGNOSTIC_USE_2D_ARRAY)

@@ -20,6 +20,9 @@ set(CORE_SOURCES
     src/key_virtual_buffer.c
     src/monkeyboard_deferred_callbacks.c
     src/monkeyboard_layer_manager.c
+    src/monkeyboard_time_manager.c
+    src/pipeline_combo.c
+    src/pipeline_combo_initializer.c
     src/pipeline_executor.c
     src/pipeline_tap_dance.c
     src/pipeline_tap_dance_initializer.c
@@ -38,6 +41,9 @@ set(CORE_HEADERS
     src/key_virtual_buffer.h
     src/monkeyboard_deferred_callbacks.h
     src/monkeyboard_layer_manager.h
+    src/monkeyboard_time_manager.h
+    src/pipeline_combo.h
+    src/pipeline_combo_initializer.h
     src/pipeline_executor.h
     src/pipeline_tap_dance.h
     src/pipeline_tap_dance_initializer.h
@@ -90,13 +96,13 @@ if(BUILD_TESTS)
     # Create platform mock library
     # Testing
     set(TEST_SOURCES
-        tests/common_functions.cpp
+        tests/keyboard_simulator.cpp
         tests/platform_mock.cpp
     )
 
     # Create core headers list
     set(TEST_HEADERS
-        tests/common_functions.hpp
+        tests/keyboard_simulator.hpp
     )
     add_library(platform_mock ${TEST_SOURCES} ${TEST_HEADERS})
     target_include_directories(platform_mock

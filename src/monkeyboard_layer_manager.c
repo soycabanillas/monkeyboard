@@ -4,6 +4,12 @@
 #include "platform_types.h"
 #include <stdint.h>
 
+#if defined(MONKEYBOARD_DEBUG)
+    #define PREFIX_DEBUG "LAYOUT: "
+    #define DEBUG_LAYOUT(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+    #define DEBUG_LAYOUT_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#endif
+
 pipeline_tap_dance_nested_layers_t nested_layers;
 uint8_t original_layer;
 
@@ -13,7 +19,7 @@ void layout_manager_initialize_nested_layers() {
 }
 
 void layout_manager_add_layer(platform_keypos_t keypos, uint8_t press_id, uint8_t layer) {
-    DEBUG_PRINT(">>>>>>>>>>>>>>>>>>> Adding layer %d for key at (%d, %d) with press ID %d", layer, keypos.row, keypos.col, press_id);
+    DEBUG_LAYOUT(">>>>>>>>>>>>>>>>>>> Adding layer %d for key at (%d, %d) with press ID %d", layer, keypos.row, keypos.col, press_id);
     if (nested_layers.layer_total < MAX_NUM_NESTED_LAYERS) {
         nested_layers.layer[nested_layers.layer_total].keypos = keypos;
         nested_layers.layer[nested_layers.layer_total].press_id = press_id;
@@ -24,7 +30,7 @@ void layout_manager_add_layer(platform_keypos_t keypos, uint8_t press_id, uint8_
 }
 
 void layout_manager_remove_layer_by_keypos(platform_keypos_t keypos) {
-    DEBUG_PRINT(">>>>>>>>>>>>>>>>>>> Removing layer for key at (%d, %d)", keypos.row, keypos.col);
+    DEBUG_LAYOUT(">>>>>>>>>>>>>>>>>>> Removing layer for key at (%d, %d)", keypos.row, keypos.col);
     for (uint8_t i = 0; i < nested_layers.layer_total; i++) {
         if (platform_compare_keyposition(nested_layers.layer[i].keypos, keypos)) {
             bool change_layer = false;
