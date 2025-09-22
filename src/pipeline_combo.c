@@ -11,6 +11,9 @@
     #define PREFIX_DEBUG "COMBO: "
     #define DEBUG_COMBO(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
     #define DEBUG_COMBO_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#else
+    #define DEBUG_COMBO(...) ((void)0)
+    #define DEBUG_COMBO_RAW(...) ((void)0)
 #endif
 
 #define g_interval_timeout 50
@@ -220,22 +223,22 @@ typedef struct {
 
 /**
  * @brief Calculate the minimum timeout span for combo processing
- * 
+ *
  * Scans all combos in COMBO_IDLE_WAITING_FOR_PRESSES state to find the one
  * that will timeout soonest. Returns the time span from current time until
  * the next combo timeout should occur.
- * 
+ *
  * This function is used by the deferred callback system to schedule the next
  * timeout event for combo processing. It ensures that combos are properly
  * timed out when the interval expires.
- * 
+ *
  * @param global_config Pointer to global combo configuration containing all combos
  * @param current_time Current platform timestamp
  * @return calculate_next_time_span_t Structure containing:
  *         - combos_on_timer: true if any combos need timeout handling, false otherwise
  *         - timespan: Duration in platform time units until next timeout (0 for immediate)
  *         - timestamp: Absolute timestamp when next timeout should occur
- * 
+ *
  * @note Uses overflow-safe time calculations via time_is_after() and calculate_time_span()
  * @note Returns timespan=0 when timeout has already passed (immediate execution needed)
  * @note Returns combos_on_timer=false when no combos are waiting for timeout
@@ -243,7 +246,7 @@ typedef struct {
 calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_config_t* global_config, platform_time_t current_time) {
     bool found = false;
     platform_time_t minimal_time = 0;
-    
+
     for (size_t i = 0; i < global_config->length; i++) {
         pipeline_combo_config_t* combo = global_config->combos[i];
         if (combo->combo_status == COMBO_IDLE_WAITING_FOR_PRESSES || combo->combo_status == COMBO_IDLE_ALL_KEYS_PRESSED) {
@@ -257,16 +260,16 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
             }
         }
     }
-    
+
     // Handle case when no combos are found
     if (!found) {
         calculate_next_time_span_t result = { false, 0, 0 };
         return result;
     }
-    
+
     // Calculate when the earliest combo should timeout
     platform_time_t next_execution_time = minimal_time + g_interval_timeout;
-    
+
     // Calculate the time span from current time to next execution
     platform_time_t time_span_to_execution;
     platform_time_t timestamp_to_execution;
@@ -280,7 +283,7 @@ calculate_next_time_span_t calculate_minimum_time_span(pipeline_combo_global_con
         time_span_to_execution = 0;
         timestamp_to_execution = current_time;
     }
-    
+
     calculate_next_time_span_t result = { found, time_span_to_execution, timestamp_to_execution };
     return result;
 }
@@ -547,7 +550,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
         // pipeline_combo_config_t* first_combo_all_keys_pressed = NULL;
         // uint8_t num_combos_pressed = 0;
         // bool first_combo_is_first = true;
- 
+
         for (size_t i = 0; i < config->length; i++) {
             pipeline_combo_config_t* combo = config->combos[i];
 
@@ -580,7 +583,7 @@ void pipeline_combo_callback_process_data(pipeline_physical_callback_params_t* p
         activate_combos(config, actions);
         // if (first_combo_all_keys_pressed != NULL && first_combo_is_first == true) {
         //     // Remove the keys from the physical event buffer and from other idle combos
-            
+
         //     for (uint8_t j = 0; j < first_combo_all_keys_pressed->keys_length; j++) {
         //         actions->remove_physical_press_fn(first_combo_all_keys_pressed->keys[j]->press_id);
         //         reset_combos_not_selected(config, first_combo_all_keys_pressed->keys[j]->keypos);

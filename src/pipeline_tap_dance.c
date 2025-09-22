@@ -13,6 +13,9 @@
     #define PREFIX_DEBUG "TAP_DANCE: "
     #define DEBUG_TAP_DANCE(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
     #define DEBUG_TAP_DANCE_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#else
+    #define DEBUG_TAP_DANCE(...) ((void)0)
+    #define DEBUG_TAP_DANCE_RAW(...) ((void)0)
 #endif
 
 pipeline_tap_dance_global_status_t* global_status;

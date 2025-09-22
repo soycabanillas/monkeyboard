@@ -13,6 +13,9 @@
     #define PREFIX_DEBUG "EXECUTOR: "
     #define DEBUG_EXECUTOR(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
     #define DEBUG_EXECUTOR_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#else
+    #define DEBUG_EXECUTOR(...) ((void)0)
+    #define DEBUG_EXECUTOR_RAW(...) ((void)0)
 #endif
 
 #if defined(MONKEYBOARD_DEBUG)

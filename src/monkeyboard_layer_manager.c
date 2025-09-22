@@ -8,6 +8,9 @@
     #define PREFIX_DEBUG "LAYOUT: "
     #define DEBUG_LAYOUT(...) DEBUG_PRINT_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
     #define DEBUG_LAYOUT_RAW(...) DEBUG_PRINT_RAW_PREFIX(PREFIX_DEBUG, __VA_ARGS__)
+#else
+    #define DEBUG_LAYOUT(...) ((void)0)
+    #define DEBUG_LAYOUT_RAW(...) ((void)0)
 #endif
 
 pipeline_tap_dance_nested_layers_t nested_layers;
