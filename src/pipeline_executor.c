@@ -185,15 +185,19 @@ static void no_capture(void) {
     pipeline_executor_state.return_data.capture_key_events = false;
 }
 
-static void reset_return_data(capture_pipeline_t* return_data) {
+static void reset_physical_return_data(capture_pipeline_t* return_data) {
     return_data->processed = false; // Reset processed state
     return_data->timer_behavior = PIPELINE_EXECUTOR_TIMEOUT_NONE;
     return_data->callback_time = 0;
     return_data->capture_key_events = false;
 }
 
+static void reset_virtual_return_data(capture_pipeline_t* return_data) {
+    return_data->processed = false; // Reset processed state
+}
+
 static void physical_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_key_event_t* key_event, bool is_capturing_keys, platform_time_t timespan) {
-    reset_return_data(&pipeline_executor_state->return_data);
+    reset_physical_return_data(&pipeline_executor_state->return_data);
 
     pipeline_physical_callback_params_t callback_params;
     callback_params.callback_type = PIPELINE_CALLBACK_KEY_EVENT;
@@ -204,7 +208,7 @@ static void physical_event_triggered(pipeline_executor_state_t* pipeline_executo
 }
 
 static void physical_event_triggered_with_timer(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, bool is_capturing_keys, platform_time_t timespan) {
-    reset_return_data(&pipeline_executor_state->return_data);
+    reset_physical_return_data(&pipeline_executor_state->return_data);
 
     pipeline_physical_callback_params_t callback_params;
     callback_params.callback_type = PIPELINE_CALLBACK_TIMER;
@@ -214,7 +218,7 @@ static void physical_event_triggered_with_timer(pipeline_executor_state_t* pipel
 }
 
 static void virtual_event_triggered(pipeline_executor_state_t* pipeline_executor_state, uint8_t pipeline_index, platform_virtual_buffer_virtual_event_t* key_event) {
-    reset_return_data(&pipeline_executor_state->return_data);
+    reset_virtual_return_data(&pipeline_executor_state->return_data);
 
     pipeline_virtual_callback_params_t callback_params;
     callback_params.key_event = key_event;
@@ -433,7 +437,7 @@ static void process_key(void) {
                 ignore_key_event = true;
                 platform_virtual_event_add_release(pipeline_executor_state.virtual_event_buffer, key_event->keycode);
                 platform_key_event_remove_physical_release_by_press_id(pipeline_executor_state.key_event_buffer, key_event->press_id);
-                pipeline_executor_state.event_length--;
+                //pipeline_executor_state.event_length--;
             }
         }
     }
