@@ -124,7 +124,7 @@ static std::string format_event_compact(const event_t& event) {
         platform_time_t actual_time = has_actual ? events[i].time : 0;
         
         bool content_match = has_expected && has_actual && (events[i] == expected[i]);
-        bool time_match = !has_expected || expected_time == 0 || expected_time == actual_time;
+        bool time_match = expected_time == actual_time;
         bool row_match = content_match && time_match && has_expected && has_actual;
         
         if (!has_mismatch && !row_match) {
@@ -194,7 +194,7 @@ static std::string format_event_compact(const event_t& event) {
         platform_time_t actual_absolute = has_actual ? events[i].time : 0;
         
         bool content_match = has_expected && has_actual && (events[i] == expected[i]);
-        bool time_match = !has_expected || expected_gap == 0 || expected_absolute == actual_absolute;
+        bool time_match = expected_absolute == actual_absolute;
         bool row_match = content_match && time_match && has_expected && has_actual;
         
         if (!has_mismatch && !row_match) {
