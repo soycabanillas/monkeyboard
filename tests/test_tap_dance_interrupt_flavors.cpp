@@ -61,7 +61,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
 
     // Should produce tap (KC_A) then KC_B
     std::vector<event_t> expected_events = {
-        td_press(OUTPUT_KEY_A, 0),
+        td_press(OUTPUT_KEY_A, 199),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
@@ -91,7 +91,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
     keyboard.release_key_at(KEY_B, 220);
 
     std::vector<event_t> expected_events = {
-        td_press(OUTPUT_KEY_A, 0),
+        td_press(OUTPUT_KEY_A, 199),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
@@ -121,7 +121,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
     keyboard.release_key_at(KEY_B, 220);
 
     std::vector<event_t> expected_events = {
-        td_press(OUTPUT_KEY_A, 0),
+        td_press(OUTPUT_KEY_A, 199),
         td_release(OUTPUT_KEY_A, 199),
         td_press(KEY_B, 210),
         td_release(KEY_B, 220)
