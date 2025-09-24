@@ -47,12 +47,7 @@ const uint16_t KEY_F = 9;
 const uint16_t KEY_G = 10;
 const uint16_t KEY_H = 11;
 
-// Test Case 1: AABB sequence - Press A, release A, press B, release B
-// Sequence: LSFT_T(KC_A) down, LSFT_T(KC_A) up, KC_B down, KC_B up
-// All actions happen before hold timeout
-// Expected: All flavors should produce tap (KC_A) then KC_B
-
-TEST_F(Combo_Basic_Test, FirstTest) {
+TEST_F(Combo_Basic_Test, CB1AP_CB1BP_CB1AR_CB1BR) {
     // Define keymap using vectors
     std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
         {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
@@ -62,9 +57,16 @@ TEST_F(Combo_Basic_Test, FirstTest) {
     TestScenario scenario(keymap);
     
     ComboConfigBuilder config_builder;
+    std::vector<ComboKeyBuilder> combo_keys = {
+        ComboKeyBuilder({0,1}),
+        ComboKeyBuilder({0,2})
+    };
+    pipeline_combo_key_translation_t press_action = create_combo_key_action(COMBO_KEY_ACTION_REGISTER, KEY_A);
+    pipeline_combo_key_translation_t release_action = create_combo_key_action(COMBO_KEY_ACTION_UNREGISTER, KEY_A);
+    
     config_builder
         .with_strategy(COMBO_STRATEGY_DISCARD_WHEN_ONE_PRESSED_IN_COMMON)
-        .add_simple_combo({{0,1}, {0,2}}, KEY_A)
+        .add_combo(combo_keys, press_action, release_action)
         .add_to_scenario(scenario);
     
     scenario.build();
@@ -75,7 +77,7 @@ TEST_F(Combo_Basic_Test, FirstTest) {
     keyboard.release_key_at(COMBO_KEY_A, 20);
     keyboard.release_key_at(COMBO_KEY_B, 30);
 
-    // Should produce tap (KC_A) then KC_B
+    // Should produce tap (KEY_A)
     std::vector<event_t> expected_events = {
         td_press(KEY_A, 10),
         td_release(KEY_A, 30),
