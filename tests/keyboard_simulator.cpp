@@ -10,7 +10,7 @@
 KeyboardSimulator::KeyboardSimulator(uint8_t rows, uint8_t cols) : rows(rows), cols(cols) {
 }
 
-platform_keypos_t KeyboardSimulator::find_keypos(uint16_t keycode) {
+platform_keypos_t KeyboardSimulator::find_keypos(platform_keycode_t keycode) {
     for (uint8_t row = 0; row < rows; row++) {
         for (uint8_t col = 0; col < cols; col++) {
             if (platform_layout_get_keycode_from_layer(0, {row, col}) == keycode) {
@@ -21,7 +21,7 @@ platform_keypos_t KeyboardSimulator::find_keypos(uint16_t keycode) {
     return {255, 255}; // Default return if not found
 }
 
-void KeyboardSimulator::press_key(uint16_t keycode, uint16_t delay_ms) {
+void KeyboardSimulator::press_key(platform_keycode_t keycode, uint16_t delay_ms) {
     if (delay_ms > 0) g_mock_state.advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode);
@@ -33,7 +33,7 @@ void KeyboardSimulator::press_key(uint16_t keycode, uint16_t delay_ms) {
     pipeline_process_key(event);
 }
 
-void KeyboardSimulator::press_key_at(uint16_t keycode, uint16_t time) {
+void KeyboardSimulator::press_key_at(platform_keycode_t keycode, uint16_t time) {
     g_mock_state.set_timer(time);
 
     platform_keypos_t keypos = find_keypos(keycode);
@@ -45,7 +45,7 @@ void KeyboardSimulator::press_key_at(uint16_t keycode, uint16_t time) {
     pipeline_process_key(event);
 }
 
-void KeyboardSimulator::release_key(uint16_t keycode, uint16_t delay_ms) {
+void KeyboardSimulator::release_key(platform_keycode_t keycode, uint16_t delay_ms) {
     if (delay_ms > 0) g_mock_state.advance_timer(delay_ms);
 
     platform_keypos_t keypos = find_keypos(keycode);
@@ -57,7 +57,7 @@ void KeyboardSimulator::release_key(uint16_t keycode, uint16_t delay_ms) {
     pipeline_process_key(event);
 }
 
-void KeyboardSimulator::release_key_at(uint16_t keycode, uint16_t time) {
+void KeyboardSimulator::release_key_at(platform_keycode_t keycode, uint16_t time) {
     g_mock_state.set_timer(time);
 
     platform_keypos_t keypos = find_keypos(keycode);
@@ -69,12 +69,12 @@ void KeyboardSimulator::release_key_at(uint16_t keycode, uint16_t time) {
     pipeline_process_key(event);
 }
 
-void KeyboardSimulator::tap_key(uint16_t keycode, uint16_t hold_ms) {
+void KeyboardSimulator::tap_key(platform_keycode_t keycode, uint16_t hold_ms) {
     press_key(keycode);
     release_key(keycode, hold_ms);
 }
 
-void KeyboardSimulator::tap_key(uint16_t keycode, uint16_t delay_before_ms, uint16_t hold_ms) {
+void KeyboardSimulator::tap_key(platform_keycode_t keycode, uint16_t delay_before_ms, uint16_t hold_ms) {
     press_key(keycode, delay_before_ms);
     release_key(keycode, hold_ms);
 }
@@ -84,7 +84,7 @@ void KeyboardSimulator::wait_ms(platform_time_t ms) {
 }
 
 // Factory function to create a keyboard simulator with layout
-KeyboardSimulator create_layout(const uint16_t* keymaps, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+KeyboardSimulator create_layout(const platform_keycode_t* keymaps, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     platform_layout_init_2D_keymap(keymaps, num_layers, rows, cols);
     return KeyboardSimulator(rows, cols);
 }

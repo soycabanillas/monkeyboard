@@ -29,10 +29,10 @@ protected:
 
 // Test one modifier on a single oneshot key
 TEST_F(OneShotModifier, OneShotWithOneModifier) {
-    const uint16_t ONE_SHOT_KEY = 100;
-    const uint16_t OUTPUT_KEY = 101;
+    const platform_keycode_t ONE_SHOT_KEY = 100;
+    const platform_keycode_t OUTPUT_KEY = 101;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         {{ ONE_SHOT_KEY, OUTPUT_KEY }}
     }};
 
@@ -63,10 +63,10 @@ TEST_F(OneShotModifier, OneShotWithOneModifier) {
 
 // Test multiple modifiers on a single oneshot key
 TEST_F(OneShotModifier, OneShotWithMultipleModifiers) {
-    const uint16_t ONE_SHOT_KEY = 200;
-    const uint16_t OUTPUT_KEY = 201;
+    const platform_keycode_t ONE_SHOT_KEY = 200;
+    const platform_keycode_t OUTPUT_KEY = 201;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         {{ ONE_SHOT_KEY, OUTPUT_KEY }}
     }};
 

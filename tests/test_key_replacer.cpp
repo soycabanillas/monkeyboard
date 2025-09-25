@@ -30,11 +30,11 @@ protected:
 // Simple Key Replacer
 // Objective: Verify key replacer functionality with a single output
 TEST_F(KeyReplacer, SimpleKeyReplacerWithSingleOutput) {
-    const uint16_t ONE_SHOT_KEY = 100;
-    const uint16_t OUTPUT_KEY1 = 101;
-    const uint16_t OUTPUT_KEY2 = 102;
+    const platform_keycode_t ONE_SHOT_KEY = 100;
+    const platform_keycode_t OUTPUT_KEY1 = 101;
+    const platform_keycode_t OUTPUT_KEY2 = 102;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { ONE_SHOT_KEY }
     }};
 
@@ -62,13 +62,13 @@ TEST_F(KeyReplacer, SimpleKeyReplacerWithSingleOutput) {
 // Simple Key Replacer
 // Objective: Verify key replacer functionality with multiple outputs
 TEST_F(KeyReplacer, SimpleKeyReplacerWithMultipleOutputs) {
-    const uint16_t ONE_SHOT_KEY = 100;
-    const uint16_t OUTPUT_KEY1 = 101;
-    const uint16_t OUTPUT_KEY2 = 102;
-    const uint16_t OUTPUT_KEY3 = 103;
-    const uint16_t OUTPUT_KEY4 = 104;
+    const platform_keycode_t ONE_SHOT_KEY = 100;
+    const platform_keycode_t OUTPUT_KEY1 = 101;
+    const platform_keycode_t OUTPUT_KEY2 = 102;
+    const platform_keycode_t OUTPUT_KEY3 = 103;
+    const platform_keycode_t OUTPUT_KEY4 = 104;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { ONE_SHOT_KEY }
     }};
 

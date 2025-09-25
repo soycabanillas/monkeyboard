@@ -11,11 +11,11 @@ extern "C" {
 #if defined(AGNOSTIC_USE_1D_ARRAY)
 void platform_layout_init_1d_keymap_impl(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys);
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
-void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols);
+void platform_layout_init_2d_keymap_impl(const platform_keycode_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols);
 #endif
 #if defined(FRAMEWORK_QMK)
 #include "info_config.h"
-void platform_layout_init_qmk_keymap_impl(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers);
+void platform_layout_init_qmk_keymap_impl(const platform_keycode_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers);
 #elif defined(FRAMEWORK_ZMK)
 void platform_layout_init_zmk_keymap_impl(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys);
 #endif

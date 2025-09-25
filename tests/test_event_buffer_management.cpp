@@ -28,10 +28,10 @@ protected:
 };
 
 TEST_F(EventBufferManagementTest, CustomEventBufferDirectManipulation) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3001;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 
@@ -79,10 +79,10 @@ TEST_F(EventBufferManagementTest, CustomEventBufferDirectManipulation) {
 }
 
 TEST_F(EventBufferManagementTest, EventBufferQueryMethods) {
-    const uint16_t KEY_A = 4000;
-    const uint16_t KEY_B = 4001;
+    const platform_keycode_t KEY_A = 4000;
+    const platform_keycode_t KEY_B = 4001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { KEY_A, KEY_B }
     }};
 
@@ -127,10 +127,10 @@ TEST_F(EventBufferManagementTest, EventBufferQueryMethods) {
 }
 
 TEST_F(EventBufferManagementTest, DefaultEventBufferStillWorks) {
-    const uint16_t TAP_DANCE_KEY = 6000;
-    const uint16_t OUTPUT_KEY = 6001;
+    const platform_keycode_t TAP_DANCE_KEY = 6000;
+    const platform_keycode_t OUTPUT_KEY = 6001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 
@@ -159,11 +159,11 @@ TEST_F(EventBufferManagementTest, DefaultEventBufferStillWorks) {
 }
 
 TEST_F(EventBufferManagementTest, CustomEventBufferWithPipelineProcessing) {
-    const uint16_t TAP_DANCE_KEY = 5000;
-    const uint16_t OUTPUT_KEY = 5001;
-    const uint8_t TARGET_LAYER = 1;
+    const platform_keycode_t TAP_DANCE_KEY = 5000;
+    const platform_keycode_t OUTPUT_KEY = 5001;
+    const platform_keycode_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 5010 }
@@ -208,10 +208,10 @@ TEST_F(EventBufferManagementTest, CustomEventBufferWithPipelineProcessing) {
 }
 
 TEST_F(EventBufferManagementTest, InspectBufferStateAfterProcessing) {
-    const uint16_t KEY_A = 7000;
-    const uint16_t KEY_B = 7001;
+    const platform_keycode_t KEY_A = 7000;
+    const platform_keycode_t KEY_B = 7001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { KEY_A, KEY_B }
     }};
 

@@ -34,13 +34,13 @@ protected:
 // The combo pipeline processes first (physical), then tap dance (physical)
 // They share a key position - when combo triggers, it outputs a key that tap dance processes
 TEST_F(CombinedPipelinesTest, ComboOutputToTapDance) {
-    const uint16_t COMBO_KEY_A = 3000;
-    const uint16_t COMBO_KEY_B = 3001;
-    const uint16_t COMBO_OUTPUT_KEY = 3002;  // Combo outputs this key
-    const uint16_t TAP_DANCE_OUTPUT = 3003;  // Tap dance final output
-    const uint8_t TARGET_LAYER = 1;
+    const platform_keycode_t COMBO_KEY_A = 3000;
+    const platform_keycode_t COMBO_KEY_B = 3001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 3002;  // Combo outputs this key
+    const platform_keycode_t TAP_DANCE_OUTPUT = 3003;  // Tap dance final output
+    const platform_keycode_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 3010, 3011 }
     }, {
         { 3020, 3021, 3022, 3023 }
@@ -81,13 +81,13 @@ TEST_F(CombinedPipelinesTest, ComboOutputToTapDance) {
 
 // Test combo output triggering tap dance hold action
 TEST_F(CombinedPipelinesTest, ComboOutputToTapDanceHold) {
-    const uint16_t COMBO_KEY_A = 4000;
-    const uint16_t COMBO_KEY_B = 4001;
-    const uint16_t COMBO_OUTPUT_KEY = 4002;  // Combo outputs this key
-    const uint16_t TAP_DANCE_OUTPUT = 4003;  // Tap dance tap output
+    const platform_keycode_t COMBO_KEY_A = 4000;
+    const platform_keycode_t COMBO_KEY_B = 4001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 4002;  // Combo outputs this key
+    const platform_keycode_t TAP_DANCE_OUTPUT = 4003;  // Tap dance tap output
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 4010, 4011 }
     }, {
         { 4020, 4021, 4022, 4023 }
@@ -129,14 +129,14 @@ TEST_F(CombinedPipelinesTest, ComboOutputToTapDanceHold) {
 
 // Test normal key that doesn't trigger combo but does trigger tap dance
 TEST_F(CombinedPipelinesTest, SingleKeyBypassesComboTriggerseTapDance) {
-    const uint16_t COMBO_KEY_A = 5000;
-    const uint16_t COMBO_KEY_B = 5001;
-    const uint16_t NORMAL_TAP_DANCE_KEY = 5002;  // Not part of combo, but has tap dance
-    const uint16_t COMBO_OUTPUT_KEY = 5003;
-    const uint16_t TAP_DANCE_OUTPUT = 5004;
+    const platform_keycode_t COMBO_KEY_A = 5000;
+    const platform_keycode_t COMBO_KEY_B = 5001;
+    const platform_keycode_t NORMAL_TAP_DANCE_KEY = 5002;  // Not part of combo, but has tap dance
+    const platform_keycode_t COMBO_OUTPUT_KEY = 5003;
+    const platform_keycode_t TAP_DANCE_OUTPUT = 5004;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, NORMAL_TAP_DANCE_KEY, 5010 }
     }, {
         { 5020, 5021, 5022, 5023 }
@@ -174,14 +174,14 @@ TEST_F(CombinedPipelinesTest, SingleKeyBypassesComboTriggerseTapDance) {
 
 // Test that when combo timeout is reached, individual keys still trigger tap dance
 TEST_F(CombinedPipelinesTest, ComboTimeoutTriggersTapDanceOnIndividualKeys) {
-    const uint16_t COMBO_KEY_A = 6000;
-    const uint16_t COMBO_KEY_B = 6001;
-    const uint16_t COMBO_OUTPUT_KEY = 6002;
-    const uint16_t TAP_DANCE_OUTPUT_A = 6003;
-    const uint16_t TAP_DANCE_OUTPUT_B = 6004;
+    const platform_keycode_t COMBO_KEY_A = 6000;
+    const platform_keycode_t COMBO_KEY_B = 6001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 6002;
+    const platform_keycode_t TAP_DANCE_OUTPUT_A = 6003;
+    const platform_keycode_t TAP_DANCE_OUTPUT_B = 6004;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 6010, 6011 }
     }, {
         { 6020, 6021, 6022, 6023 }
@@ -225,14 +225,14 @@ TEST_F(CombinedPipelinesTest, ComboTimeoutTriggersTapDanceOnIndividualKeys) {
 
 // Test combo timeout with hold on first key, tap on second
 TEST_F(CombinedPipelinesTest, ComboTimeoutFirstKeyHoldSecondKeyTap) {
-    const uint16_t COMBO_KEY_A = 7000;
-    const uint16_t COMBO_KEY_B = 7001;
-    const uint16_t COMBO_OUTPUT_KEY = 7002;
-    const uint16_t TAP_DANCE_OUTPUT_A = 7003;
-    const uint16_t TAP_DANCE_OUTPUT_B = 7004;
+    const platform_keycode_t COMBO_KEY_A = 7000;
+    const platform_keycode_t COMBO_KEY_B = 7001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 7002;
+    const platform_keycode_t TAP_DANCE_OUTPUT_A = 7003;
+    const platform_keycode_t TAP_DANCE_OUTPUT_B = 7004;
     const uint8_t TARGET_LAYER = 1;
-
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 7010, 7011 }
     }, {
         { 7020, 7021, 7022, 7023 }
@@ -277,13 +277,13 @@ TEST_F(CombinedPipelinesTest, ComboTimeoutFirstKeyHoldSecondKeyTap) {
 
 // Test rapid sequence where combo timeout prevents combo but allows tap dance
 TEST_F(CombinedPipelinesTest, RapidSequenceComboTimeoutTapDanceStillWorks) {
-    const uint16_t COMBO_KEY_A = 8000;
-    const uint16_t COMBO_KEY_B = 8001;
-    const uint16_t COMBO_OUTPUT_KEY = 8002;
-    const uint16_t TAP_DANCE_OUTPUT_A = 8003;
-    const uint16_t TAP_DANCE_OUTPUT_B = 8004;
+    const platform_keycode_t COMBO_KEY_A = 8000;
+    const platform_keycode_t COMBO_KEY_B = 8001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 8002;
+    const platform_keycode_t TAP_DANCE_OUTPUT_A = 8003;
+    const platform_keycode_t TAP_DANCE_OUTPUT_B = 8004;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 8010, 8011 }
     }};
 
@@ -324,13 +324,13 @@ TEST_F(CombinedPipelinesTest, RapidSequenceComboTimeoutTapDanceStillWorks) {
 
 // Test overlapping keys where combo fails due to timing but tap dance succeeds
 TEST_F(CombinedPipelinesTest, OverlappingKeysComboFailsTapDanceSucceeds) {
-    const uint16_t COMBO_KEY_A = 9000;
-    const uint16_t COMBO_KEY_B = 9001;
-    const uint16_t COMBO_OUTPUT_KEY = 9002;
-    const uint16_t TAP_DANCE_OUTPUT_A = 9003;
-    const uint16_t TAP_DANCE_OUTPUT_B = 9004;
+    const platform_keycode_t COMBO_KEY_A = 9000;
+    const platform_keycode_t COMBO_KEY_B = 9001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 9002;
+    const platform_keycode_t TAP_DANCE_OUTPUT_A = 9003;
+    const platform_keycode_t TAP_DANCE_OUTPUT_B = 9004;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 9010, 9011 }
     }};
 
@@ -371,12 +371,12 @@ TEST_F(CombinedPipelinesTest, OverlappingKeysComboFailsTapDanceSucceeds) {
 
 // Test successful combo activation with proper timing
 TEST_F(CombinedPipelinesTest, SuccessfulComboActivationWithProperTiming) {
-    const uint16_t COMBO_KEY_A = 10000;
-    const uint16_t COMBO_KEY_B = 10001;
-    const uint16_t COMBO_OUTPUT_KEY = 10002;
-    const uint16_t TAP_DANCE_OUTPUT = 10003;
+    const platform_keycode_t COMBO_KEY_A = 10000;
+    const platform_keycode_t COMBO_KEY_B = 10001;
+    const platform_keycode_t COMBO_OUTPUT_KEY = 10002;
+    const platform_keycode_t TAP_DANCE_OUTPUT = 10003;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { COMBO_KEY_A, COMBO_KEY_B, 10010, 10011 }
     }};
 

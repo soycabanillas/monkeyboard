@@ -65,7 +65,7 @@ private:
     bool uses_custom_event_buffer_;
 
 public:
-    TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap) 
+    TestScenario(const std::vector<std::vector<std::vector<platform_keycode_t>>>& keymap) 
         : uses_custom_event_buffer_(false) {
        
         g_mock_state.reset();
@@ -76,7 +76,7 @@ public:
         size_t rows = keymap[0].size();
         size_t cols = keymap[0][0].size();
         
-        uint16_t* flat_keymap = static_cast<uint16_t*>(malloc(layers * rows * cols * sizeof(uint16_t)));
+        platform_keycode_t* flat_keymap = static_cast<platform_keycode_t*>(malloc(layers * rows * cols * sizeof(platform_keycode_t)));
         for (size_t l = 0; l < layers; ++l) {
             for (size_t r = 0; r < rows; ++r) {
                 for (size_t c = 0; c < cols; ++c) {
@@ -89,7 +89,7 @@ public:
         // Note: keeping flat_keymap allocated as keyboard might reference it
     }
 
-    TestScenario(const std::vector<std::vector<std::vector<uint16_t>>>& keymap, 
+    TestScenario(const std::vector<std::vector<std::vector<platform_keycode_t>>>& keymap, 
                  EventBufferManager& custom_event_buffer) 
         : uses_custom_event_buffer_(true) {
        
@@ -101,7 +101,7 @@ public:
         size_t rows = keymap[0].size();
         size_t cols = keymap[0][0].size();
         
-        uint16_t* flat_keymap = static_cast<uint16_t*>(malloc(layers * rows * cols * sizeof(uint16_t)));
+        platform_keycode_t* flat_keymap = static_cast<platform_keycode_t*>(malloc(layers * rows * cols * sizeof(platform_keycode_t)));
         for (size_t l = 0; l < layers; ++l) {
             for (size_t r = 0; r < rows; ++r) {
                 for (size_t c = 0; c < cols; ++c) {

@@ -282,7 +282,7 @@ bool platform_compare_keyposition(platform_keypos_t key1, platform_keypos_t key2
 // Mock layer operations
 
 #if defined(FRAMEWORK_QMK)
-void platform_layout_init_qmk_keymap(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
+void platform_layout_init_qmk_keymap(const platform_keycode_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
     platform_layout_init_qmk_keymap_impl(layers, num_layers);
 }
 #elif defined(FRAMEWORK_ZMK)
@@ -295,7 +295,7 @@ void platform_layout_init_1d_keymap(platform_keycode_t **layers, uint8_t num_lay
     platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
 }
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
-void platform_layout_init_2D_keymap(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+void platform_layout_init_2D_keymap(const platform_keycode_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     platform_layout_init_2d_keymap_impl(layers,  num_layers, rows, cols);
 }
 #endif

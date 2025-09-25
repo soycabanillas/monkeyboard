@@ -30,26 +30,26 @@ protected:
 };
 
 
-const uint16_t COMBO_KEY_A = 3000;
-const uint16_t COMBO_KEY_B = 3001;
-const uint16_t COMBO_KEY_C = 3002;
-const uint16_t COMBO_KEY_D = 3003;
-const uint16_t COMBO_KEY_E = 3004;
-const uint16_t COMBO_KEY_F = 3005;
-const uint16_t COMBO_KEY_G = 3006;
-const uint16_t COMBO_KEY_H = 3007;
-const uint16_t KEY_A = 4;
-const uint16_t KEY_B = 5;
-const uint16_t KEY_C = 6;
-const uint16_t KEY_D = 7;
-const uint16_t KEY_E = 8;
-const uint16_t KEY_F = 9;
-const uint16_t KEY_G = 10;
-const uint16_t KEY_H = 11;
+const platform_keycode_t COMBO_KEY_A = 3000;
+const platform_keycode_t COMBO_KEY_B = 3001;
+const platform_keycode_t COMBO_KEY_C = 3002;
+const platform_keycode_t COMBO_KEY_D = 3003;
+const platform_keycode_t COMBO_KEY_E = 3004;
+const platform_keycode_t COMBO_KEY_F = 3005;
+const platform_keycode_t COMBO_KEY_G = 3006;
+const platform_keycode_t COMBO_KEY_H = 3007;
+const platform_keycode_t KEY_A = 4;
+const platform_keycode_t KEY_B = 5;
+const platform_keycode_t KEY_C = 6;
+const platform_keycode_t KEY_D = 7;
+const platform_keycode_t KEY_E = 8;
+const platform_keycode_t KEY_F = 9;
+const platform_keycode_t KEY_G = 10;
+const platform_keycode_t KEY_H = 11;
 
 TEST_F(Combo_Basic_Test, CB1AP_CB1BP_CB1AR_CB1BR) {
     // Define keymap using vectors
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         {{ KEY_A, COMBO_KEY_A, COMBO_KEY_B, KEY_C }}
     }};
 
@@ -92,7 +92,7 @@ TEST_F(Combo_Basic_Test, TestOld) {
     static const platform_keycode_t keymaps[1][1][2] = {
         {{ COMBO_KEY_A, COMBO_KEY_B }}
     };
-    KeyboardSimulator keyboard = create_layout((const uint16_t*)keymaps, 1, 1, 2);
+    KeyboardSimulator keyboard = create_layout((const platform_keycode_t*)keymaps, 1, 1, 2);
 
     pipeline_combo_global_state_create();
     size_t n_elements = 1;

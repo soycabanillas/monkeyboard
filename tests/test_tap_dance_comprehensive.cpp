@@ -30,10 +30,10 @@ protected:
 // ==================== BASIC TAP FUNCTIONALITY ====================
 
 TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
-    const uint16_t TAP_DANCE_KEY = 2000;
-    const uint16_t OUTPUT_KEY = 2001;
+    const platform_keycode_t TAP_DANCE_KEY = 2000;
+    const platform_keycode_t OUTPUT_KEY = 2001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 
@@ -56,11 +56,11 @@ TEST_F(TapDanceComprehensiveTest, BasicSingleTap) {
 }
 
 TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3001;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3001;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 3010 }, { 3011, 3012 } }
     ,
         { { 3020, 3021 }, { 3022, 3023 } }
@@ -96,9 +96,9 @@ TEST_F(TapDanceComprehensiveTest, KeyRepetitionException) {
 }
 
 TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
-    const uint16_t NORMAL_KEY = 4000;
+    const platform_keycode_t NORMAL_KEY = 4000;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { NORMAL_KEY }
     }};
 
@@ -124,11 +124,11 @@ TEST_F(TapDanceComprehensiveTest, NoActionConfigured) {
 // ==================== BASIC HOLD FUNCTIONALITY ====================
 
 TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
-    const uint16_t TAP_DANCE_KEY = 5000;
+    const platform_keycode_t TAP_DANCE_KEY = 5000;
     const uint8_t BASE_LAYER = 0;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 5010 }, { 5011, 5012 } }
     ,
         { { 5020, 5021 }, { 5022, 5023 } }
@@ -157,11 +157,11 @@ TEST_F(TapDanceComprehensiveTest, BasicHoldTimeout) {
 }
 
 TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
-    const uint16_t TAP_DANCE_KEY = 6000;
-    const uint16_t OUTPUT_KEY = 6001;
+    const platform_keycode_t TAP_DANCE_KEY = 6000;
+    const platform_keycode_t OUTPUT_KEY = 6001;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 6010 }, { 6011, 6012 } }
     ,
         { { 6020, 6021 }, { 6022, 6023 } }
@@ -188,11 +188,11 @@ TEST_F(TapDanceComprehensiveTest, HoldReleasedBeforeTimeout) {
 // ==================== MULTI-TAP SEQUENCES ====================
 
 TEST_F(TapDanceComprehensiveTest, DoubleTap) {
-    const uint16_t TAP_DANCE_KEY = 7000;
-    const uint16_t SINGLE_TAP_KEY = 7001;
-    const uint16_t DOUBLE_TAP_KEY = 7011;
+    const platform_keycode_t TAP_DANCE_KEY = 7000;
+    const platform_keycode_t SINGLE_TAP_KEY = 7001;
+    const platform_keycode_t DOUBLE_TAP_KEY = 7011;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 7010 }, { 7012, 7013 } }
     ,
         { { 7020, 7021 }, { 7022, 7023 } }
@@ -227,12 +227,12 @@ TEST_F(TapDanceComprehensiveTest, DoubleTap) {
 }
 
 TEST_F(TapDanceComprehensiveTest, TripleTap) {
-    const uint16_t TAP_DANCE_KEY = 8000;
-    const uint16_t SINGLE_TAP_KEY = 8001;
-    const uint16_t DOUBLE_TAP_KEY = 8011;
-    const uint16_t TRIPLE_TAP_KEY = 8012;
+    const platform_keycode_t TAP_DANCE_KEY = 8000;
+    const platform_keycode_t SINGLE_TAP_KEY = 8001;
+    const platform_keycode_t DOUBLE_TAP_KEY = 8011;
+    const platform_keycode_t TRIPLE_TAP_KEY = 8012;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 8010 }, { 8013, 8014 } }
     ,
         { { 8020, 8021 }, { 8022, 8023 } }
@@ -262,11 +262,11 @@ TEST_F(TapDanceComprehensiveTest, TripleTap) {
 }
 
 TEST_F(TapDanceComprehensiveTest, TapCountExceedsConfiguration) {
-    const uint16_t TAP_DANCE_KEY = 9000;
-    const uint16_t SINGLE_TAP_KEY = 9001;
-    const uint16_t DOUBLE_TAP_KEY = 9011;
+    const platform_keycode_t TAP_DANCE_KEY = 9000;
+    const platform_keycode_t SINGLE_TAP_KEY = 9001;
+    const platform_keycode_t DOUBLE_TAP_KEY = 9011;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {
         { { TAP_DANCE_KEY, 9010 }, { 9012, 9013 } }
     ,
         { { 9020, 9021 }, { 9022, 9023 } }

@@ -28,9 +28,9 @@ protected:
     }
 };
 
-const uint16_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
-const uint16_t KEY_B = 3010;          // KC_B
-const uint16_t OUTPUT_KEY_A = 3003;   // KC_A output
+const platform_keycode_t TAP_DANCE_KEY = 3000;  // LSFT_T(KC_A)
+const platform_keycode_t KEY_B = 3010;          // KC_B
+const platform_keycode_t OUTPUT_KEY_A = 3003;   // KC_A output
 const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
 
 // Test Case 1: AABB sequence - Press A, release A, press B, release B
@@ -39,7 +39,7 @@ const uint8_t TARGET_LAYER_SHIFT = 1; // LSFT layer
 // Expected: All flavors should produce tap (KC_A) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -70,7 +70,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -100,7 +100,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -134,7 +134,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_NoHold_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -164,7 +164,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -194,7 +194,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -229,7 +229,7 @@ TEST_F(InterruptFlavorsTest, TapHold_AABB_HoldTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -259,7 +259,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -289,7 +289,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -323,7 +323,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_BeforeTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -354,7 +354,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -385,7 +385,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -420,7 +420,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_TimeoutAfterBRelease_HoldPreferred) {
 // Expected: All flavors should produce hold (shift layer) then KC_B
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -450,7 +450,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -480,7 +480,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -515,7 +515,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABBA_AfterTimeout_HoldPreferred) {
 // Expected behavior varies by flavor
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -545,7 +545,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -575,7 +575,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -610,7 +610,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_BeforeTimeout_HoldPreferred) {
 // Expected: All flavors should produce "B" - hold action with B on shift layer
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -640,7 +640,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_TapPreferred) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer
@@ -670,7 +670,7 @@ TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_Balanced) {
 }
 
 TEST_F(InterruptFlavorsTest, TapHold_ABAB_WithTimeout_HoldPreferred) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY, KEY_B }
     }, {
         { 3011, 3012 }  // Shift layer

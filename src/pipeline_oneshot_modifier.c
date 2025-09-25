@@ -32,7 +32,7 @@ void pipeline_oneshot_modifier_callback_process_data(pipeline_virtual_callback_p
     }
     if (global_status->modifiers != 0 && key_event->keycode <= 0xFF && key_event->is_press == true) {
         actions->mark_as_processed_fn();
-        uint16_t modifiers = global_status->modifiers;
+        uint8_t modifiers = global_status->modifiers;
         if (modifiers & MACRO_KEY_MODIFIER_LEFT_SHIFT) {
             actions->report_press_fn(PLATFORM_KC_LEFT_SHIFT);
         }

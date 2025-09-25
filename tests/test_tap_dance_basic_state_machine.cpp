@@ -30,10 +30,10 @@ protected:
 // Simple Tap
 // Objective: Verify basic tap sequence with release before hold timeout
 TEST_F(BasicStateMachineTest, SimpleTap) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3001;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3001;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 
@@ -59,11 +59,11 @@ TEST_F(BasicStateMachineTest, SimpleTap) {
 // Simple Hold
 // Objective: Verify basic hold sequence with timeout triggering hold action
 TEST_F(BasicStateMachineTest, SimpleHold) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3002;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3002;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -91,10 +91,10 @@ TEST_F(BasicStateMachineTest, SimpleHold) {
 // Hold Timeout Boundary - Just Before
 // Objective: Verify tap behavior when released exactly at hold timeout boundary
 TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3002;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3002;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -122,11 +122,11 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustBefore) {
 // Hold Timeout Boundary - Exactly At
 // Objective: Verify hold behavior when timeout occurs exactly at boundary
 TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3002;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3002;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -154,11 +154,11 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryExactlyAt) {
 // Hold Timeout Boundary - Just After
 // Objective: Verify hold behavior when held past timeout
 TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3002;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3002;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -186,10 +186,10 @@ TEST_F(BasicStateMachineTest, HoldTimeoutBoundaryJustAfter) {
 // No Hold Action Configured - Immediate Execution
 // Objective: Verify immediate execution when no hold action available
 TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY = 3002;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY = 3002;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -217,10 +217,10 @@ TEST_F(BasicStateMachineTest, NoHoldActionConfiguredImmediateExecution) {
 // Only Hold Action Configured - Timeout Not Reached
 // Objective: Verify behavior when only hold action is configured
 TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutNotReached) {
-    const uint16_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -246,10 +246,10 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutNotReached) {
 // Only Hold Action - Timeout Reached
 // Objective: Verify hold action executes when only hold configured and timeout reached
 TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
-    const uint16_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
     const uint8_t TARGET_LAYER = 1;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -277,13 +277,13 @@ TEST_F(BasicStateMachineTest, OnlyHoldActionTimeoutReached) {
 // State Machine Reset Verification - Tap -> Reset -> Hold
 // Objective: Verify state machine properly resets between independent sequences
 TEST_F(BasicStateMachineTest, TapResetHold) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY_1 = 3003;
-    const uint16_t OUTPUT_KEY_2 = 3004;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY_1 = 3003;
+    const platform_keycode_t OUTPUT_KEY_2 = 3004;
     const uint8_t TARGET_LAYER_1 = 1;
     const uint8_t TARGET_LAYER_2 = 2;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -323,13 +323,13 @@ TEST_F(BasicStateMachineTest, TapResetHold) {
 // State Machine Reset Verification - Tap -> Reset -> Tap
 // Objective: Verify state machine properly resets between independent sequences
 TEST_F(BasicStateMachineTest, TapResetTap) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY_1 = 3003;
-    const uint16_t OUTPUT_KEY_2 = 3004;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY_1 = 3003;
+    const platform_keycode_t OUTPUT_KEY_2 = 3004;
     const uint8_t TARGET_LAYER_1 = 1;
     const uint8_t TARGET_LAYER_2 = 2;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -370,13 +370,13 @@ TEST_F(BasicStateMachineTest, TapResetTap) {
 // State Machine Reset Verification - Hold -> Reset -> Tap
 // Objective: Verify state machine properly resets between independent sequences
 TEST_F(BasicStateMachineTest, HoldResetTap) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY_1 = 3003;
-    const uint16_t OUTPUT_KEY_2 = 3004;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY_1 = 3003;
+    const platform_keycode_t OUTPUT_KEY_2 = 3004;
     const uint8_t TARGET_LAYER_1 = 1;
     const uint8_t TARGET_LAYER_2 = 2;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -417,13 +417,13 @@ TEST_F(BasicStateMachineTest, HoldResetTap) {
 // State Machine Reset Verification - Hold -> Reset -> Hold
 // Objective: Verify state machine properly resets between independent sequences
 TEST_F(BasicStateMachineTest, HoldResetHold) {
-    const uint16_t TAP_DANCE_KEY = 3000;
-    const uint16_t OUTPUT_KEY_1 = 3003;
-    const uint16_t OUTPUT_KEY_2 = 3004;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t OUTPUT_KEY_1 = 3003;
+    const platform_keycode_t OUTPUT_KEY_2 = 3004;
     const uint8_t TARGET_LAYER_1 = 1;
     const uint8_t TARGET_LAYER_2 = 2;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }, {
         { 3001 }
@@ -463,9 +463,9 @@ TEST_F(BasicStateMachineTest, HoldResetHold) {
 // Hold with no actions configured
 // Objective: Verify hold functionality when there are no actions
 TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
-    const uint16_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 
@@ -492,9 +492,9 @@ TEST_F(BasicStateMachineTest, HoldWithNoActionsConfigured) {
 // Tap with no actions configured
 // Objective: Verify tap functionality when there are no actions
 TEST_F(BasicStateMachineTest, TapWithNoActionsConfigured) {
-    const uint16_t TAP_DANCE_KEY = 3000;
+    const platform_keycode_t TAP_DANCE_KEY = 3000;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY }
     }};
 

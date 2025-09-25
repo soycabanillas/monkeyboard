@@ -68,7 +68,7 @@ typedef enum {
 } modifier_t;
 
 // Platform-specific type definitions
-typedef uint16_t platform_keycode_t;
+typedef uint32_t platform_keycode_t;
 
 // Platform-agnostic deferred execution token
 typedef uint32_t platform_deferred_token;
@@ -120,7 +120,7 @@ typedef struct {
     uint8_t rows;
     uint8_t cols;
     uint8_t current_layer;
-    const uint16_t *layouts;  // Pointer to flattened 2D layout data (layers * rows * cols)
+    const platform_keycode_t *layouts;  // Pointer to flattened 2D layout data (layers * rows * cols)
 } custom_layout_t;
 #endif
 

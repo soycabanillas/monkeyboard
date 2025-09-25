@@ -28,14 +28,14 @@ protected:
 };
 
 TEST_F(TapDanceNestedTest, SimpleNestingABBA) {
-    const uint16_t TAP_DANCE_KEY_1 = 2001;
-    const uint16_t OUTPUT_KEY_1 = 2002;
-    const uint16_t INTERRUPTING_KEY_1 = 2003;
-    const uint16_t TAP_DANCE_KEY_2 = 2111;
-    const uint16_t OUTPUT_KEY_2 = 2112;
-    const uint16_t INTERRUPTING_KEY_2 = 2113;
+    const platform_keycode_t TAP_DANCE_KEY_1 = 2001;
+    const platform_keycode_t OUTPUT_KEY_1 = 2002;
+    const platform_keycode_t INTERRUPTING_KEY_1 = 2003;
+    const platform_keycode_t TAP_DANCE_KEY_2 = 2111;
+    const platform_keycode_t OUTPUT_KEY_2 = 2112;
+    const platform_keycode_t INTERRUPTING_KEY_2 = 2113;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { TAP_DANCE_KEY_1, INTERRUPTING_KEY_1, 2051, 2052 }
     }, {
         { 2151, 2152, TAP_DANCE_KEY_2, INTERRUPTING_KEY_2 }

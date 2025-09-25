@@ -52,7 +52,7 @@ static void init_1D_map_and_layers(platform_keycode_t **layers, uint8_t num_laye
 // The function returns nothing, but it modifies the global manager and key_map variables
 // The function assumes that the input parameters are valid and does not check for errors
 // The function is defined as static to limit its visibility to this file
-static void init_2D_map_and_layers(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+static void init_2D_map_and_layers(const platform_keycode_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     // Allocate the manager structure
     manager = (custom_layout_t*) malloc(sizeof(custom_layout_t));
     if (!manager) {
@@ -82,7 +82,7 @@ void platform_layout_init_1d_keymap_impl(platform_keycode_t **layers, uint8_t nu
 
 #elif defined (AGNOSTIC_USE_2D_ARRAY)
 
-void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
+void platform_layout_init_2d_keymap_impl(const platform_keycode_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     init_2D_map_and_layers(layers, num_layers, rows, cols);
 }
 
@@ -90,8 +90,8 @@ void platform_layout_init_2d_keymap_impl(const uint16_t* layers, uint8_t num_lay
 
 #if defined(FRAMEWORK_QMK)
 
-void platform_layout_init_qmk_keymap_impl(const uint16_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
-    platform_layout_init_2d_keymap_impl((const uint16_t*)layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
+void platform_layout_init_qmk_keymap_impl(const platform_keycode_t layers[][MATRIX_ROWS][MATRIX_COLS], uint8_t num_layers) {
+    platform_layout_init_2d_keymap_impl((const platform_keycode_t*)layers, num_layers, MATRIX_ROWS, MATRIX_COLS);
 }
 
 #elif defined(FRAMEWORK_ZMK)

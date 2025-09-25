@@ -66,7 +66,7 @@ public:
     }
 
     ComboConfigBuilder& add_simple_combo(const std::vector<platform_keypos_t>& positions,
-                                         uint16_t output_keycode) {
+                                         platform_keycode_t output_keycode) {
         std::vector<ComboKeyBuilder> keys;
         for (const auto& pos : positions) {
             keys.emplace_back(pos);

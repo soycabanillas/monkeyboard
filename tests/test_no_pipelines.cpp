@@ -27,10 +27,10 @@ protected:
 
 // Test no pipelines
 TEST_F(NoPipelines, BasicKeyPressRelease_NoPipelines) {
-    const uint16_t KEY_A = 100;
-    const uint16_t KEY_B = 101;
+    const platform_keycode_t KEY_A = 100;
+    const platform_keycode_t KEY_B = 101;
 
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         {{ KEY_A, KEY_B }}
     }};
 

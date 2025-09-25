@@ -28,14 +28,14 @@ protected:
     }
 };
 
-const uint16_t PREVIOUS_KEY_A = 2000;
-const uint16_t PREVIOUS_KEY_B = 2001;
-const uint16_t TAP_DANCE_KEY = 2002;
-const uint16_t OUTPUT_KEY = 2003;
-const uint16_t INTERRUPTING_KEY = 2004;
+const platform_keycode_t PREVIOUS_KEY_A = 2000;
+const platform_keycode_t PREVIOUS_KEY_B = 2001;
+const platform_keycode_t TAP_DANCE_KEY = 2002;
+const platform_keycode_t OUTPUT_KEY = 2003;
+const platform_keycode_t INTERRUPTING_KEY = 2004;
 
 void test_A_TDK_A_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -89,7 +89,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_TDK_With_1Tap1Hold_BALANCED) {
 }
 
 void test_A_TDK_A_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -137,7 +137,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_TDK_With_1Hold_BALANCED) {
 }
 
 void test_A_TDK_A_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -193,7 +193,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_TDK_With_1Tap_BALANCED) {
 //
 
 void test_A_TDK_HOLD_A_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -247,7 +247,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_HOLD_A_TDK_With_1Tap1Hold_BALANCED) 
 }
 
 void test_A_TDK_HOLD_A_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -301,7 +301,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_HOLD_A_TDK_With_1Hold_BALANCED) {
 }
 
 void test_A_TDK_HOLD_A_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -357,7 +357,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_HOLD_A_TDK_With_1Tap_BALANCED) {
 //
 
 void test_A_TDK_A_HOLD_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -411,7 +411,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_HOLD_TDK_With_1Tap1Hold_BALANCED) 
 }
 
 void test_A_TDK_A_HOLD_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -465,7 +465,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_HOLD_TDK_With_1Hold_BALANCED) {
 }
 
 void test_A_TDK_A_HOLD_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -521,7 +521,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_HOLD_TDK_With_1Tap_BALANCED) {
 //
 
 void test_A_TDK_Interrupt_A_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -579,7 +579,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_TDK_With_1Tap1Hold_BALAN
 }
 
 void test_A_TDK_Interrupt_A_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -633,7 +633,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_TDK_With_1Hold_BALANCED)
 }
 
 void test_A_TDK_Interrupt_A_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -693,7 +693,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_TDK_With_1Tap_BALANCED) 
 //
 
 void test_A_TDK_Interrupt_A_HOLD_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -751,7 +751,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_HOLD_TDK_With_1Tap1Hold_
 }
 
 void test_A_TDK_Interrupt_A_HOLD_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -809,7 +809,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_HOLD_TDK_With_1Hold_BALA
 }
 
 void test_A_TDK_Interrupt_A_HOLD_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -869,7 +869,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_Interrupt_A_HOLD_TDK_With_1Tap_BALAN
 //
 
 void test_A_TDK_A_Interrupt_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -927,7 +927,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_Interrupt_TDK_With_1Tap1Hold_BALAN
 }
 
 void test_A_TDK_A_Interrupt_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -981,7 +981,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_Interrupt_TDK_With_1Hold_BALANCED)
 }
 
 void test_A_TDK_A_Interrupt_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -1041,7 +1041,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_Interrupt_TDK_With_1Tap_BALANCED) 
 //
 
 void test_A_TDK_A_Interrupt_HOLD_TDK_With_1Tap1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -1099,7 +1099,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_Interrupt_HOLD_TDK_With_1Tap1Hold_
 }
 
 void test_A_TDK_A_Interrupt_HOLD_TDK_With_1Hold(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
@@ -1157,7 +1157,7 @@ TEST_F(TapDanceRollOverPreviousPress, A_TDK_A_Interrupt_HOLD_TDK_With_1Hold_BALA
 }
 
 void test_A_TDK_A_Interrupt_HOLD_TDK_With_1Tap(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    std::vector<std::vector<std::vector<uint16_t>>> keymap = {{
+    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
         { PREVIOUS_KEY_A, PREVIOUS_KEY_B, TAP_DANCE_KEY, INTERRUPTING_KEY }
     }, {
         { 2100, 2101, 2102, 2103 }
