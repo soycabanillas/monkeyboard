@@ -108,37 +108,37 @@ static std::string format_event_compact(const event_t& event) {
     debug_table << "\nTap dance event comparison (absolute time):\n";
     debug_table << "Pos | Error | Expected Event        | Exp Time | Actual Event          | Act Time\n";
     debug_table << "----|-------|-----------------------|----------|-----------------------|----------\n";
-    
+
     size_t max_size = std::max(events.size(), expected.size());
     bool has_mismatch = false;
     size_t first_mismatch_pos = 0;
-    
+
     for (size_t i = 0; i < max_size; i++) {
         bool has_expected = i < expected.size();
         bool has_actual = i < events.size();
-        
+
         std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
         std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
-        
+
         platform_time_t expected_time = has_expected ? expected[i].time : 0;
         platform_time_t actual_time = has_actual ? events[i].time : 0;
-        
+
         bool content_match = has_expected && has_actual && (events[i] == expected[i]);
         bool time_match = expected_time == actual_time;
         bool row_match = content_match && time_match && has_expected && has_actual;
-        
+
         if (!has_mismatch && !row_match) {
             has_mismatch = true;
             first_mismatch_pos = i;
         }
-        
+
         std::string error_marker = "";
         if (!row_match && i == first_mismatch_pos) {
             error_marker = "  -> ";
         } else {
             error_marker = "     ";
         }
-        
+
         debug_table << std::setw(3) << i << " | "
                    << error_marker << " | "
                    << std::setw(21) << std::left << expected_event_str << " | "
@@ -169,46 +169,46 @@ static std::string format_event_compact(const event_t& event) {
     debug_table << "\nTap dance event comparison (relative time, start: " << start_time << "):\n";
     debug_table << "Pos | Error | Expected Event        | Exp Gap  | Exp Abs  | Actual Event          | Act Gap  | Act Abs\n";
     debug_table << "----|-------|-----------------------|----------|----------|-----------------------|----------|----------\n";
-    
+
     size_t max_size = std::max(events.size(), expected.size());
     bool has_mismatch = false;
     size_t first_mismatch_pos = 0;
-    
+
     platform_time_t expected_cumulative_time = 0;
     platform_time_t previous_actual_time = start_time;
-    
+
     for (size_t i = 0; i < max_size; i++) {
         bool has_expected = i < expected.size();
         bool has_actual = i < events.size();
-        
+
         std::string expected_event_str = has_expected ? format_event_compact(expected[i]) : "MISSING";
         std::string actual_event_str = has_actual ? format_event_compact(events[i]) : "MISSING";
-        
+
         platform_time_t expected_gap = has_expected ? expected[i].time : 0;
         platform_time_t actual_gap = has_actual ? events[i].time - previous_actual_time : 0;
-        
+
         if (has_expected) {
             expected_cumulative_time += expected_gap;
         }
         platform_time_t expected_absolute = start_time + expected_cumulative_time;
         platform_time_t actual_absolute = has_actual ? events[i].time : 0;
-        
+
         bool content_match = has_expected && has_actual && (events[i] == expected[i]);
         bool time_match = expected_absolute == actual_absolute;
         bool row_match = content_match && time_match && has_expected && has_actual;
-        
+
         if (!has_mismatch && !row_match) {
             has_mismatch = true;
             first_mismatch_pos = i;
         }
-        
+
         std::string error_marker = "";
         if (!row_match && i == first_mismatch_pos) {
             error_marker = "  -> ";
         } else {
             error_marker = "     ";
         }
-        
+
         debug_table << std::setw(3) << i << " | "
                    << error_marker << " | "
                    << std::setw(21) << std::left << expected_event_str << " | "
@@ -217,7 +217,7 @@ static std::string format_event_compact(const event_t& event) {
                    << std::setw(21) << std::left << actual_event_str << " | "
                    << std::setw(8) << std::right << (has_actual ? std::to_string(actual_gap) : "-") << " | "
                    << std::setw(9) << std::right << (has_actual ? std::to_string(actual_absolute) : "-") << "\n";
-        
+
         if (has_actual) {
             previous_actual_time = events[i].time;
         }
@@ -286,13 +286,13 @@ void platform_layout_init_qmk_keymap(const platform_keycode_t layers[][MATRIX_RO
     platform_layout_init_qmk_keymap_impl(layers, num_layers);
 }
 #elif defined(FRAMEWORK_ZMK)
-void platform_layout_init_zmk_keymap(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
-    platform_layout_init_zmk_keymap_impl(layers, num_layers, key_map, num_keys);
+void platform_layout_init_zmk_keymap(platform_keycode_t **layers, uint8_t num_layers, uint16_t num_keys) {
+    platform_layout_init_zmk_keymap_impl(layers, num_layers, num_keys);
 }
 #endif
 #if defined(AGNOSTIC_USE_1D_ARRAY)
-void platform_layout_init_1d_keymap(platform_keycode_t **layers, uint8_t num_layers, matrix_pos_t* key_map, uint16_t num_keys) {
-    platform_layout_init_1d_keymap_impl(layers, num_layers, key_map, num_keys);
+void platform_layout_init_1d_keymap(platform_keycode_t **layers, uint8_t num_layers, uint16_t num_keys) {
+    platform_layout_init_1d_keymap_impl(layers, num_layers, num_keys);
 }
 #elif defined(AGNOSTIC_USE_2D_ARRAY)
 void platform_layout_init_2D_keymap(const platform_keycode_t* layers, uint8_t num_layers, uint8_t rows, uint8_t cols) {

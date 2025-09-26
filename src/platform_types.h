@@ -107,22 +107,21 @@ typedef struct {
     platform_time_t time;
 } abskeyevent_t;
 
-#if defined(AGNOSTIC_USE_1D_ARRAY)
+// Internal structure to manage layouts and layers
+typedef platform_keycode_t (*get_keycode_from_layer_def)(uint8_t layer, platform_keypos_t position);
 typedef struct {
     uint8_t num_layers;
-    uint32_t num_positions;
     uint8_t current_layer;
+    #if defined(AGNOSTIC_USE_1D_ARRAY)
+    uint32_t num_positions;
     platform_keycode_t **layouts;  // Pointer to array of 1D layout pointers
-} custom_layout_t;
-#elif defined(AGNOSTIC_USE_2D_ARRAY)
-typedef struct {
-    uint8_t num_layers;
+    #elif defined(AGNOSTIC_USE_2D_ARRAY)
     uint8_t rows;
     uint8_t cols;
-    uint8_t current_layer;
     const platform_keycode_t *layouts;  // Pointer to flattened 2D layout data (layers * rows * cols)
+    #endif
+    get_keycode_from_layer_def get_keycode_from_layer_fn;
 } custom_layout_t;
-#endif
 
 #ifdef __cplusplus
 }
