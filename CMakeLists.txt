@@ -19,6 +19,7 @@ set(CORE_SOURCES
     src/key_press_buffer.c
     src/key_virtual_buffer.c
     src/monkeyboard_deferred_callbacks.c
+    src/monkeyboard_keycodes.c
     src/monkeyboard_layer_manager.c
     src/monkeyboard_time_manager.c
     src/pipeline_combo.c
@@ -40,6 +41,7 @@ set(CORE_HEADERS
     src/key_press_buffer.h
     src/key_virtual_buffer.h
     src/monkeyboard_deferred_callbacks.h
+    src/monkeyboard_keycodes.h
     src/monkeyboard_layer_manager.h
     src/monkeyboard_time_manager.h
     src/pipeline_combo.h
