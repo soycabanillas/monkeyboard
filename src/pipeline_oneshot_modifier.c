@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "key_virtual_buffer.h"
+#include "monkeyboard_keycodes.h"
 #include "pipeline_executor.h"
-#include "platform_types.h"
 
 uint8_t modifier_state = 0;
 

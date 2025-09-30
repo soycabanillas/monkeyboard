@@ -9,64 +9,6 @@
 extern "C" {
 #endif
 
-// Platform-specific keycode definitions - only when needed
-#if defined(FRAMEWORK_QMK)
-
-    #include "keycodes.h"
-    #define PLATFORM_KC_LEFT_SHIFT  KC_LSFT
-    #define PLATFORM_KC_RIGHT_SHIFT KC_RSFT
-    #define PLATFORM_KC_LEFT_CTRL   KC_LCTL
-    #define PLATFORM_KC_RIGHT_CTRL  KC_RCTL
-    #define PLATFORM_KC_LEFT_ALT    KC_LALT
-    #define PLATFORM_KC_RIGHT_ALT   KC_RALT
-    #define PLATFORM_KC_LEFT_GUI    KC_LGUI
-    #define PLATFORM_KC_RIGHT_GUI   KC_RGUI
-
-#elif defined(FRAMEWORK_ZMK)
-
-    #include <zmk/keys.h>
-    #define PLATFORM_KC_LEFT_SHIFT  LSHIFT
-    #define PLATFORM_KC_RIGHT_SHIFT RSHIFT
-    #define PLATFORM_KC_LEFT_CTRL   LCTRL
-    #define PLATFORM_KC_RIGHT_CTRL  RCTRL
-    #define PLATFORM_KC_LEFT_ALT    LALT
-    #define PLATFORM_KC_RIGHT_ALT   RALT
-    #define PLATFORM_KC_LEFT_GUI    LGUI
-    #define PLATFORM_KC_RIGHT_GUI   RGUI
-
-#elif defined(FRAMEWORK_UNIT_TEST)
-
-    #define PLATFORM_KC_LEFT_SHIFT  0xE1
-    #define PLATFORM_KC_RIGHT_SHIFT 0xE5
-    #define PLATFORM_KC_LEFT_CTRL   0xE0
-    #define PLATFORM_KC_RIGHT_CTRL  0xE4
-    #define PLATFORM_KC_LEFT_ALT    0xE2
-    #define PLATFORM_KC_RIGHT_ALT   0xE6
-    #define PLATFORM_KC_LEFT_GUI    0xE3
-    #define PLATFORM_KC_RIGHT_GUI   0xE7
-
-#endif
-
-#define MACRO_KEY_MODIFIER_LEFT_SHIFT  (1 << 0)
-#define MACRO_KEY_MODIFIER_RIGHT_SHIFT (1 << 1)
-#define MACRO_KEY_MODIFIER_LEFT_CTRL   (1 << 2)
-#define MACRO_KEY_MODIFIER_RIGHT_CTRL  (1 << 3)
-#define MACRO_KEY_MODIFIER_LEFT_ALT    (1 << 4)
-#define MACRO_KEY_MODIFIER_RIGHT_ALT   (1 << 5)
-#define MACRO_KEY_MODIFIER_LEFT_GUI    (1 << 6)
-#define MACRO_KEY_MODIFIER_RIGHT_GUI   (1 << 7)
-
-typedef enum {
-    MODIFIER_LEFT_SHIFT  = (1 << 0),
-    MODIFIER_RIGHT_SHIFT = (1 << 1),
-    MODIFIER_LEFT_CTRL   = (1 << 2),
-    MODIFIER_RIGHT_CTRL  = (1 << 3),
-    MODIFIER_LEFT_ALT    = (1 << 4),
-    MODIFIER_RIGHT_ALT   = (1 << 5),
-    MODIFIER_LEFT_GUI    = (1 << 6),
-    MODIFIER_RIGHT_GUI   = (1 << 7)
-} modifier_t;
-
 // Platform-specific type definitions
 typedef uint32_t platform_keycode_t;
 

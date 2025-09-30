@@ -25,19 +25,69 @@ typedef struct {
     keycode_type_t type;
     uint8_t basic_key;      // Valid for BASIC and MODIFIED
     uint8_t modifiers;      // Valid for MODIFIED only
-    uint32_t unicode_cp;    // Valid for UNICODE only  
+    uint32_t unicode_cp;    // Valid for UNICODE only
     uint32_t custom_func;   // Valid for CUSTOM only
 } keycode_info_t;
 
-// Modifier bit definitions for convenience
-#define MOD_LCTL  (1 << 7)  // Bit 15 in keycode
-#define MOD_LSFT  (1 << 6)  // Bit 14 in keycode  
-#define MOD_LALT  (1 << 5)  // Bit 13 in keycode
-#define MOD_LGUI  (1 << 4)  // Bit 12 in keycode
-#define MOD_RCTL  (1 << 3)  // Bit 11 in keycode
-#define MOD_RSFT  (1 << 2)  // Bit 10 in keycode
-#define MOD_RALT  (1 << 1)  // Bit 9 in keycode  
-#define MOD_RGUI  (1 << 0)  // Bit 8 in keycode
+#define PLATFORM_KC_LEFT_CTRL   0xE0
+#define PLATFORM_KC_LEFT_SHIFT  0xE1
+#define PLATFORM_KC_LEFT_ALT    0xE2
+#define PLATFORM_KC_LEFT_GUI    0xE3
+#define PLATFORM_KC_RIGHT_CTRL  0xE4
+#define PLATFORM_KC_RIGHT_SHIFT 0xE5
+#define PLATFORM_KC_RIGHT_ALT   0xE6
+#define PLATFORM_KC_RIGHT_GUI   0xE7
+
+// Modifier bit in 32-bit keycode format
+#define MOONKEEB_BIT_LCTL  (1 << 8)  // Bit 15 in keycode
+#define MOONKEEB_BIT_LSFT  (1 << 9)  // Bit 14 in keycode
+#define MOONKEEB_BIT_LALT  (1 << 10)  // Bit 13 in keycode
+#define MOONKEEB_BIT_LGUI  (1 << 11)  // Bit 12 in keycode
+#define MOONKEEB_BIT_RCTL  (1 << 12)  // Bit 11 in keycode
+#define MOONKEEB_BIT_RSFT  (1 << 13)  // Bit 10 in keycode
+#define MOONKEEB_BIT_RALT  (1 << 14)  // Bit 9 in keycode
+#define MOONKEEB_BIT_RGUI  (1 << 15)  // Bit 8 in keycode
+
+#define MONKEEB_LCTL(key) (MOONKEEB_BIT_LCTL | (key))
+#define MONKEEB_LSFT(key) (MOONKEEB_BIT_LSFT | (key))
+#define MONKEEB_LALT(key) (MOONKEEB_BIT_LALT | (key))
+#define MONKEEB_LGUI(key) (MOONKEEB_BIT_LGUI | (key))
+
+#define MONKEEB_RCTL(key) (MOONKEEB_MOONKEEB_BIT_RCTL | (key))
+#define MONKEEB_RSFT(key) (MOONKEEB_BIT_RSFT | (key))
+#define MONKEEB_RALT(key) (MOONKEEB_BIT_RALT | (key))
+#define MONKEEB_RGUI(key) (MOONKEEB_BIT_RGUI | (key))
+
+
+#define MONKEEB_LCS(kc) (MOONKEEB_BIT_LCTL | MOONKEEB_BIT_LSFT | (kc))
+#define MONKEEB_LCA(kc) (MOONKEEB_BIT_LCTL | MOONKEEB_BIT_LALT | (kc))
+#define MONKEEB_LCG(kc) (MOONKEEB_BIT_LCTL | MOONKEEB_BIT_LGUI | (kc))
+#define MONKEEB_LSA(kc) (MOONKEEB_BIT_LSFT | MOONKEEB_BIT_LALT | (kc))
+#define MONKEEB_LSG(kc) (MOONKEEB_BIT_LSFT | MOONKEEB_BIT_LGUI | (kc))
+#define MONKEEB_LAG(kc) (MOONKEEB_BIT_LALT | MOONKEEB_BIT_LGUI | (kc))
+#define MONKEEB_LCSG(kc) (MOONKEEB_BIT_LCTL | MOONKEEB_BIT_LSFT | MOONKEEB_BIT_LGUI | (kc))
+#define MONKEEB_LCAG(kc) (MOONKEEB_BIT_LCTL | MOONKEEB_BIT_LALT | MOONKEEB_BIT_LGUI | (kc))
+#define MONKEEB_LSAG(kc) (MOONKEEB_BIT_LSFT | MOONKEEB_BIT_LALT | MOONKEEB_BIT_LGUI | (kc))
+
+#define MONKEEB_RCA(kc) (MOONKEEB_BIT_RCTL | MOONKEEB_BIT_RALT | (kc))
+#define MONKEEB_RCS(kc) (MOONKEEB_BIT_RCTL | MOONKEEB_BIT_RSFT | (kc))
+#define MONKEEB_RCG(kc) (MOONKEEB_BIT_RCTL | MOONKEEB_BIT_RGUI | (kc))
+#define MONKEEB_RSA(kc) (MOONKEEB_BIT_RSFT | MOONKEEB_BIT_RALT | (kc))
+#define MONKEEB_RSG(kc) (MOONKEEB_BIT_RSFT | MOONKEEB_BIT_RGUI | (kc))
+#define MONKEEB_RAG(kc) (MOONKEEB_BIT_RALT | MOONKEEB_BIT_RGUI | (kc))
+#define MONKEEB_RCSG(kc) (MOONKEEB_BIT_RCTL | MOONKEEB_BIT_RSFT | MOONKEEB_BIT_RGUI | (kc))
+#define MONKEEB_RCAG(kc) (MOONKEEB_BIT_RCTL | MOONKEEB_BIT_RALT | MOONKEEB_BIT_RGUI | (kc))
+#define MONKEEB_RSAG(kc) (MOONKEEB_BIT_RSFT | MOONKEEB_BIT_RALT | MOONKEEB_BIT_RGUI | (kc))
+
+// Modifier bit when extracted to 8-bit modifier field
+#define MONKEEB_MOD_LCTL  (1 << 0)
+#define MONKEEB_MOD_LSFT  (1 << 1)
+#define MONKEEB_MOD_LALT  (1 << 2)
+#define MONKEEB_MOD_LGUI  (1 << 3)
+#define MONKEEB_MOD_RCTL  (1 << 4)
+#define MONKEEB_MOD_RSFT  (1 << 5)
+#define MONKEEB_MOD_RALT  (1 << 6)
+#define MONKEEB_MOD_RGUI  (1 << 7)
 
 // =============================================================================
 // DECODING FUNCTIONS - Extract information from 32-bit keycodes
