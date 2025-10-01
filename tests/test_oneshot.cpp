@@ -4,6 +4,7 @@
 #include <vector>
 #include "keyboard_simulator.hpp"
 #include "gtest/gtest.h"
+#include "monkeyboard_keycodes.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
 #include "platform_types.h"
