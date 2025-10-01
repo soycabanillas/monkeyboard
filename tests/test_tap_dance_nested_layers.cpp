@@ -27,18 +27,41 @@ protected:
     }
 };
 
-TEST_F(TapDanceNestedTest, SimpleNestingABBA) {
-    const platform_keycode_t TAP_DANCE_KEY_1 = 2001;
-    const platform_keycode_t OUTPUT_KEY_1 = 2002;
-    const platform_keycode_t INTERRUPTING_KEY_1 = 2003;
-    const platform_keycode_t TAP_DANCE_KEY_2 = 2111;
-    const platform_keycode_t OUTPUT_KEY_2 = 2112;
-    const platform_keycode_t INTERRUPTING_KEY_2 = 2113;
+// Mnemonic legend for keys:
+// KA = Key A
+// KB = Key B
+// TDKA = Tap Dance Key 1
+// TDKB = Tap Dance Key 2
+// TDKAOK = Output key for Tap Dance Key 1
+// TDKBOK = Output key for Tap Dance Key 2
+// TDKAIP = Interrupting key for Tap Dance Key 1
+// TDKBIP = Interrupting key for Tap Dance Key 2
+
+// Mnemonic legend for events:
+// 1TapTDKA = tap activation after 1 key count (single tap) for key A
+// 2TapTDKB = tap activation after 2 key count (double tap) for key B
+// 1HoldL1TDKA = hold activation after 1 key count (single hold) activates layer 1 for key A
+// 1HoldL2TDKB = hold activation after 1 key count (single hold) activates layer 2 for key B
+// 2HoldL1TDKA = hold activation after 2 key count (double hold) activates layer 1 for key A
+// 2HoldL2TDKB = hold activation after 2 key count (double hold) activates layer 2 for key B
+// RelL1TDKA = release layer 1 for key A
+// RelL2TDKB = release layer 2 for key B
+// KPKA = key press for key A
+// KRKA = key release for key B
+
+TEST_F(TapDanceNestedTest, 1HoldL1_1TapL1_RelL1_KPKA_KRKA) {
+    const platform_keycode_t TDKA = 2001;
+    const platform_keycode_t TDKAOK = 2002;
+    const platform_keycode_t TDKAIP = 2003;
+    const platform_keycode_t KA = 2051;
+    const platform_keycode_t TDKB = 2111;
+    const platform_keycode_t TDKBOK = 2112;
+    const platform_keycode_t TDKBIP = 2113;
 
     std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TAP_DANCE_KEY_1, INTERRUPTING_KEY_1, 2051, 2052 }
+        { TDKA, TDKAIP, KA, 2052 }
     }, {
-        { 2151, 2152, TAP_DANCE_KEY_2, INTERRUPTING_KEY_2 }
+        { 2151, 2152, TDKB, TDKBIP }
     }, {
         { 2053, 2054, 2055, 2056 }
     }};
@@ -47,25 +70,29 @@ TEST_F(TapDanceNestedTest, SimpleNestingABBA) {
     TapDanceConfigBuilder config_builder;
     
     // Configure first tap dance key: tap -> OUTPUT_KEY_1, hold -> layer 1
-    config_builder.add_tap_hold(TAP_DANCE_KEY_1, {{1, OUTPUT_KEY_1}}, {{1, 1}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
     
     // Configure second tap dance key: tap -> OUTPUT_KEY_2, hold -> layer 2
-    config_builder.add_tap_hold(TAP_DANCE_KEY_2, {{1, OUTPUT_KEY_2}}, {{1, 2}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
+    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}}, {{1, 2}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
-    keyboard.press_key_at(TAP_DANCE_KEY_1, 0);
+    keyboard.press_key_at(TDKA, 0);
     keyboard.press_key_at(2051, 200);
     keyboard.release_key_at(2051, 400);
-    keyboard.release_key_at(TAP_DANCE_KEY_1, 400);
+    keyboard.release_key_at(TDKA, 400);
+    keyboard.press_key_at(KA, 400);
+    keyboard.release_key_at(KA, 400);
 
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
         td_layer(2, 400),
         td_layer(1, 400),
-        td_layer(0, 400)
+        td_layer(0, 400),
+        td_press(KA, 400),
+        td_release(KA, 400)
     };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
