@@ -39,7 +39,7 @@ TEST_F(EventBufferManagementTest, CustomEventBufferDirectManipulation) {
     EventBufferManager custom_event_buffer;
     
     // Pre-populate the event buffer with some events
-    uint8_t press_id1 = custom_event_buffer.add_physical_press(0, 0, 0);
+    uint8_t press_id1 = custom_event_buffer.add_physical_press(0, 0, 0, 0);
     bool release_added = custom_event_buffer.add_physical_release(100, 0, 0);
     
     EXPECT_GT(press_id1, 0);

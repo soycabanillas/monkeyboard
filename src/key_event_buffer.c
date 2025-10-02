@@ -1,7 +1,6 @@
 #include "monkeyboard_debug.h"
 #include "key_event_buffer.h"
 #include "key_press_buffer.h"
-#include "platform_interface.h"
 #include "platform_types.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -103,10 +102,8 @@ static bool platform_key_event_add_event_internal(platform_key_event_buffer_t *e
     return true;
 }
 
-uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, bool* buffer_full) {
+uint8_t platform_key_event_add_physical_press(platform_key_event_buffer_t *event_buffer, platform_time_t time, platform_keypos_t keypos, platform_keycode_t keycode, bool* buffer_full) {
     uint8_t press_id = get_keypress_id(event_buffer, event_buffer->key_press_buffer);
-    uint8_t layer = platform_layout_get_current_layer();
-    platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, keypos);
 
     platform_key_press_key_press_t* key_press = platform_key_press_add_press(event_buffer->key_press_buffer, keypos, keycode, press_id);
     if (key_press == NULL) {
@@ -232,18 +229,18 @@ void platform_key_event_change_keycode(platform_key_event_buffer_t *event_buffer
     }
 }
 
-void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos) {
-    if (event_buffer == NULL) {
-        return;
-    }
-    if (pos >= event_buffer->event_buffer_pos) {
-        return; // Position out of bounds
-    }
-    for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
-        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
-        platform_key_event_change_keycode(event_buffer, event_buffer->event_buffer[i].press_id, keycode);
-    }
-}
+// void platform_key_event_update_layer_for_physical_events(platform_key_event_buffer_t *event_buffer, uint8_t layer, uint8_t pos) {
+//     if (event_buffer == NULL) {
+//         return;
+//     }
+//     if (pos >= event_buffer->event_buffer_pos) {
+//         return; // Position out of bounds
+//     }
+//     for (uint8_t i = pos; i < event_buffer->event_buffer_pos; i++) {
+//         platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, event_buffer->event_buffer[i].keypos);
+//         platform_key_event_change_keycode(event_buffer, event_buffer->event_buffer[i].press_id, keycode);
+//     }
+// }
 
 #ifdef MONKEYBOARD_DEBUG
 void print_key_event_buffer(platform_key_event_buffer_t *event_buffer) {

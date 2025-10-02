@@ -585,7 +585,9 @@ void pipeline_process_key(abskeyevent_t abskeyevent) {
     bool buffer_full = false;
     bool event_added = false;
     if (abskeyevent.pressed) {
-        uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos, &buffer_full);
+        uint8_t layer = platform_layout_get_current_layer();
+        platform_keycode_t keycode = platform_layout_get_keycode_from_layer(layer, abskeyevent.keypos);
+        uint8_t press_id = platform_key_event_add_physical_press(pipeline_executor_state.key_event_buffer, abskeyevent.time, abskeyevent.keypos, keycode, &buffer_full);
         if (press_id > 0) {
             event_added = true;
         }

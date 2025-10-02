@@ -58,9 +58,9 @@ public:
     platform_key_event_buffer_t* get() const { return event_buffer_; }
 
     // Add physical key events
-    uint8_t add_physical_press(platform_time_t time, platform_keypos_t keypos) {
+    uint8_t add_physical_press(platform_time_t time, platform_keypos_t keypos, platform_keycode_t keycode) {
         bool buffer_full = false;
-        return platform_key_event_add_physical_press(event_buffer_, time, keypos, &buffer_full);
+        return platform_key_event_add_physical_press(event_buffer_, time, keypos, keycode, &buffer_full);
     }
 
     bool add_physical_release(platform_time_t time, platform_keypos_t keypos) {
@@ -69,9 +69,9 @@ public:
     }
 
     // Helper methods for 2D array positions
-    uint8_t add_physical_press(platform_time_t time, uint8_t row, uint8_t col) {
+    uint8_t add_physical_press(platform_time_t time, uint8_t row, uint8_t col, platform_keycode_t keycode) {
         platform_keypos_t keypos = {row, col};
-        return add_physical_press(time, keypos);
+        return add_physical_press(time, keypos, keycode);
     }
 
     bool add_physical_release(platform_time_t time, uint8_t row, uint8_t col) {
