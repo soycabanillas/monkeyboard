@@ -138,18 +138,10 @@ TEST_F(TapDanceNestedTest, ExistingTest_1HoldL1_1TapL1_RelL1_KPKA_KRKA) {
 // Helper functions for DuplicateKeys DuplicatePhysicalKeyPresses
 
 void test_DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    const platform_keycode_t TDKA = 2001;
-    const platform_keycode_t TDKAOK = 2002;
-    const platform_keycode_t KA = 2051;
-
-    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TDKA, KA }
-    }};
-
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK1}}, {{1, 1}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
@@ -165,43 +157,33 @@ void test_DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTD
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA_TAP_PREFERRED) {
     std::vector<event_t> expected_events = {
-        td_press(2002, 150),
-        td_release(2002, 150)
+        td_press(TDKAOK1, 100),
+        td_release(TDKAOK1, 100)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_TAP_PREFERRED, expected_events);
 }
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA_HOLD_PREFERRED) {
     std::vector<event_t> expected_events = {
-        td_press(2002, 150),
-        td_release(2002, 150)
+        td_press(TDKAOK1, 100),
+        td_release(TDKAOK1, 100)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
 }
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA_BALANCED) {
     std::vector<event_t> expected_events = {
-        td_press(2002, 150),
-        td_release(2002, 150)
+        td_press(TDKAOK1, 100),
+        td_release(TDKAOK1, 100)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Taps_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_BALANCED, expected_events);
 }
 
 void test_DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    const platform_keycode_t TDKA = 2001;
-    const platform_keycode_t TDKAOK = 2002;
-    const platform_keycode_t KA = 2051;
-
-    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TDKA, KA }
-    }, {
-        { 2151, 2152 }
-    }};
-
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK1}}, {{1, 1}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
@@ -217,24 +199,24 @@ void test_DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelT
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA_TAP_PREFERRED) {
     std::vector<event_t> expected_events = {
-        td_layer(1, 250),
-        td_layer(0, 300)
+        td_layer(1, 200),
+        td_layer(0, 250)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_TAP_PREFERRED, expected_events);
 }
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA_HOLD_PREFERRED) {
     std::vector<event_t> expected_events = {
-        td_layer(1, 250),
-        td_layer(0, 300)
+        td_layer(1, 200),
+        td_layer(0, 250)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
 }
 
 TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA_BALANCED) {
     std::vector<event_t> expected_events = {
-        td_layer(1, 250),
-        td_layer(0, 300)
+        td_layer(1, 200),
+        td_layer(0, 250)
     };
     test_DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_TDKA_RelTDKA_RelTDKA(TAP_DANCE_BALANCED, expected_events);
 }
@@ -244,28 +226,18 @@ TEST_F(TapDanceNestedTest, DuplicateKeys_DuplicatePhysicalKeyPresses_Holds_TDKA_
 // Helper functions for Single Layer Tests
 
 void test_SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    const platform_keycode_t TDKA = 2001;
-    const platform_keycode_t TDKAOK = 2002;
-    const platform_keycode_t KA = 2051;
-
-    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TDKA, KA }
-    }, {
-        { 2151, 2152 }
-    }};
-
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK1}}, {{1, 1}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
     keyboard.press_key_at(TDKA, 0);
-    keyboard.press_key_at(2151, 200);
-    keyboard.release_key_at(2151, 250);
+    keyboard.press_key_at(KB, 200);
+    keyboard.release_key_at(KB, 250);
     keyboard.release_key_at(TDKA, 300);
     keyboard.press_key_at(KA, 350);
     keyboard.release_key_at(KA, 400);
@@ -276,11 +248,11 @@ void test_SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t s
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA_TAP_PREFERRED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2151, 200),
-        td_release(2151, 250),
+        td_press(KB, 200),
+        td_release(KB, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
 }
@@ -288,11 +260,11 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA_TAP_PREFER
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA_HOLD_PREFERRED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2151, 200),
-        td_release(2151, 250),
+        td_press(KB, 200),
+        td_release(KB, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
 }
@@ -300,33 +272,21 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA_HOLD_PREFE
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA_BALANCED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2151, 200),
-        td_release(2151, 250),
+        td_press(KB, 200),
+        td_release(KB, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapL1_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
 }
 
 void test_SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    const platform_keycode_t TDKA = 2001;
-    const platform_keycode_t TDKAOK = 2002;
-    const platform_keycode_t KA = 2051;
-    const platform_keycode_t TDKB = 2111;
-    const platform_keycode_t TDKBOK = 2112;
-
-    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TDKA, KA }
-    }, {
-        { TDKB, 2152 }
-    }};
-
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
-    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}}, {{1, 2}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK1}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKB, {{1, TDKBOK1}}, {{1, 2}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
@@ -345,11 +305,11 @@ void test_SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA_TAP_PREFERRED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2112, 250),
-        td_release(2112, 250),
+        td_press(TDKBOK1, 250),
+        td_release(TDKBOK1, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
 }
@@ -357,11 +317,11 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA_TAP_PREF
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA_HOLD_PREFERRED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2112, 250),
-        td_release(2112, 250),
+        td_press(TDKBOK1, 250),
+        td_release(TDKBOK1, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
 }
@@ -369,30 +329,20 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA_HOLD_PRE
 TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA_BALANCED) {
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
-        td_press(2112, 250),
-        td_release(2112, 250),
+        td_press(TDKBOK1, 250),
+        td_release(TDKBOK1, 250),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_1TapTDKB_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
 }
 
 void test_SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
-    const platform_keycode_t TDKA = 2001;
-    const platform_keycode_t TDKAOK = 2002;
-    const platform_keycode_t KA = 2051;
-
-    std::vector<std::vector<std::vector<platform_keycode_t>>> keymap = {{
-        { TDKA, KA }
-    }, {
-        { 2151, 2152 }
-    }};
-
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK1}}, {{1, 1}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
@@ -410,8 +360,8 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA_TAP_PREF
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
 }
@@ -420,8 +370,8 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA_HOLD_PRE
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
 }
@@ -430,8 +380,8 @@ TEST_F(TapDanceNestedTest, SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA_BALANCED
     std::vector<event_t> expected_events = {
         td_layer(1, 200),
         td_layer(0, 300),
-        td_press(2051, 350),
-        td_release(2051, 400)
+        td_press(KA, 350),
+        td_release(KA, 400)
     };
     test_SingleLayer_1HoldL1_NoAction_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
 }
