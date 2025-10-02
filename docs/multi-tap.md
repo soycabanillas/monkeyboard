@@ -82,22 +82,122 @@ createbehaviouraction_hold(tap_count, layer, hold_strategy)
 
 ### Hold Strategies
 
-Choose how your Multi-Tap behaves when other keys are pressed:
+Choose how your Multi-Tap behaves when other keys are pressed while waiting for a hold decision:
 
-**`TAP_DANCE_HOLD_PREFERRED`** ⚡
-- Activates hold immediately when another key is pressed
-- Best for: Frequent layer access, gaming where speed matters
-- Trade-off: Might accidentally trigger holds
+#### `TAP_DANCE_HOLD_PREFERRED` ⚡
 
-**`TAP_DANCE_TAP_PREFERRED`** 🎯
-- Waits full timeout before considering holds
-- Best for: When you need reliable taps, typing-heavy workflows
-- Trade-off: Slower layer activation
+**When Hold Activates:**
+- Immediately when another key is pressed while in `WAITING_FOR_HOLD` state
+- After hold timeout expires (if no other keys pressed)
 
-**`TAP_DANCE_BALANCED`** ⚖️
-- Smart middle ground - considers context
-- Best for: Most users, general purpose
-- Trade-off: Slightly more complex behavior
+**Behavior with Interrupting Keys:**
+```c
+// Example: Space key with hold-preferred strategy
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_SPC),
+    createbehaviouraction_hold(1, SYMBOL_LAYER, TAP_DANCE_HOLD_PREFERRED)
+};
+
+// Sequence: Press Space, then press 'A' within hold timeout
+// 1. Press Space → enters WAITING_FOR_HOLD state
+// 2. Press 'A' → IMMEDIATELY activates SYMBOL_LAYER
+// 3. 'A' gets processed using the symbol layer (might output '!' instead of 'a')
+// 4. Release Space → deactivates layer
+```
+
+**Best for:** Gaming, frequent layer access, speed-focused workflows
+**Trade-off:** Can accidentally trigger holds when typing fast
+
+#### `TAP_DANCE_TAP_PREFERRED` 🎯
+
+**When Hold Activates:**
+- Only after the full hold timeout expires, regardless of other key presses
+- Never activates due to interrupting keys alone
+
+**Behavior with Interrupting Keys:**
+```c
+// Example: Space key with tap-preferred strategy  
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_SPC),
+    createbehaviouraction_hold(1, SYMBOL_LAYER, TAP_DANCE_TAP_PREFERRED)
+};
+
+// Sequence: Press Space, then press 'A' within hold timeout
+// 1. Press Space → enters WAITING_FOR_HOLD state  
+// 2. Press 'A' → continues waiting (no immediate layer activation)
+// 3. 'A' gets processed on current layer (outputs 'a')
+// 4. After 200ms timeout → activates SYMBOL_LAYER (if Space still held)
+// 5. Release Space → deactivates layer
+```
+
+**Best for:** Typing-heavy workflows, when you need reliable taps, avoiding accidental holds
+**Trade-off:** Slower layer activation, less responsive for gaming
+
+#### `TAP_DANCE_BALANCED` ⚖️
+
+**When Hold Activates:**
+- When another key is pressed AND released while in `WAITING_FOR_HOLD` state
+- After hold timeout expires (if key still held)
+- Uses smart context detection to avoid false positives
+
+**Behavior with Interrupting Keys:**
+```c
+// Example: Space key with balanced strategy
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_SPC),
+    createbehaviouraction_hold(1, SYMBOL_LAYER, TAP_DANCE_BALANCED)
+};
+
+// Sequence 1: Press Space, press and release 'A', then release Space
+// 1. Press Space → enters WAITING_FOR_HOLD state
+// 2. Press 'A' → continues waiting (no immediate activation)
+// 3. Release 'A' → detects "press+release" pattern, activates SYMBOL_LAYER
+// 4. Further keys get processed on symbol layer
+// 5. Release Space → deactivates layer
+
+// Sequence 2: Press Space, press 'A' but don't release, then release Space  
+// 1. Press Space → enters WAITING_FOR_HOLD state
+// 2. Press 'A' → continues waiting
+// 3. Release Space before releasing 'A' → executes tap action instead
+```
+
+**Best for:** General purpose use, most users, balanced responsiveness
+**Trade-off:** Slightly more complex behavior, requires understanding the "press+release" pattern
+
+#### Timing Comparison
+
+**Fastest Hold Activation:** `HOLD_PREFERRED` (immediate on key press)  
+**Most Reliable Taps:** `TAP_PREFERRED` (always waits full timeout)  
+**Best Balance:** `BALANCED` (smart detection of intentional holds)
+
+#### Real-World Scenarios
+
+**Gaming Example:**
+```c
+// WASD movement with sprint layer - use HOLD_PREFERRED for instant response
+pipeline_tap_dance_action_config_t* w_actions[] = {
+    createbehaviouraction_tap(1, KC_W),
+    createbehaviouraction_hold(1, SPRINT_LAYER, TAP_DANCE_HOLD_PREFERRED)  // Instant sprint on movement
+};
+```
+
+**Typing Example:**  
+```c
+// Space for space/enter, symbols layer - use TAP_PREFERRED to avoid accidental layers
+pipeline_tap_dance_action_config_t* space_actions[] = {
+    createbehaviouraction_tap(1, KC_SPC),
+    createbehaviouraction_hold(1, SYMBOL_LAYER, TAP_DANCE_TAP_PREFERRED)  // Deliberate layer access
+};
+```
+
+**General Use Example:**
+```c
+// Semicolon for punctuation and coding symbols - use BALANCED for smart behavior
+pipeline_tap_dance_action_config_t* semi_actions[] = {
+    createbehaviouraction_tap(1, KC_SCLN),
+    createbehaviouraction_hold(1, SYMBOL_LAYER, TAP_DANCE_BALANCED)  // Smart detection
+};
+```
 
 ## Timing Configuration
 
@@ -164,13 +264,52 @@ pipeline_tap_dance_action_config_t* gap_actions[] = {
 };
 ```
 
-### Reset Behavior
-When you exceed the maximum configured taps, the sequence resets:
+### Sequence Completion Behavior
+
+Multi-Tap has smart logic for when sequences end:
+
+**Immediate Execution** - When you reach a tap action and there are no further actions (tap or hold) configured:
 ```c
-// Max is 3 taps
-// Tap 4 times → resets to tap 1, no action executed on the 4th tap
-// This prevents accidental triggers and lets you restart sequences
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_A),    // 1 tap = A
+    createbehaviouraction_tap(3, KC_C),    // 3 taps = C (final action)
+    createbehaviouraction_hold(2, LAYER_1, TAP_DANCE_BALANCED)  // Hold after 2 taps
+};
+
+// Behavior:
+// 1st tap → waits (more actions possible)
+// 3rd tap → executes immediately (no actions beyond tap 3)
 ```
+
+**Timeout Execution** - When you reach a tap action but hold actions exist at the same tap count OR beyond:
+```c
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_A),    // 1 tap = A
+    createbehaviouraction_tap(2, KC_B),    // 2 taps = B
+    createbehaviouraction_hold(3, LAYER_1, TAP_DANCE_BALANCED)  // Hold after 3 taps
+};
+
+// Behavior:
+// 1st tap → waits (more actions possible)
+// 2nd tap → waits for tap timeout (hold action exists beyond tap 2)
+// If 3rd tap before timeout → continues to hold action
+// If timeout reached → executes 2nd tap action
+```
+
+**Sequence Reset** - When you exceed all configured actions:
+```c
+pipeline_tap_dance_action_config_t* actions[] = {
+    createbehaviouraction_tap(1, KC_A),    // 1 tap = A
+    createbehaviouraction_tap(2, KC_B),    // 2 taps = B  
+    createbehaviouraction_hold(3, LAYER_1, TAP_DANCE_BALANCED)  // Hold after 3 taps
+};
+
+// Max configured count is 3
+// 1st-3rd taps → normal sequence behavior
+// 4th tap → restarts sequence (begins new tap count from 1)
+```
+
+**Key insight:** Tap actions execute immediately only when no further actions are possible. If hold actions exist beyond the current tap count, the system waits to see if you'll continue the sequence, preventing premature execution.
 
 ## Layer Behavior
 
@@ -179,6 +318,138 @@ When a hold activates a layer:
 - ✅ **Affects new key presses**: Keys pressed after activation use the new layer
 - ✅ **Auto-deactivates**: Releasing the key returns to previous layer
 - ✅ **Handles nesting**: Multiple layers can stack and unstack properly
+
+### Layer Nesting and Stacking
+
+Multi-Tap supports sophisticated layer stacking that lets you build complex layer hierarchies:
+
+#### How Layer Stacking Works
+
+When you activate hold actions on multiple keys, layers stack on top of each other:
+
+```c
+// Example: Two keys with hold actions
+// Key A: Hold for SYMBOLS layer
+// Key B: Hold for NUMBERS layer
+
+// Sequence:
+// 1. Hold A → SYMBOLS layer active
+// 2. Hold B → NUMBERS layer stacks on top (SYMBOLS + NUMBERS active)
+// 3. Release A → Only NUMBERS layer remains active  
+// 4. Release B → Return to base layer
+```
+
+#### Stack Behavior Rules
+
+**Stacking Up** 📚
+- Each hold action pushes a new layer onto the stack
+- Newer layers have priority over older ones
+- Multiple layers can be active simultaneously
+
+**Stacking Down** 📉  
+- Only the key that activated a layer can deactivate it
+- Releasing a key removes its layer from anywhere in the stack
+- Other active layers remain unaffected
+
+#### Real-World Example
+
+```c
+// Setup two Multi-Tap keys with hold actions
+pipeline_tap_dance_action_config_t* left_thumb_actions[] = {
+    createbehaviouraction_tap(1, KC_SPC),
+    createbehaviouraction_hold(1, SYMBOLS_LAYER, TAP_DANCE_BALANCED)  // Layer 1
+};
+
+pipeline_tap_dance_action_config_t* right_thumb_actions[] = {
+    createbehaviouraction_tap(1, KC_ENT), 
+    createbehaviouraction_hold(1, NUMBERS_LAYER, TAP_DANCE_BALANCED)  // Layer 2
+};
+```
+
+**Interaction Scenario:**
+
+1. **Hold left thumb** → `SYMBOLS_LAYER` activated
+   - Stack: `[BASE, SYMBOLS]`
+   - Press `1` → outputs `!` (from symbols layer)
+
+2. **Hold right thumb** (while still holding left)
+   - Stack: `[BASE, SYMBOLS, NUMBERS]` 
+   - Press `1` → outputs `1` (numbers layer has priority)
+
+3. **Release left thumb** (right thumb still held)
+   - Stack: `[BASE, NUMBERS]`
+   - Press `1` → outputs `1` (numbers layer still active)
+
+4. **Release right thumb**
+   - Stack: `[BASE]`
+   - Press `1` → outputs `1` (back to base layer)
+
+#### Independent Layer Management
+
+Each Multi-Tap key manages its own layer independently:
+
+```c
+// This won't interfere with layer stacking
+pipeline_tap_dance_action_config_t* complex_actions[] = {
+    createbehaviouraction_tap(1, KC_A),                               // 1 tap = A
+    createbehaviouraction_tap(2, KC_B),                               // 2 taps = B  
+    createbehaviouraction_hold(1, LAYER_NAV, TAP_DANCE_BALANCED),     // Hold after 1 tap = navigation
+    createbehaviouraction_hold(2, LAYER_FUNC, TAP_DANCE_BALANCED)    // Hold after 2 taps = function keys
+};
+```
+
+**Key Independence:**
+- Tapping twice then holding activates `LAYER_FUNC`
+- Other Multi-Tap keys can still activate their own layers
+- All layers stack properly regardless of tap count used to activate them
+
+#### Stack Edge Cases ⚠️
+
+**Rapid Key Releases:**
+```c
+// Scenario: Hold A, Hold B, quickly release both
+// Result: Both layers deactivate in release order
+// Stack properly manages cleanup automatically
+```
+
+**Nested Same Layers:**
+```c
+// Multiple keys can activate the same layer number:
+// Key A: Hold for LAYER_1
+// Key B: Hold for LAYER_1 (same layer)
+// 
+// Both activations work independently - no conflicts
+// Each key manages its own layer activation/deactivation
+// Releasing either key removes only that key's layer contribution
+```
+
+**Duplicate Physical Key Presses:**
+If the same physical key is pressed again before releasing (possible when reassigning keycodes):
+```c
+// Example: Key physically pressed twice before any release
+// 1. First press → Multi-Tap sequence starts normally
+// 2. Second press → Ignored (key already being processed)
+// 3. First release → Ignored (doesn't match the active press)
+// 4. Second release → Processed as normal release
+//
+// Only the last press/release pair is processed
+```
+
+This prevents conflicts when keys are remapped or when rapid key bouncing occurs.
+
+**Memory Management:**
+The layer stack automatically handles memory and prevents leaks - you don't need to manually track active layers.
+
+#### Debugging Layer Stack
+
+When troubleshooting layer issues:
+
+1. **Check layer definitions**: Ensure layer numbers exist in your layout
+2. **Verify key mappings**: Confirm each layer has the expected key assignments  
+3. **Test isolation**: Try each Multi-Tap key individually first
+4. **Timing conflicts**: Make sure hold timeouts don't interfere with each other
+
+The layer stacking system is designed to "just work" - hold keys to stack layers, release keys to unstack them. Your muscle memory will quickly adapt to the natural flow. 🏗️
 
 ## Performance & Limitations
 
