@@ -1327,7 +1327,9 @@ TEST_F(TapDanceNestedTest, SameLayer_1HoldL1TDKA_1HoldL1TDKB_1TapL1_RelL1TDKB_Re
 
 // Multi-Tap While Holding Tests
 
-TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA) {
+// Helper functions for Multi-Tap While Holding Tests
+
+void test_MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
     const platform_keycode_t TDKA = 2001;
     const platform_keycode_t TDKAOK = 2002;
     const platform_keycode_t TDKB = 2111;
@@ -1344,34 +1346,62 @@ TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
-    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}, {2, TDKB2OK}}, {{1, 2}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}, {2, TDKB2OK}}, {{1, 2}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
-    keyboard.press_key_at(TDKA, 0);      // Hold TDKA to activate layer 1
-    keyboard.press_key_at(TDKB, 200);    // First tap of TDKB
-    keyboard.release_key_at(TDKB, 250);  // Release first tap
-    keyboard.press_key_at(TDKB, 300);    // Second tap of TDKB (double-tap)
-    keyboard.release_key_at(TDKB, 350);  // Release second tap
-    keyboard.release_key_at(TDKA, 400);  // Release TDKA hold
-    keyboard.press_key_at(KA, 450);      // Press normal key
-    keyboard.release_key_at(KA, 500);    // Release normal key
+    keyboard.press_key_at(TDKA, 0);
+    keyboard.press_key_at(TDKB, 200);
+    keyboard.release_key_at(TDKB, 250);
+    keyboard.press_key_at(TDKB, 300);
+    keyboard.release_key_at(TDKB, 350);
+    keyboard.release_key_at(TDKA, 400);
+    keyboard.press_key_at(KA, 450);
+    keyboard.release_key_at(KA, 500);
 
-    std::vector<event_t> expected_events = {
-        td_layer(1, 200),          // Layer 1 activated
-        td_press(TDKB2OK, 550),    // Double-tap action executed after timeout
-        td_release(TDKB2OK, 550),  // Double-tap action released
-        td_layer(0, 400),          // Layer deactivated
-        td_press(KA, 450),         // Normal key press
-        td_release(KA, 500)        // Normal key release
-    };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA) {
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA_TAP_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2113, 550),
+        td_release(2113, 550),
+        td_layer(0, 400),
+        td_press(2051, 450),
+        td_release(2051, 500)
+    };
+    test_MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA_HOLD_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2113, 550),
+        td_release(2113, 550),
+        td_layer(0, 400),
+        td_press(2051, 450),
+        td_release(2051, 500)
+    };
+    test_MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA_BALANCED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2113, 550),
+        td_release(2113, 550),
+        td_layer(0, 400),
+        td_press(2051, 450),
+        td_release(2051, 500)
+    };
+    test_MultiTapHolding_1HoldL1_2TapL1_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
+}
+
+void test_MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
     const platform_keycode_t TDKA = 2001;
     const platform_keycode_t TDKAOK = 2002;
     const platform_keycode_t TDKB = 2111;
@@ -1388,36 +1418,64 @@ TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA) {
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
-    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}, {3, TDKB3OK}}, {{1, 2}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}, {3, TDKB3OK}}, {{1, 2}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
-    keyboard.press_key_at(TDKA, 0);      // Hold TDKA to activate layer 1
-    keyboard.press_key_at(TDKB, 200);    // First tap of TDKB
-    keyboard.release_key_at(TDKB, 250);  // Release first tap
-    keyboard.press_key_at(TDKB, 300);    // Second tap of TDKB
-    keyboard.release_key_at(TDKB, 350);  // Release second tap
-    keyboard.press_key_at(TDKB, 400);    // Third tap of TDKB (triple-tap)
-    keyboard.release_key_at(TDKB, 450);  // Release third tap
-    keyboard.release_key_at(TDKA, 500);  // Release TDKA hold
-    keyboard.press_key_at(KA, 550);      // Press normal key
-    keyboard.release_key_at(KA, 600);    // Release normal key
+    keyboard.press_key_at(TDKA, 0);
+    keyboard.press_key_at(TDKB, 200);
+    keyboard.release_key_at(TDKB, 250);
+    keyboard.press_key_at(TDKB, 300);
+    keyboard.release_key_at(TDKB, 350);
+    keyboard.press_key_at(TDKB, 400);
+    keyboard.release_key_at(TDKB, 450);
+    keyboard.release_key_at(TDKA, 500);
+    keyboard.press_key_at(KA, 550);
+    keyboard.release_key_at(KA, 600);
 
-    std::vector<event_t> expected_events = {
-        td_layer(1, 200),          // Layer 1 activated
-        td_press(TDKB3OK, 450),    // Triple-tap action executed immediately
-        td_release(TDKB3OK, 450),  // Triple-tap action released
-        td_layer(0, 500),          // Layer deactivated
-        td_press(KA, 550),         // Normal key press
-        td_release(KA, 600)        // Normal key release
-    };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
 }
 
-TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA) {
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA_TAP_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2114, 450),
+        td_release(2114, 450),
+        td_layer(0, 500),
+        td_press(2051, 550),
+        td_release(2051, 600)
+    };
+    test_MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA_HOLD_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2114, 450),
+        td_release(2114, 450),
+        td_layer(0, 500),
+        td_press(2051, 550),
+        td_release(2051, 600)
+    };
+    test_MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA_BALANCED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_press(2114, 450),
+        td_release(2114, 450),
+        td_layer(0, 500),
+        td_press(2051, 550),
+        td_release(2051, 600)
+    };
+    test_MultiTapHolding_1HoldL1_3TapL1_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
+}
+
+void test_MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA(tap_dance_hold_strategy_t strategy, const std::vector<event_t>& expected_events) {
     const platform_keycode_t TDKA = 2001;
     const platform_keycode_t TDKAOK = 2002;
     const platform_keycode_t TDKB = 2111;
@@ -1438,34 +1496,66 @@ TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KP
     TestScenario scenario(keymap);
     TapDanceConfigBuilder config_builder;
     
-    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
-    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}}, {{1, 2}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
-    config_builder.add_tap_hold(TDKC, {{1, TDKCOK}, {2, TDKC2OK}}, {{1, 3}}, 200, 200, TAP_DANCE_HOLD_PREFERRED);
+    config_builder.add_tap_hold(TDKA, {{1, TDKAOK}}, {{1, 1}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKB, {{1, TDKBOK}}, {{1, 2}}, 200, 200, strategy);
+    config_builder.add_tap_hold(TDKC, {{1, TDKCOK}, {2, TDKC2OK}}, {{1, 3}}, 200, 200, strategy);
 
     config_builder.add_to_scenario(scenario);
     scenario.build();
     KeyboardSimulator& keyboard = scenario.keyboard();
 
-    keyboard.press_key_at(TDKA, 0);      // Hold TDKA to activate layer 1
-    keyboard.press_key_at(TDKB, 200);    // Hold TDKB to activate layer 2
-    keyboard.press_key_at(TDKC, 400);    // First tap of TDKC
-    keyboard.release_key_at(TDKC, 450);  // Release first tap
-    keyboard.press_key_at(TDKC, 500);    // Second tap of TDKC (double-tap)
-    keyboard.release_key_at(TDKC, 550);  // Release second tap
-    keyboard.release_key_at(TDKB, 600);  // Release TDKB (layer 2)
-    keyboard.release_key_at(TDKA, 650);  // Release TDKA (layer 1)
-    keyboard.press_key_at(KA, 700);      // Press normal key
-    keyboard.release_key_at(KA, 750);    // Release normal key
+    keyboard.press_key_at(TDKA, 0);
+    keyboard.press_key_at(TDKB, 200);
+    keyboard.press_key_at(TDKC, 400);
+    keyboard.release_key_at(TDKC, 450);
+    keyboard.press_key_at(TDKC, 500);
+    keyboard.release_key_at(TDKC, 550);
+    keyboard.release_key_at(TDKB, 600);
+    keyboard.release_key_at(TDKA, 650);
+    keyboard.press_key_at(KA, 700);
+    keyboard.release_key_at(KA, 750);
 
-    std::vector<event_t> expected_events = {
-        td_layer(1, 200),          // Layer 1 activated
-        td_layer(2, 400),          // Layer 2 activated
-        td_press(TDKC2OK, 750),    // Double-tap action executed after timeout
-        td_release(TDKC2OK, 750),  // Double-tap action released
-        td_layer(1, 600),          // Layer 2 deactivated
-        td_layer(0, 650),          // Layer 1 deactivated
-        td_press(KA, 700),         // Normal key press
-        td_release(KA, 750)        // Normal key release
-    };
     EXPECT_TRUE(g_mock_state.event_actions_match_absolute(expected_events));
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA_TAP_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_layer(2, 400),
+        td_press(2223, 750),
+        td_release(2223, 750),
+        td_layer(1, 600),
+        td_layer(0, 650),
+        td_press(2051, 700),
+        td_release(2051, 750)
+    };
+    test_MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA(TAP_DANCE_TAP_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA_HOLD_PREFERRED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_layer(2, 400),
+        td_press(2223, 750),
+        td_release(2223, 750),
+        td_layer(1, 600),
+        td_layer(0, 650),
+        td_press(2051, 700),
+        td_release(2051, 750)
+    };
+    test_MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA(TAP_DANCE_HOLD_PREFERRED, expected_events);
+}
+
+TEST_F(TapDanceNestedTest, MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA_BALANCED) {
+    std::vector<event_t> expected_events = {
+        td_layer(1, 200),
+        td_layer(2, 400),
+        td_press(2223, 750),
+        td_release(2223, 750),
+        td_layer(1, 600),
+        td_layer(0, 650),
+        td_press(2051, 700),
+        td_release(2051, 750)
+    };
+    test_MultiTapHolding_1HoldL1_1HoldL2_2TapL2_RelL2_RelL1_KPKA_KRKA(TAP_DANCE_BALANCED, expected_events);
 }
