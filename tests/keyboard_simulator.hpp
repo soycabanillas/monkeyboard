@@ -1,18 +1,20 @@
 #pragma once
 
 #include <cstdint>
+#include <stdint.h>
 #include "platform_types.h"
 
 // Keyboard simulation class
 class KeyboardSimulator {
 private:
+    uint8_t num_layers;
     uint8_t rows;
     uint8_t cols;
     platform_keypos_t find_keypos(platform_keycode_t keycode);
 
 public:
     // Constructor
-    KeyboardSimulator(uint8_t rows = 4, uint8_t cols = 4);
+    KeyboardSimulator(uint8_t num_layers = 1, uint8_t rows = 4, uint8_t cols = 4);
     
     // Simplified key event simulation
     void press_key(platform_keycode_t keycode, uint16_t delay_ms = 0);

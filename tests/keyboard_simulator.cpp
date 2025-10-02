@@ -1,5 +1,6 @@
 // Generic keypos finder for any keymap size
 #include <cstdint>
+#include <stdint.h>
 #include "pipeline_executor.h"
 #include "platform_interface.h"
 #include "platform_mock.hpp"
@@ -7,14 +8,16 @@
 #include "keyboard_simulator.hpp"
 
 // KeyboardSimulator class implementation
-KeyboardSimulator::KeyboardSimulator(uint8_t rows, uint8_t cols) : rows(rows), cols(cols) {
+KeyboardSimulator::KeyboardSimulator(uint8_t num_layers, uint8_t rows, uint8_t cols) : rows(rows), cols(cols) {
 }
 
 platform_keypos_t KeyboardSimulator::find_keypos(platform_keycode_t keycode) {
-    for (uint8_t row = 0; row < rows; row++) {
-        for (uint8_t col = 0; col < cols; col++) {
-            if (platform_layout_get_keycode_from_layer(0, {row, col}) == keycode) {
-                return {row, col};
+    for (uint8_t layer = 0; layer < num_layers; layer++) {
+        for (uint8_t row = 0; row < rows; row++) {
+            for (uint8_t col = 0; col < cols; col++) {
+                if (platform_layout_get_keycode_from_layer(layer, {row, col}) == keycode) {
+                    return {row, col};
+                }
             }
         }
     }
@@ -86,5 +89,5 @@ void KeyboardSimulator::wait_ms(platform_time_t ms) {
 // Factory function to create a keyboard simulator with layout
 KeyboardSimulator create_layout(const platform_keycode_t* keymaps, uint8_t num_layers, uint8_t rows, uint8_t cols) {
     platform_layout_init_2D_keymap(keymaps, num_layers, rows, cols);
-    return KeyboardSimulator(rows, cols);
+    return KeyboardSimulator(num_layers, rows, cols);
 }
